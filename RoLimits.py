@@ -106,8 +106,8 @@ if __name__ == '__main__':
                 bkg_name = bkgf.split('/')[-1].split('_')[1]
                 if bkg_name == 'Data' : continue 
                 bf = ROOT.TFile.Open(bkgf, "read")
-                #print(bkg_name)
-                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg_name+'sig_SR_nominal')
+                #print(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
+                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
                 #print(bhist.Integral())
                 hist.Add(bhist)
                 lists.append(hist)
