@@ -160,6 +160,7 @@ All_files = {
         },
 }
 
+# cut to produce control plots 
 cut_strings = ""
 cut_strings +='(nLep == 1 && Lep_pt > 25)'
 cut_strings +='&& (Selected == 1)'
@@ -178,6 +179,7 @@ cut_strings +='&& (HT > 500)'
 cut_strings +='&& (LT > 250)'
 cut_strings +='&& (nBJet >= 1)'
 
+# variables to plot
 varList = [] #[ name of tree branch, name of pdf file, name of variable, number of bins, min bin, max bin]
 varList.append(["HT", "HT", "H_{T} [GeV]", 30, 0, 3000, "LogY",["MoreY",1000]])
 varList.append(["LT", "LT", "L_{T} [GeV]", 15, 0, 1500 , "LogY",["MoreY",1000]])

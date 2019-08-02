@@ -36,7 +36,7 @@ class rootplot(object) :
         for f in filesList : 
             chain.Add(f)
         return chain
-    def makecuts(self,Tree = None,cutstring = '',extraCuts = "" ) :
+    def makecuts(self,Tree = None,cutstring = "",extraCuts = "" ) :
         ''' This Function is to apply selection on specific tree'''
         from ROOT import TCut
         cutstring = TCut(cutstring+extraCuts)
