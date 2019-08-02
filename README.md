@@ -35,3 +35,30 @@ or you can use mine env by doing `export PATH="/nfs/dust/cms/user/amohamed/anaco
 - `evaluate.py` is prepared to evaluate the model on any of the independent samples we use for farther analysis
 - `evaluate_onbatch.py` will wrap `evaluate.py` to run an independent batch system job for each sample, it will produce either `.root` or `.csv` based on the input file extension and it can also save the score only or save the entire sample based on what you need. Finally, it can run with parametric evaluation i.e. evaluate an indepenedet score for each signal hypothis  
 - `testhyperOpt.py` is also prepared to do hyper parameter optimizations taken mainly from `https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/`
+
+
+For the full analysis work-flow, this package is made fully independent of CMSSW but you need it only for limit setting when we use HiggsCombineTools `https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/`
+
+ - for plotting what we need is to indentify cuts, plottinggroups you need with styles and the variables to plot here `hepML1Lep/plotClass/plotting/plotGroups.py`
+ - `RoPlotter.py` is prepared to take over the plotting class and work on what you need to plot with the proper tdrstyle 
+ - the first few lines are made to contol how the `plotter` should work `https://github.com/ashrafkasem/hepML1Lep/blob/master/RoPlotter.py#L28-L48`
+ - `RoShapes.py` is prepared to make the shapes for the limits (still simplifed version i.e without the prpoer systematics) `development are upcoming`
+ ```bash 
+ # to produce shapes for the background according to the SRs/CRs specified at `hepML1Lep/plotClass/search_regions.py` (-b to activate the batch submission)
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes --lumi 35.9 -b
+ # to produce shapes for the signals according to the SRs specified at `hepML1Lep/plotClass/search_regions.py` (-b to activate the batch submission)
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes_signal --lumi 35.9 -b --scan
+ # to produce shapes for the one signal/backgrpund according to the SRs specified at --cut argument which will be translated from `hepML1Lep/plotClass/search_regions.py` --mass the identify which mass to evaluate with (parametrized DNN)
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes_signal --lumi 35.9 --scan -cut 'SR' --mass 1700_800
+ ```
+
+  - `RoLimits.py` is made to take over the shapes and produce the datacards in addition to calculating the limits still working on getting all the systematics into the game
+  - `/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/` will be used by default as I've already prepared the combine tool but feel free to change it to whatever you have
+  ```bash
+  # -L is to calculate the limit on HTC otherwise only the datacards will be produced
+  ./RoLimits.py --indir shapes_16_DNN_31_July19v2 --outdir testLimits -L
+  ```
+  - `plotLimit.py` is made to plot the limit contour it will use the `glu_xsecs_13TeV.txt` for calculating the Xsec limits
+  - `overly_DNN_Multi.C` is for comparing to limit contours 
+
+
