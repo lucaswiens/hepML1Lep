@@ -45,11 +45,11 @@ For the full analysis work-flow, this package is made fully independent of CMSSW
  - `RoShapes.py` is prepared to make the shapes for the limits (still simplifed version i.e without the prpoer systematics) `development are upcoming`
  ```bash 
  # to produce shapes for the background according to the SRs/CRs specified at `hepML1Lep/plotClass/search_regions.py` (-b to activate the batch submission)
- ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes --lumi 35.9 -b
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir shapes --lumi 35.9 -b
  # to produce shapes for the signals according to the SRs specified at `hepML1Lep/plotClass/search_regions.py` (-b to activate the batch submission)
- ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes_signal --lumi 35.9 -b --scan
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir shapes --lumi 35.9 -b --scan
  # to produce shapes for the one signal/backgrpund according to the SRs specified at --cut argument which will be translated from `hepML1Lep/plotClass/search_regions.py` --mass the identify which mass to evaluate with (parametrized DNN)
- ./RoShapes.py --indir root_FRs_w_score/ --outdir testshapes_signal --lumi 35.9 --scan -cut 'SR' --mass 1700_800
+ ./RoShapes.py --indir root_FRs_w_score/ --outdir shapes --lumi 35.9 --scan -cut 'SR' --mass 1700_800
  ```
 
   - `RoLimits.py` is made to take over the shapes and produce the datacards in addition to calculating the limits still working on getting all the systematics into the game
