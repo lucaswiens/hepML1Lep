@@ -27,16 +27,16 @@ tdrstyle.setTDRStyle()
 
 lumi = '35.9'
 indir = '/nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep/root_FRs_w_score/'
-outdire = './testplots'
+outdire = './testplots_Sig'
 scale_bkgd_toData = True
 if not os.path.exists(outdire) : os.makedirs(outdire)
-doRatio = True
+doRatio = False
 YmaX = 0.0
 YmiN = 0.1
 
 rmin =  0.05 
 rmax =  1.95
-showRatioErorr = True
+showRatioErorr = False
 ShowMCerror = True
 CMS_lumi.writeExtraText = 1
 
@@ -51,9 +51,17 @@ CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62
 #from plotClass.plotting.SplitCanv import * 
 
 
+'''def findItem(theList, item):
+   return [(ind, theList[ind].index(item)) for ind in range(len(theList)) if item in theList[ind]]'''
+def findItem(theList, item):
+    for ind in range(len(theList)):
+        if item in theList[ind]:
+            return ind, theList[ind].index(item)
+        else: pass
+
 def make1D(var,style,name):
     '''  A functon to make a 1D histogram and set it's style '''
-    hist = ROOT.TH1F(name,name,var[3],var[4],var[5])
+    hist = ROOT.TH1F(name,name,var[3][0],var[3][1],var[3][2])
     #hist.Draw('goff')
     if style["fill"]:
         style["fill"].Copy(hist)
@@ -243,7 +251,7 @@ if __name__ == '__main__':
         total.SetName("totalBKG")
         total.Write()
         # scale the individual background to data
-        if All_files['Data']['hist'][i] : sf = doScaleBkgNormData(All_files['Data']['hist'],sorttinglist(stackableHists),total)
+        if 'Data' in All_files.keys() : sf = doScaleBkgNormData(All_files['Data']['hist'],sorttinglist(stackableHists),total)
         else : sf = 1.0
         # scale the total backgrounds to data
         total.Scale(sf)
@@ -286,8 +294,9 @@ if __name__ == '__main__':
             stackPad.cd()
         # Draw the stack first
         stack.Draw('hist')
-        if len(var) > 7 :
-            stack.SetMaximum(var[7][1]*stack.GetMaximum())
+        if any('MoreY' in e for e in var) : 
+            index1,_ = findItem(var , 'MoreY')
+            stack.SetMaximum(var[index1][1]*stack.GetMaximum())
         stack.SetMinimum(YmiN)
         stack.GetXaxis().SetTitleOffset(1.1)
         stack.GetXaxis().SetLabelOffset(0.007)
@@ -313,8 +322,9 @@ if __name__ == '__main__':
             totaluncert.Draw("PE2 SAME")
         # for blinding a specific histogram
         xblind = [9e99, -9e99]
-        if len(var) > 8 and  All_files['Data']['hist'][i] : 
-            blind = var[8][1]
+        if any('blinded' in e for e in var) and  'Data' in All_files.keys() : 
+            index2,_ = findItem(var , 'blinded')
+            blind = var[index2][1]
             import re
             if re.match(r'(bin|x)\s*([<>]?)\s*(\+|-)?\d+(\.\d+)?|(\+|-)?\d+(\.\d+)?\s*<\s*(bin|x)\s*<\s*(\+|-)?\d+(\.\d+)?', blind):
                 xfunc = (lambda h, b: b) if 'bin' in blind else (lambda h, b: h.GetXaxis().GetBinCenter(b))
@@ -329,7 +339,7 @@ if __name__ == '__main__':
                         xblind[1] = max(xblind[1], All_files['Data']['hist'][i].GetXaxis().GetBinUpEdge(b))
 
         # draw and write the data histo if there any 
-        if All_files['Data']['hist'][i] : 
+        if 'Data' in All_files.keys() : 
             All_files['Data']['hist'][i].Write()
             All_files['Data']['hist'][i].Draw('EP same')
             All_files['Data']['hist'][i].SetMarkerStyle(20)
@@ -397,8 +407,8 @@ if __name__ == '__main__':
         CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
 
         doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
-                 All_files['Data']['hist'][i] if All_files['Data']['hist'][i] else None, textSize=0.040, columns=2, uncertHist=totaluncert if ShowMCerror else None)
-        if var[6] == 'LogY' : 
+                 All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2, uncertHist=totaluncert if ShowMCerror else None)
+        if any('LogY' in e for e in var) :
             ROOT.gPad.SetLogy()
                     
         canv.SaveAs(pngdire+'/'+var[0]+'.png')

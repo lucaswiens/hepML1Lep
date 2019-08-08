@@ -80,23 +80,7 @@ def masslist(masslist):
         mass_list.append(mGo+'_'+mLSP)
         #print (small_list)
     return mass_list
-
-def sigscoreToUse(mgo,mlsp) : 
-    if mgo < 1500 : 
-        mass = '1500_1000'
-    elif (mgo > 1500 and mgo <= 1900) :
-        if mlsp < 800 : mass = '1900_100'
-        elif (mlsp >= 800 and mlsp < 1000 ) : mass = '1900_800'
-    elif mgo > 1900 : 
-        if mlsp < 800 : mass = '2200_100'
-        else : mass = '2200_800'
-    elif (mgo > 1800 and mgo <=1900 and mlsp > 800 and mlsp < 1000) : mass = '1900_1000'    
-    elif (mgo > 1800 and mgo <=1900 and mlsp > 1000): mass = '1800_1300'
-    elif (mgo > 1700 and mgo <= 1800 and mlsp >= 1000 ) : mass = '1700_1200'
-    elif (mgo > 1600 and mgo <= 1700 and mlsp >= 1000 ) : mass = '1600_1100'
-    elif (mgo >= 1500 and mgo <=1600 and mlsp >= 1000 ) : mass = '1500_1200' 
-    return mass
-
+    
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for nanoAOD', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -122,6 +106,7 @@ if __name__ == '__main__':
     group = args.group
     cutdict = args.cutdict
     
+
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
 
     if cutdict == 'SR' : cutdict_ = SRs_cut_strings
@@ -140,6 +125,7 @@ if __name__ == '__main__':
         os.makedirs(logdir) 
     
     
+
     if sig : massdir = os.path.join(outdir,'scan/'+mass)
     else :  massdir = os.path.join(outdir,'grid/'+mass)
     
@@ -149,10 +135,9 @@ if __name__ == '__main__':
     if not os.path.exists(massdir): os.makedirs(massdir)
 
     instPlot = rootplot(indir,outdir,All_files=All_files)
-
+    cuttext = open(massdir+"/"+cutdict+".txt", "w+")
     if not batch : 
         cuts = cutdict_['1900_100'] if sig else cutdict_[mass]
-        
         g  = group
         if sig : g  = 'Signal_1'
         print ('producing the shapes for :',g, ' for signal mass of : ', mass )
@@ -167,7 +152,8 @@ if __name__ == '__main__':
             extraCuts = "&& mGo =="+mass.split('_')[0]+ "&& mLSP == "+mass.split('_')[1]
             scale = All_files['Signal_1']['scale']
         print (cuts + extraCuts)
-        chain = instPlot.chain_and_cut (filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+        cuttext.write('cuts applied are :'+cuts + extraCuts+'\n')
+        chain = instPlot.chain_and_cut(filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
         print(chain.GetEntries())
         # create the output root file
         outroot = ROOT.TFile(massdir+"/shapes_{0}_{1}_{2}".format(g,mass,cutdict)+".root","recreate")

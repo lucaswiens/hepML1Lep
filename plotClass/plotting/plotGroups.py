@@ -178,25 +178,27 @@ cut_strings +='&& (Jet2_pt > 80)'
 cut_strings +='&& (HT > 500)'
 cut_strings +='&& (LT > 250)'
 cut_strings +='&& (nBJet >= 1)'
+cut_strings +='&& (1900_100sig >1900_100TTDi ) && (1900_100sig >1900_100TTS) && (1900_100sig >1900_100WJ)'#(1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )'#'&& (1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )'
 
 # variables to plot
 varList = [] #[ name of tree branch, name of pdf file, name of variable, number of bins, min bin, max bin]
-varList.append(["HT", "HT", "H_{T} [GeV]", 30, 0, 3000, "LogY",["MoreY",1000]])
-varList.append(["LT", "LT", "L_{T} [GeV]", 15, 0, 1500 , "LogY",["MoreY",1000]])
-varList.append(["MET", "MET", "MET [GeV]", 15, 0, 1500 , "LogY",["MoreY",1000]])
-varList.append(["Lep_pt", "Lep_pt", "Lep p_{T} [GeV]", 32, 0, 800, "LogY",["MoreY",1000]])
-varList.append(["nJets30Clean", "nJets30Clean", "jet multiplicity", 10, 0, 15 , "LogY",["MoreY",1000]])
+varList.append(["HT", "HT", "H_{T} [GeV]", [30, 0, 3000], "LogY",["MoreY",1000]])
+varList.append(["LT", "LT", "L_{T} [GeV]", [15, 0, 1500] , "LogY",["MoreY",1000]])
+varList.append(["MET", "MET", "MET [GeV]", [15, 0, 1500] , "LogY",["MoreY",1000]])
+varList.append(["Lep_pt", "Lep_pt", "Lep p_{T} [GeV]", [32, 0, 800], "LogY",["MoreY",1000]])
+varList.append(["nJets30Clean", "nJets30Clean", "jet multiplicity", [10, 0, 15] , "LogY",["MoreY",1000]])
 #varList.append(["BDT","BDT","BDT Response" , 60,-0.5,1 , "Logy"]) 
-varList.append(["dPhi", "fabs(dPhi)", "#Delta #varphi (lep,W)" ,30, 0, 3.142,"LogY",["MoreY",1000]])
-varList.append(["nBJet","nBJet","b-jet multiplicity (Med)",8, 0, 8, "LogY",["MoreY",1000]])
+varList.append(["dPhi", "fabs(dPhi)", "#Delta #varphi (lep,W)" ,[30, 0, 3.142],"LogY",["MoreY",1000]])
+varList.append(["nBJet","nBJet","b-jet multiplicity (Med)",[8, 0, 8], "LogY",["MoreY",1000]])
 
-varList.append(["1900_100TTDi","1900_100TTDi","DNN classifier t#bar{t} ll",20,0,1,"LogY",["MoreY",1000]])
-varList.append(["1900_100sig","1900_100sig","DNN classifier T1t^{4}",20,0,1,"LogY",["MoreY",1000],['blinded',"0.8 < x < 1.0"]])
-varList.append(["1900_100WJ","1900_100WJ","DNN classifier W+jets",20,0,1,"LogY",["MoreY",1000]])
-varList.append(["1900_100TTS","1900_100TTS","DNN classifier t#bar{t} l",20,0,1,"LogY",["MoreY",1000]])
+varList.append(["1900_100TTDi","1900_100TTDi","DNN classifier t#bar{t} ll",[20,0,1],"LogY",["MoreY",1000]])
+varList.append(["1900_100sig","1900_100sig","DNN classifier T1t^{4}",[20,0,1],"LogY",["MoreY",1000]]) #,['blinded',"0.8 < x < 1.0"]])
 
-varList.append(["CatTT1Lep","(1900_100TTS >1900_100TTDi ) && (1900_100TTS >1900_100sig) && (1900_100TTS >1900_100WJ)","t#bar{t} l + jets Event Category",2,0,1.1,"LogY",["MoreY",1000]])
-varList.append(["CatTT2Lep","(1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )","t#bar{t} ll + jets Event Category",2,0,1.1,"LogY",["MoreY",1000]])
-varList.append(["CatWJ","(1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )","W+jets Event Category",2,0,1.1,"LogY",["MoreY",1000]])
-varList.append(["CatSig","(1900_100sig >1900_100TTDi ) && (1900_100sig >1900_100TTS) && (1900_100sig >1900_100WJ)","T1t^{4} Event Category",2,0,1.1,"LogY",["MoreY",1000]])
+varList.append(["1900_100WJ","1900_100WJ","DNN classifier W+jets",[20,0,1],"LogY",["MoreY",1000]])
+varList.append(["1900_100TTS","1900_100TTS","DNN classifier t#bar{t} l",[20,0,1],"LogY",["MoreY",1000]])
+
+varList.append(["CatTT1Lep","(1900_100TTS >1900_100TTDi ) && (1900_100TTS >1900_100sig) && (1900_100TTS >1900_100WJ)","t#bar{t} l + jets Event Category",[2,0,1.1],"LogY",["MoreY",1000]])
+varList.append(["CatTT2Lep","(1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )","t#bar{t} ll + jets Event Category",[2,0,1.1],"LogY",["MoreY",1000]])
+varList.append(["CatWJ","(1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )","W+jets Event Category",[2,0,1.1],"LogY",["MoreY",1000]])
+varList.append(["CatSig","(1900_100sig >1900_100TTDi ) && (1900_100sig >1900_100TTS) && (1900_100sig >1900_100WJ)","T1t^{4} Event Category",[2,0,1.1],"LogY",["MoreY",1000]])
 

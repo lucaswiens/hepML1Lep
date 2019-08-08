@@ -12,7 +12,7 @@ def findLayerSize(layer,refSize):
     elif isinstance(layer, int):
         return layer
     else:
-        print 'WARNING: layer must be int or float'
+        print ('WARNING: layer must be int or float')
         return None
         
 ## copied from A.Elwood https://github.com/aelwood/hepML/blob/master/MlFunctions/DnnFunctions.py
