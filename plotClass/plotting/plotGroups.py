@@ -160,6 +160,10 @@ All_files = {
         },
 }
 
+CatTT1Lep = '&& (1900_100TTS >1900_100TTDi ) && (1900_100TTS >1900_100sig) && (1900_100TTS >1900_100WJ)'
+CatTT2Lep = '&& (1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )'
+CatWJ     = '&& (1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )'
+CatSig   = '&& (1900_100sig >1900_100TTDi ) && (1900_100sig >1900_100TTS) && (1900_100sig >1900_100WJ)'
 # cut to produce control plots 
 cut_strings = ""
 cut_strings +='(nLep == 1 && Lep_pt > 25)'
@@ -173,12 +177,12 @@ cut_strings +='&& (!iso_Veto)'
 cut_strings +='&& (MET/met_caloPt <= 5)'
 cut_strings +='&& (RA2_muJetFilter == 1)'
 cut_strings +='&& (Flag_fastSimCorridorJetCleaning)'
-cut_strings +='&& (nJets30Clean >= 5)'
+cut_strings +='&& (nJets30Clean < 5)'
 cut_strings +='&& (Jet2_pt > 80)'
 cut_strings +='&& (HT > 500)'
 cut_strings +='&& (LT > 250)'
-cut_strings +='&& (nBJet >= 1)'
-cut_strings +='&& (1900_100sig >1900_100TTDi ) && (1900_100sig >1900_100TTS) && (1900_100sig >1900_100WJ)'#(1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )'#'&& (1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )'
+cut_strings +='&& (nBJet == 0)'
+#cut_strings += CatTT2Lep
 
 # variables to plot
 varList = [] #[ name of tree branch, name of pdf file, name of variable, number of bins, min bin, max bin]

@@ -55,4 +55,3 @@ class rootplot(object) :
         return chain
 
 
-    

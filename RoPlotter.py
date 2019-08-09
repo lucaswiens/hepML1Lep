@@ -27,10 +27,13 @@ tdrstyle.setTDRStyle()
 
 lumi = '35.9'
 indir = '/nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep/root_FRs_w_score/'
-outdire = './testplots_Sig'
-scale_bkgd_toData = True
+outdire = './testplots_NJless5_nb0_SFtest'
+scale_bkgd_toData = False
+do_alphabetagamma = True
+alpha,beta,gamma =  0.84 ,0.97 , 0.71
+
 if not os.path.exists(outdire) : os.makedirs(outdire)
-doRatio = False
+doRatio = True
 YmaX = 0.0
 YmiN = 0.1
 
@@ -150,6 +153,20 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     legend_ = leg
     return leg
 
+
+def doalphabetagamma(histlist,alpha,beta,gamma):
+    scaled_List = []
+    for h in histlist : 
+        hname = h.GetName()
+        if 'DiLepTT' in hname : 
+            h.Scale(beta)
+        elif 'SemiLepTT' in hname : 
+            h.Scale(alpha)
+        else : 
+            h.Scale(gamma)
+        scaled_List.append(h)
+    return scaled_List
+
 def doShadedUncertainty(h):
     xaxis = h.GetXaxis()
     points = []; errors = []
@@ -177,16 +194,21 @@ def makeStack(histList):
     s = ROOT.THStack("s","")
     for bkghist in histList :
         s.Add(bkghist)
-
     s.SetTitle('THStack')
     return s 
 
-def hadd1ds(histList):
+def hadd1ds(histList,alphabetagamma=False):
     '''  A functon to hadd background and set it's style '''
     sumbkg = ROOT.TH1F(histList[0].Clone())
     sumbkg.Reset()
     for bkghist in histList :
-        sumbkg.Add(bkghist)
+        h = ROOT.TH1F(bkghist.Clone())
+        if alphabetagamma : 
+            hname = h.GetName()
+            if 'DiLepTT' in hname : h.Scale(beta)
+            elif 'SemiLepTT' in hname : h.Scale(alpha)
+            else : h.Scale(gamma)
+        sumbkg.Add(h)
     #sumbkg.Draw('goff')
     sumbkg.SetTitle('Total BKG')
     sumbkg.SetName('sumbkg')
@@ -246,18 +268,21 @@ if __name__ == '__main__':
             hist.Write()
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
         # make the total BKG hist to be used for ratio calculation
-        total = hadd1ds(sorttinglist(stackableHists))
+        total = hadd1ds(stackableHists,do_alphabetagamma)
         outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
         total.SetName("totalBKG")
         total.Write()
+        stackableHists = sorttinglist(stackableHists)
         # scale the individual background to data
-        if 'Data' in All_files.keys() : sf = doScaleBkgNormData(All_files['Data']['hist'],sorttinglist(stackableHists),total)
+        
+        if do_alphabetagamma : doalphabetagamma(stackableHists,alpha,beta,gamma) ; sf = 1.0
+        elif ('Data' in All_files.keys() and scale_bkgd_toData ) : sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total)
         else : sf = 1.0
         # scale the total backgrounds to data
         total.Scale(sf)
         total.SetName("totalBKG_scaled")
         # make stack of the background (sorted)
-        stack = makeStack(sorttinglist(stackableHists))
+        stack = makeStack(stackableHists)
         # write them 
         stack.Write()
         total.Write()
