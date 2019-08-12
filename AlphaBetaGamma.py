@@ -57,8 +57,12 @@ if __name__ == '__main__':
     if not os.path.exists(outdir):os.makedirs(outdir)
     if os.path.exists(outdir+'/alphabetagammaTable.tex'):
         os.remove(outdir+'/alphabetagammaTable.tex')
+    if os.path.exists(outdir+'/alphabetagammaTable.txt'):
+            os.remove(outdir+'/alphabetagammaTable.txt')
 
     latexalphabetagamma = open(outdir+'/alphabetagammaTable.tex', "a+")
+    textalphabetagamma = open(outdir+'/alphabetagammaTable.txt', "a+")
+    textalphabetagamma.write("{:<20}{:<12}{:<15}{:<12}{:<15}{:<12}{:<15}".format('mass','alpha','alphaE','beta' ,'betaE', 'gamma','gammaE')+" \n")
 
     latexalphabetagamma.write("\\documentclass[a4paper,11pt]{article} \n")
     latexalphabetagamma.write("\\usepackage{longtable} \n")
@@ -183,7 +187,7 @@ if __name__ == '__main__':
         latexalphabetagamma.write('\\hline\\hline \n')
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('   & ',alpha, ' $\pm$ '+str(alphaerr)+' & ',beta ,' $\pm$ '+str(betaerr)+' & ', gamma,' $\pm$ '+str(gammaerr)+' &   \\\\' )+"\n")
         latexalphabetagamma.write('\\hline\\hline\\hline \n')
-    
+        textalphabetagamma.write("{:<20}{:<12}{:<15}{:<12}{:<15}{:<12}{:<15}".format(bkg_list[0].split('/')[1] ,alpha, str(alphaerr) ,beta ,str(betaerr), gamma,str(gammaerr) )+"\n")
     latexalphabetagamma.write("\\caption{ Normalizaton parameters for backgrounds, calculated from control categories.}")
     latexalphabetagamma.write("\\label{normalize}")
     latexalphabetagamma.write("\\end{longtable}\n")

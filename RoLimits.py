@@ -54,6 +54,26 @@ def bkgToUse(mgo,mlsp) :
 def simpleAsimov(s,b):
     sign = s/sqrt(s+b+(0.2*b)**2)
     return sign
+
+def getSFs(sffile,mass='1900_100',which='alpha') : 
+    token = open(sffile,'r')
+    linestoken=token.readlines()
+    if which == 'alpha' :  tokens_column_number = 1
+    if which == 'alphaE' :  tokens_column_number = 2
+    if which == 'beta' :  tokens_column_number = 3
+    if which == 'betaE' :  tokens_column_number = 4
+    if which == 'gamma' :  tokens_column_number = 5
+    if which == 'gammaE' :  tokens_column_number = 6
+    resulttoken=[]
+    masstoken=[]
+    for x in linestoken:
+        resulttoken.append(x.split()[tokens_column_number])
+        masstoken.append(x.split()[0])
+    token.close()
+    idx = masstoken.index(mass)
+    return resulttoken[idx]
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for nanoAOD', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -63,6 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--Limit','-L', help='calculate the limit after making the datacards',default=False, action='store_true')
     parser.add_argument('--cmsswdir', help='cmssw directory',default='/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/', metavar='cmsswdir')
     parser.add_argument('--execu', help="wight directory",default='./batch/Limit_exec.sh' ,metavar='execu')
+    parser.add_argument('--sfs', help="the text file that has alpha beta gamma",default='./testalph/alphabetagammaTable.txt' ,metavar='sfs')
     
     binned = False
     args = parser.parse_args()
@@ -72,7 +93,9 @@ if __name__ == '__main__':
     cmsswdir = args.cmsswdir
     outdir = args.outdir
     execu = args.execu   
-    
+    sfs = args.sfs
+
+
     if not os.path.exists(outdir): os.makedirs(outdir)
     
     datacardsdir = os.path.join(outdir,'datacards/combinedCards')
@@ -105,6 +128,13 @@ if __name__ == '__main__':
                 #print(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
                 bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
                 #print(bhist.Integral())
+                which = ''
+                scalefactor = 1.0
+                if bkg_name == 'DiLepTT' : which = 'beta'
+                elif bkg_name == 'SemiLepTT' :which = 'alpha'
+                elif bkg_name != 'Data' : which = 'gamma'
+                scalefactor = float(getSFs(sfs,mass=bkg,which=which))
+                bhist.Scale(scalefactor)
                 hist.Add(bhist)
                 lists.append(hist)
                 #blisthist.append(bhist)

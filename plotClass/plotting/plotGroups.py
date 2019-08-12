@@ -160,6 +160,11 @@ All_files = {
         },
 }
 
+dPhiCut = '&& ((LT < 350 && fabs(dPhi) > 1.0) || (350 < LT && LT < 600 && fabs(dPhi) > 0.75) || (600 < LT && fabs(dPhi) > 0.5))'
+AntidPhiCut = '&& ((LT < 350 && fabs(dPhi) < 1.0) || (350 < LT && LT < 600 && fabs(dPhi) < 0.75) || (600 < LT && fabs(dPhi) < 0.5))'
+ntopCut = '&& nTop_Total_Combined >= 1 '
+AntintopCut = '&& nTop_Total_Combined < 1'
+
 CatTT1Lep = '&& (1900_100TTS >1900_100TTDi ) && (1900_100TTS >1900_100sig) && (1900_100TTS >1900_100WJ)'
 CatTT2Lep = '&& (1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )'
 CatWJ     = '&& (1900_100WJ >1900_100TTDi ) && (1900_100WJ >1900_100sig) && (1900_100WJ  > 1900_100TTS )'
@@ -177,12 +182,24 @@ cut_strings +='&& (!iso_Veto)'
 cut_strings +='&& (MET/met_caloPt <= 5)'
 cut_strings +='&& (RA2_muJetFilter == 1)'
 cut_strings +='&& (Flag_fastSimCorridorJetCleaning)'
-cut_strings +='&& (nJets30Clean < 5)'
+cut_strings +='&& (nJets30Clean >= 5)'
 cut_strings +='&& (Jet2_pt > 80)'
 cut_strings +='&& (HT > 500)'
 cut_strings +='&& (LT > 250)'
 cut_strings +='&& (nBJet == 0)'
-#cut_strings += CatTT2Lep
+cut_strings += AntintopCut #CatSig + dPhiCut + ntopCut
+
+# for Dilep CR 
+'''cut_strings += '(!isData || (HLT_EleOR || HLT_MuOR || HLT_MetOR))'
+cut_strings += '&& (!isData || ( (PD_SingleEle && HLT_EleOR) || (PD_SingleMu && (HLT_MuOR) && !(HLT_EleOR) ) || (PD_MET && (HLT_MetOR) && !(HLT_EleOR) && !(HLT_MuOR) )  ))'
+cut_strings += '&& (!isData || METfilters == 1)'
+cut_strings += '&& ( nLep == 2 && Selected == 1 && nVeto == 0)'
+cut_strings += '&& ( DLMS_nJets30Clean_0 >=3)'
+cut_strings += '&& (Jet2_pt > 80 ) '
+cut_strings += '&& (DLMS_HT_0>500)'
+cut_strings += '&& ( DLMS_ST_0>250 )'
+cut_strings += '&& (nBJet == 0)'
+cut_strings += CatSig'''
 
 # variables to plot
 varList = [] #[ name of tree branch, name of pdf file, name of variable, number of bins, min bin, max bin]

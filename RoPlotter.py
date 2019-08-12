@@ -27,7 +27,7 @@ tdrstyle.setTDRStyle()
 
 lumi = '35.9'
 indir = '/nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep/root_FRs_w_score/'
-outdire = './testplots_NJless5_nb0_SFtest'
+outdire = './testplots_nb0_nT0'
 scale_bkgd_toData = False
 do_alphabetagamma = True
 alpha,beta,gamma =  0.84 ,0.97 , 0.71
@@ -291,10 +291,10 @@ if __name__ == '__main__':
         plotformat = (600,600)
         sf_ = 20./plotformat[0]
 
-        height = plotformat[1]+150 if doRatio else plotformat[1]
+        height = plotformat[1]+150 if (doRatio  and 'Data' in All_files.keys()) else plotformat[1]
         ROOT.gStyle.SetPadLeftMargin(600.*0.18/plotformat[0])
 
-        if doRatio: ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
+        if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
         else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
         
         # create canvas
@@ -304,7 +304,7 @@ if __name__ == '__main__':
         topsize = 0.12*600./height if doRatio else 0.06*600./height
         canv.SetTopMargin(topsize)
         canv.cd()
-        if doRatio : 
+        if (doRatio  and 'Data' in All_files.keys()) : 
             stackPad = ROOT.TPad("mainpad"+var[0], "mainpad"+var[0], 0, 0.30, 1, 1)
             ROOT.SetOwnership(stackPad, False)
             stackPad.SetBottomMargin(0.025)
@@ -325,7 +325,7 @@ if __name__ == '__main__':
         stack.SetMinimum(YmiN)
         stack.GetXaxis().SetTitleOffset(1.1)
         stack.GetXaxis().SetLabelOffset(0.007)
-        if  doRatio : 
+        if  (doRatio and 'Data' in All_files.keys()): 
             stack.GetXaxis().SetLabelOffset(999) ## send them away
             stack.GetXaxis().SetTitleOffset(999) ## in outer space
         stack.GetXaxis().SetTitleFont(42)
@@ -388,7 +388,7 @@ if __name__ == '__main__':
                 sHist.Write()
                 sHist.Draw('histsame')
 
-        if doRatio : 
+        if (doRatio and 'Data' in All_files.keys()): 
             ratioPad.cd()
             sumbkgscaled = ROOT.TH1F(total.Clone())
             pull = ROOT.TH1F(All_files['Data']['hist'][i].Clone())

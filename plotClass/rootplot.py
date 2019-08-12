@@ -39,8 +39,14 @@ class rootplot(object) :
     def makecuts(self,Tree = None,cutstring = "",extraCuts = "" ) :
         ''' This Function is to apply selection on specific tree'''
         from ROOT import TCut
+        
+        CUTtext = open(self.outdir+"/cuts.txt", "w+")
+        CUTtext.write(cutstring+extraCuts+'\n')
+
         cutstring = TCut(cutstring+extraCuts)
         cut = cutstring.GetTitle()
+        
+        
         if Tree ==None : 
             print ('no Tree founded please cheack')
             pass  
