@@ -15,7 +15,7 @@ append=''
 ##########################
 
 # multiclass or binary 
-MultiClass = True
+MultiClass = False
 
 if MultiClass : 
     class_names = ['TTSemiLep','TTDiLep','WJets','signal']

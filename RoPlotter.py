@@ -27,7 +27,7 @@ tdrstyle.setTDRStyle()
 
 lumi = '35.9'
 indir = '/nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep/root_FRs_w_score/'
-outdire = './testplots_nb0_nT0'
+outdire = './testplots'
 scale_bkgd_toData = False
 do_alphabetagamma = True
 alpha,beta,gamma =  0.84 ,0.97 , 0.71

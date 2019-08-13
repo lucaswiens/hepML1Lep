@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os, glob, sys, math
 from array import array
-from ROOT import TH2D,TGraph2D,TH2F,TFile,TCanvas,TGraph,Double
+from ROOT import TH2D,TGraph2D,TH2F,TFile,TCanvas,TGraph,Double,TColor,gStyle
 
 def GetContours(g, color, style):
     contours = [1.0]
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         hobs = TH2F('hobs','hobs', 113,-12.5,2812.5, 113,-12.5,2812.5)
         vmx=[]; vmy = []; vxsec = []; vobs = [];  vobsup = []; vobsdown = []; vexp = []; vup = []; vdown = []; vlim = [];
         for x in fileList:
-            print (x)
+            #print (x)
             mGo = int(x[x.find('_mGo')+4:x.find('_mLSP')])
             mLSP = int(x[x.find('_mLSP')+5:x.find('.As')])
             f = TFile.Open(x, 'read')
@@ -179,8 +179,8 @@ if __name__ == "__main__":
             rExp1SigmaDown = 0
             rExp1SigmaUp = 0
             factor = 1.0
-            if mGo < 1400:
-                factor = 100.0
+            #if mGo < 1400:
+            #    factor = 400.0
             for entry in t:
                 q = entry.quantileExpected
                 if q == 0.5: rExp = entry.limit/factor
@@ -245,7 +245,20 @@ if __name__ == "__main__":
         cobsup = GetContoursSmooth(gobsup,1,2)
         cobsdown = GetContoursSmooth(gobsdown,1,2)
 
+        #stops = [] ; red = [] ; green = [] ; blue = []
+
+        NRGBs         = 5
+        NCont         = 255
+        stops =  array('d',[ 0.00, 0.34, 0.61, 0.84, 1.00 ])
+        red   =  array('d',[ 0.50, 0.50, 1.00, 1.00, 1.00 ])
+        green =  array('d',[ 0.50, 1.00, 1.00, 0.60, 0.50 ])
+        blue  =  array('d',[ 1.00, 1.00, 0.50, 0.40, 0.50 ])
+        TColor.CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont)
+        gStyle.SetNumberContours(NCont)
+        gStyle.SetOptStat(0)
+
         hlim = glim.GetHistogram()
+        hlim.SetAxisRange(0.0001, 1.3, "Z")
         hlim.SetTitle(";m_{gluino} [GeV];m_{LSP} [GeV]");
         hlim.Draw("colz")
         cexp.Draw("same")

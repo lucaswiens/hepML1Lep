@@ -186,8 +186,8 @@ cut_strings +='&& (nJets30Clean >= 5)'
 cut_strings +='&& (Jet2_pt > 80)'
 cut_strings +='&& (HT > 500)'
 cut_strings +='&& (LT > 250)'
-cut_strings +='&& (nBJet == 0)'
-cut_strings += AntintopCut #CatSig + dPhiCut + ntopCut
+cut_strings +='&& (nBJet >= 1)'
+#cut_strings += CatSig + dPhiCut + ntopCut
 
 # for Dilep CR 
 '''cut_strings += '(!isData || (HLT_EleOR || HLT_MuOR || HLT_MetOR))'

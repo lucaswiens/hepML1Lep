@@ -168,12 +168,15 @@ if __name__ == '__main__':
                 continue 
             #sigerr  = 1.0 + sqrt(sigRate)/(sigRate+0.01)
             #bkgerr  = 1.0 + sqrt(bkgRate)/(bkgRate + 0.01)
+            alphaE  = float(getSFs(sfs,mass=bkg,which='alphaE')) + 1.0
+            betaE  = float(getSFs(sfs,mass=bkg,which='betaE')) + 1.0
+            gammaE  = float(getSFs(sfs,mass=bkg,which='gammaE')) + 1.0
             if not binned :
                 datacard = open(datacardsdir+ '/T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+'.txt', 'w'); 
                 datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(bestBin),str(NBins+1)))
                 datacard.write("imax 1 number of bins \n")
-                datacard.write("jmax 1 number of processes minus 1 \n")
-                datacard.write("kmax 4 number of nuisance parameters \n")
+                datacard.write("jmax * number of processes minus 1 \n")
+                datacard.write("kmax * number of nuisance parameters \n")
                 datacard.write(130*'-')
                 datacard.write('\n')
                 datacard.write("shapes *    ch1  FAKE \n");
@@ -193,14 +196,18 @@ if __name__ == '__main__':
                 datacard.write("{:<62}{:<30}{:<30}".format("MCstatsbackground lnN",'-',round(1.0+(bkgerr/(bkgRate+0.01)),2))+'\n')
                 datacard.write("{:<62}{:<30}{:<30}".format("sigSyst lnN",1.2,'-')+'\n')
                 datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
+                datacard.write("{:<62}{:<30}{:<30}".format("alphauncert lnN",'-',alphaE)+'\n')
+                datacard.write("{:<62}{:<30}{:<30}".format("betauncert lnN",'-',betaE)+'\n')
+                datacard.write("{:<62}{:<30}{:<30}".format("gammauncert lnN",'-',gammaE)+'\n')
+
             else : 
                 binsdir = os.path.join(outdir,'datacards/T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)))
                 if not os.path.exists(binsdir) : os.makedirs(binsdir)
                 datacard = open(binsdir+'/LastBin.txt', 'w'); 
                 datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(bestBin),str(NBins+1)))
                 datacard.write("imax 1 number of bins \n")
-                datacard.write("jmax 1 number of processes minus 1 \n")
-                datacard.write("kmax 4 number of nuisance parameters \n")
+                datacard.write("jmax * number of processes minus 1 \n")
+                datacard.write("kmax * number of nuisance parameters \n")
                 datacard.write(130*'-')
                 datacard.write('\n')
                 datacard.write("shapes *    ch1  FAKE \n");
@@ -229,8 +236,8 @@ if __name__ == '__main__':
                     datacard = open(binsdir+'/bin_'+str(i)+'.txt', 'w'); 
                     datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(1),str(bestBin)))
                     datacard.write("imax 1 number of bins \n")
-                    datacard.write("jmax 1 number of processes minus 1 \n")
-                    datacard.write("kmax 4 number of nuisance parameters \n")
+                    datacard.write("jmax * number of processes minus 1 \n")
+                    datacard.write("kmax * number of nuisance parameters \n")
                     datacard.write(130*'-')
                     datacard.write('\n')
                     datacard.write("shapes *    ch1  FAKE \n");
