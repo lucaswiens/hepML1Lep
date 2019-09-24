@@ -32,7 +32,7 @@ def convert1LepDFs(infile,outdir,scores = []):
         if 'Logs' in score : continue 
         #print (score)
         #print (os.path.join(score,infile.split("/")[-1].replace('.csv','_'+score.split('/')[-1]+'.csv')))
-        scoreDF = infile.split("/")[-1].replace('.csv','_'+score.split('/')[-1]+'.csv')
+        scoreDF = infile.split("/")[-1]#.replace('.csv','_'+score.split('/')[-1]+'.csv')
         names = [score.split('/')[-1]+X for X in list_]
         print (os.path.join(score,scoreDF))
         S_df = pd.read_csv(os.path.join(score,scoreDF),index_col=None,names=names,skiprows=1)

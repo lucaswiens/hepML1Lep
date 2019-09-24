@@ -11,7 +11,7 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptTitle(0)
 
 from plotClass.rootplot  import rootplot
-from plotClass.plotting.plotGroups import All_files,cut_strings
+from plotClass.search_regions import All_files
 
 import plotClass.search_regions as sr
 

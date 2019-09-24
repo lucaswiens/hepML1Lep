@@ -10,12 +10,12 @@ from MlFunctions.DnnFunctions import significanceLoss,significanceLossInvert,sig
 
 # if you want to use a pretrained model activate it and give the model path wthout any extension
 loadmodel = False
-pathToModel = './testing/model/1Lep_DNN_Multiclass'
+pathToModel = './training/model/1Lep_DNN_Multiclass'
 append=''
 ##########################
 
 # multiclass or binary 
-MultiClass = False
+MultiClass = True
 
 if MultiClass : 
     class_names = ['TTSemiLep','TTDiLep','WJets','signal']
@@ -49,7 +49,7 @@ if loadmodel :
 else : 
     # nClass will be ignored in binary classification tasks anywayes
     # loss = None will use the normal cross entropy change it if you want to whatever defined in MlFunctions/DnnFunctions.py
-    scoreing.do_train(nclass =len(class_names),epochs=5,batch_size=1024,loss=None)
+    scoreing.do_train(nclass =len(class_names),epochs=100,batch_size=4096,loss=None)
     #scoreing.load_model()
     scoreing.save_model(scoreing.model) # here we need to enforce saving it
 ##########################

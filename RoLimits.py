@@ -36,7 +36,7 @@ def hadd1ds(histList):
 def bkgToUse(mgo,mlsp) : 
     #print('mgo ',mgo,' mlsp ',mlsp)
     if (mgo <= 1500 and mlsp <= 800): mass = '1500_1000'
-    elif (mgo <= 1500 and mlsp > 800): mass = '1500_1200'
+    elif (mgo <= 1500 and mlsp > 800): mass = '1500_1000'
     elif (mgo > 1500 and mgo <= 1900 and mlsp < 800) : mass = '1900_100'
     elif (mgo > 1500 and mgo <= 1900 and mlsp >= 800 and mlsp < 1000 ) : mass = '1900_800'
     elif (mgo > 1900 and mlsp < 800): mass = '2200_100'
@@ -45,7 +45,7 @@ def bkgToUse(mgo,mlsp) :
     elif (mgo > 1800 and mgo <=1900 and mlsp >= 1000): mass = '1800_1300'
     elif (mgo >= 1700 and mgo <= 1800 and mlsp >= 1000 ) : mass = '1700_1200'
     elif (mgo >= 1600 and mgo < 1700 and mlsp >= 1000 ) : mass = '1600_1100'
-    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1200' 
+    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1000' 
     else : 
         print(mgo,' ',mlsp, 'could not fit into any of you modes please check')
         mass = ''

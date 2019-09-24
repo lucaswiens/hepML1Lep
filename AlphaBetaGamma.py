@@ -23,7 +23,7 @@ m_list = ['1500_1000','1500_1200','1600_1100','1700_1200','1800_1300','1900_100'
 b_list = ['DiLepTT','DY','QCD','SemiLepTT','SingleT','TTV','VV','WJ','Data']
 others_bkg = ['DY','QCD','SingleT','TTV','VV','WJ']
 
-CRs = ['CR2','CR3','CR4']
+CRs = ['SR','CR2','CR3','CR4']
 
 bkg_dires = []
 
@@ -90,14 +90,14 @@ if __name__ == '__main__':
         txtCR4 = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_CR4.txt', "w+")
         txtalphabetagamma = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_alphabetagamma.txt', "w+")
 
-        WJ_2 = 0 ; WJ_3 = 0 ; WJ_3 = 0
-        TTl_2 = 0 ; TTll_2 = 0 ; Data_2 = 0
-        TTl_3 = 0 ; TTll_3 = 0 ; Data_3 = 0
+        WJ_1 = 0 ; WJ_2 = 0 ; WJ_3 = 0 ; WJ_4 = 0
+        TTl_1 = 0 ; TTl_2 = 0 ; TTll_2 = 0 ; Data_2 = 0
+        TTll_1 = 0 ;TTl_3 = 0 ; TTll_3 = 0 ; Data_3 = 0
         TTl_4 = 0 ; TTll_4 = 0 ; Data_4 = 0
         err   = ROOT.Double(0.) ; err_1 = ROOT.Double(0.) ; err_3 = ROOT.Double(0.)  ;err_4 = ROOT.Double(0.)  ;err_5 = ROOT.Double(0.)  ;err_6 = ROOT.Double(0.) 
         err_7 = ROOT.Double(0.) ; err_8 = ROOT.Double(0.) ; err_9 = ROOT.Double(0.)  ;err_10 = ROOT.Double(0.) ;err_11 = ROOT.Double(0.) ;err_12 = ROOT.Double(0.) 
         err_13 = ROOT.Double(0.) ; err_14 = ROOT.Double(0.) ; err_15 = ROOT.Double(0.)  ;err_16 = ROOT.Double(0.) ;err_17 = ROOT.Double(0.) ;err_18 = ROOT.Double(0.)
-        err_2 = ROOT.Double(0.)  ;
+        err_2 = ROOT.Double(0.)  ;err_0   = ROOT.Double(0.) ;err_00   = ROOT.Double(0.);err_000   = ROOT.Double(0.)
         for bkg in bkg_list : 
             tdir = f.Get(bkg)
             hList = tdir.GetListOfKeys()
@@ -115,6 +115,8 @@ if __name__ == '__main__':
                 
                 if ('_SR' in hname and not 'Data' in hname): 
                     txtSR.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
+                    if 'SemiLepTT' in hname  : TTl_1  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_0), 2)
+                    if 'DiLepTT' in hname    : TTll_1 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_00), 2)
                 elif '_CR1' in hname : 
                     txtCR1.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
                 elif '_CR2' in hname : 
@@ -135,6 +137,7 @@ if __name__ == '__main__':
 
         txtSR.write((60 *('='))+'\n')
         txtSR.write("{:<20}{:<20}{:<20}".format(otherSR.GetTitle(),round(otherSR.IntegralAndError(0, otherSR.GetNbinsX()+1, err_10), 2), round(err_10, 2))+"\n")
+        WJ_1 = round(otherSR.IntegralAndError(0, otherSR.GetNbinsX()+1, err_000),2)
         txtCR1.write((60 *('='))+'\n')
         txtCR1.write("{:<20}{:<20}{:<20}".format(otherCR1.GetTitle(),round(otherCR1.IntegralAndError(0, otherCR1.GetNbinsX()+1, err_11), 2), round(err_11, 2))+"\n")
         txtCR2.write((60 *('='))+'\n')
@@ -169,6 +172,8 @@ if __name__ == '__main__':
         txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SemiLepTTCat'  ,TTl_2       ,'+/-'+str(round(err_1,2)) ,TTll_2    ,'+/-'+str(round(err_2,2)) ,WJ_2     ,'+/-'+str(round(err_12,2)) ,Data_2 ,'+/-'+str(round(err_3,2)))+"\n")
         txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('DiLepTTCat'    ,TTl_3       ,'+/-'+str(round(err_4,2)) ,TTll_3    ,'+/-'+str(round(err_5,2)),WJ_3     ,'+/-'+str(round(err_13,2)) ,Data_3 ,'+/-'+str(round(err_6,2 )))+"\n")
         txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('othersCat'     ,TTl_4       ,'+/-'+str(round(err_7,2)) ,TTll_4    ,'+/-'+str(round(err_8,2)) ,WJ_4     ,'+/-'+str(round(err_14,2)) ,Data_4 ,'+/-'+str(round(err_9,2)))+"\n")
+        txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SigCat'        ,TTl_1       ,'+/-'+str(round(err_0,2)) ,TTll_1    ,'+/-'+str(round(err_00,2)) ,WJ_1     ,'+/-'+str(round(err_000,2)) ,'---' ,'+/-'+'---')+"\n")
+
         txtalphabetagamma.write((60 *('='))+'\n')
 
         txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' ','alpha',' ','beta' ,' ', 'gamma',' ')+"\n")
@@ -181,6 +186,8 @@ if __name__ == '__main__':
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('SemiLepTTCat & '  ,TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2)+"\\\\ \n")
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('DiLepTTCat & '    ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3)+"\\\\ \n")
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('othersCat &'     ,TTl_4       ,' $\pm$ '+str(round(err_7,2))+'& ' ,TTll_4    ,'  $\pm$ '+str(round(err_8,2)) +'& ',WJ_4     ,' $\pm$ '+str(round(err_14,2)) +'& ',Data_4)+"\\\\ \n")
+        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('SigCat &'        ,TTl_1       ,' $\pm$ '+str(round(err_0,2))+'& ' ,TTll_1    ,'  $\pm$ '+str(round(err_00,2)) +'& ',WJ_1     ,' $\pm$ '+str(round(err_000,2)) +'& ','---')+"\\\\ \n")
+
         latexalphabetagamma.write('\\hline\\hline \n')
 
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('   & ','$\\alpha$',' & ','$\\beta$' ,' & ', '$\\gamma$','   & ')+"\\\\ \n")
