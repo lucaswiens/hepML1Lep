@@ -1,0 +1,4 @@
+Requirements = OpSysAndVer == "CentOS7"
+Request_GPU = 1
+queue
+ 

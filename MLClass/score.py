@@ -134,7 +134,7 @@ class score(object):
                                 batch_size=batch_size, 
                                 class_weight = class_weights,#train_DF["Finalweight"].values,#*train_DF["training_weight"],
                                 verbose=1, # switch to 1 for more verbosity 
-                                callbacks=[early_stopping, model_checkpoint], 
+                                callbacks=[model_checkpoint], 
                                 validation_split=0.25)
 
 

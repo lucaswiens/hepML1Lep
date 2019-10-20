@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from array import array
 
 import sys
 sys.argv.append( '-b-' )
@@ -11,7 +12,7 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptTitle(0)
 
 from plotClass.rootplot  import rootplot
-from plotClass.plotting.plotGroups import All_files,cut_strings,varList
+from plotClass.plotting.plotGroups import All_files
 from plotClass.plotting import tdrstyle,CMS_lumi
 
 import os 
@@ -20,35 +21,6 @@ import datetime
 from math import hypot, sqrt, ceil
 
 currentDT = datetime.datetime.now()
-
-
-tdrstyle.setTDRStyle()
-
-
-lumi = '35.9'
-indir = '/nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep/root_FRs_w_score/'
-outdire = './testplots'
-scale_bkgd_toData = False
-do_alphabetagamma = True
-alpha,beta,gamma =  0.84 ,0.97 , 0.71
-
-if not os.path.exists(outdire) : os.makedirs(outdire)
-doRatio = True
-YmaX = 0.0
-YmiN = 0.1
-
-rmin =  0.05 
-rmax =  1.95
-showRatioErorr = False
-ShowMCerror = True
-CMS_lumi.writeExtraText = 1
-
-CMS_lumi.lumi_13TeV = "%s fb^{-1}" % lumi
-CMS_lumi.extraText  = 'Preliminary'
-CMS_lumi.lumi_sqrtS = '13 TeV'
-CMS_lumi.lumiTextSize     = 0.6 if doRatio else 0.52
-CMS_lumi.cmsTextSize      = 0.75 if doRatio else 0.62
-CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
 
 
 #from plotClass.plotting.SplitCanv import * 
@@ -62,9 +34,13 @@ def findItem(theList, item):
             return ind, theList[ind].index(item)
         else: pass
 
-def make1D(var,style,name):
+def make1D(var,style,name,bins = []):
     '''  A functon to make a 1D histogram and set it's style '''
-    hist = ROOT.TH1F(name,name,var[3][0],var[3][1],var[3][2])
+    # check if var binwidth is requested 
+    if len(bins) == 0 :
+        hist = ROOT.TH1F(name,name,var[3][0],var[3][1],var[3][2])
+    else : 
+        hist = ROOT.TH1F(name,name,len(bins)-1 ,array('d',bins))
     #hist.Draw('goff')
     if style["fill"]:
         style["fill"].Copy(hist)
@@ -83,7 +59,36 @@ def make1D(var,style,name):
     hist.SetTitle(style["Label"])
     return hist
 
-def doScaleBkgNormData(datalist,bkglist,bkgsum):
+def make1D_bins(binlist,style,name):
+    '''  A functon to make a 1D histogram from bins and set it's style '''
+    # check if var binwidth is requested 
+    if len(binlist) == 0 : 
+        print('you requested to make 1D histogram from bins while the bin list is empy, will not do it, please check')
+        pass
+    else : 
+        hist = ROOT.TH1F(name,name,len(binlist),0,len(binlist))
+    #hist.Draw('goff')
+    if style["fill"]:
+        style["fill"].Copy(hist)
+    if style["line"]:
+        style["line"].Copy(hist)
+    if style["marker"]:
+        style["marker"].Copy(hist)
+    hist.GetYaxis().SetTitle('Events')
+    hist.GetYaxis().SetTitleSize(0.07)
+    hist.GetYaxis().SetTitleFont(42)
+    hist.GetYaxis().SetTitleOffset(1.2)
+    hist.GetXaxis().SetTitle('')
+    hist.GetXaxis().SetLabelFont(42)
+    hist.GetYaxis().SetLabelSize(0.05)
+    hist.GetXaxis().SetTitleOffset(1.1)
+    hist.SetTitle(style["Label"])
+    for i , binname in enumerate(binlist) : 
+        hist.GetXaxis().SetBinLabel(i+1,binname)
+    return hist
+
+
+def doScaleBkgNormData(datalist,bkglist,bkgsum,apply = False):
     if len(datalist) == 0 : return -1.0
     if len(bkglist)  == 0 : return -1.0
     data = datalist[0]
@@ -94,8 +99,9 @@ def doScaleBkgNormData(datalist,bkglist,bkgsum):
     rm = bkg.Integral() - int
     sf = (data.Integral() - rm) / int
     bkgs = bkglist
-    for h in bkgs:
-        h.Scale(sf)
+    if apply : 
+        for h in bkgs:
+            h.Scale(sf)
     return sf
 
 def sorttinglist(Hlist) : 
@@ -214,8 +220,82 @@ def hadd1ds(histList,alphabetagamma=False):
     sumbkg.SetName('sumbkg')
     return sumbkg
 
+#lumi = #'59.74'#'41.9'#
+
+import argparse
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Runs a NAF batch system for nanoAOD', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--indir', help='List of datasets to process',default=None, metavar='indir')
+    parser.add_argument('--lumi', help='integrated luminosity',default='35.9', metavar='lumi')
+    parser.add_argument('--outdir', help='output directory',default=None,metavar='outdir')
+    parser.add_argument('--scale_bkgd_toData','--sbtd', help="scale the over all bkg to data",default=False, action='store_true')
+    parser.add_argument('--do_alphabetagamma','--apg', help='use alpha/beta/gamma scale',default=False, action='store_true')
+    parser.add_argument('--blind',help='blind data',default=False, action='store_true')
+    parser.add_argument('--doRatio','--ratio', help='do data/MC ration plot',default=False, action='store_true')
+    parser.add_argument('--YmaX', help='Yaxis maximum',default='0.0', metavar='YmaX')
+    parser.add_argument('--YmiN', help='Yaxis minimum',default='0.1', metavar='YmiN')
+    parser.add_argument('--rmax', help='ratio Yaxis maximum',default='1.95', metavar='YmaX')
+    parser.add_argument('--rmin', help='ratio Yaxis minimum',default='0.05', metavar='YmiN')
+    parser.add_argument('--cuts','--c',help='a text file that has a cutlist',default='plotClass/Cutstring.txt', metavar='cuts')
+    parser.add_argument('--mcuts','--mc',help='a text file that has additional cutlist',default=None, metavar='mcuts')
+    parser.add_argument('--varList','--vars',help='variables to plot',default=None, metavar='varList')
+    parser.add_argument('--mvarList','--mvars',help='more variables to plot',default=None, metavar='mvarList')
+    parser.add_argument('--alpha', help='scale factor alpha',default='0.0', metavar='alpha')
+    parser.add_argument('--beta', help='scale factor alpha',default='0.0', metavar='beta')
+    parser.add_argument('--gamma', help='scale factor alpha',default='0.0', metavar='gamma')
+
+    args = parser.parse_args()
+    subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
+    lumi = args.lumi ; indir = args.indir ; outdire = os.path.join(args.outdir,subdir)
+    if not os.path.exists(outdire) : os.makedirs(outdire)
+    scale_bkgd_toData = args.scale_bkgd_toData
+    do_alphabetagamma = args.do_alphabetagamma
+    doRatio = args.doRatio
+    YmaX = float(args.YmaX) ; YmiN = float(args.YmiN)
+    rmax = float(args.rmax) ; rmin = float(args.rmin)
+    
+    cut_strings = ''
+    cf = open(args.cuts, 'r')
+    for cutline in cf : 
+        if cutline.startswith("#") : continue
+        cutline = str(cutline).strip()
+        cut_strings+= cutline 
+    
+    if args.mcuts != None : 
+        mcf = open(args.mcuts, 'r')
+        for cutline in mcf : 
+            if cutline.startswith("#") : continue
+            cutline = str(cutline).strip()
+            cut_strings+= cutline 
+
+    if args.blind : 
+        del All_files['Data']
+        doRatio = False
+    varList = [] 
+    exec(open(args.varList).read())
+    if args.mvarList != None : 
+        exec(open(args.mvarList).read())
+ 
+    alpha,beta,gamma =  float(args.alpha),float(args.beta),float(args.gamma)#0.83 ,1.01 , 0.74
+
+
+    tdrstyle.setTDRStyle()
+
+    showRatioErorr = False
+    ShowMCerror = True
+    CMS_lumi.writeExtraText = 1
+
+    CMS_lumi.lumi_13TeV = "%s fb^{-1}" % lumi
+    CMS_lumi.extraText  = 'Preliminary'
+    CMS_lumi.lumi_sqrtS = '13 TeV'
+    CMS_lumi.lumiTextSize     = 0.6 if doRatio else 0.52
+    CMS_lumi.cmsTextSize      = 0.75 if doRatio else 0.62
+    CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
+
+
+
     
     # get the plotter class instant 
     instPlot = rootplot(indir,outdire,All_files=All_files)
@@ -228,7 +308,8 @@ if __name__ == '__main__':
         All_files[g]['chain']  = chain
         # init empty list of histogram tio be filled in the next loop
         All_files[g]['hist'] = []
-    
+        All_files[g]['hist_bins'] = []
+        
     # create the output root file
     outroot = ROOT.TFile(outdire+"/plots_{0}_{1}_{2}".format(currentDT.year,currentDT.month,currentDT.day)+".root","recreate")
     for i,var in enumerate(varList) :
@@ -254,7 +335,12 @@ if __name__ == '__main__':
         error = ROOT.Double(0.)
         for key in All_files :
             # make the hist 
-            hist = make1D(var,All_files[key],key+var[0])
+            if any('varbin' in e for e in var) : 
+                index0,_ = findItem(var , 'varbin')
+                bins = var[index0][1]
+                hist = make1D(var,All_files[key],key+var[0],bins = bins)
+            else : 
+                hist = make1D(var,All_files[key],key+var[0])
             # draw the variable to the hist created 
             if 'Data' in key : lum = '1.0' 
             else  : lum = lumi
@@ -264,6 +350,22 @@ if __name__ == '__main__':
             All_files[key]['hist'].append(hist) 
             if All_files[key]['Stackable'] : stackableHists.append(hist)
             if 'Sig' in key : SignalHists.append(hist)
+            # check the overflow bins 
+            if any('IncludeOverflows' in e for e in var) :
+                n = hist.GetNbinsX()
+                hist.SetBinContent(1,hist.GetBinContent(0)+hist.GetBinContent(1))
+                hist.SetBinContent(n,hist.GetBinContent(n+1)+hist.GetBinContent(n))
+                hist.SetBinError(1,hypot(hist.GetBinError(0),hist.GetBinError(1)))
+                hist.SetBinError(n,hypot(hist.GetBinError(n+1),hist.GetBinError(n)))
+                hist.SetBinContent(0,0)
+                hist.SetBinContent(n+1,0)
+                hist.SetBinContent(0,0)
+                hist.SetBinContent(n+1,0)
+            # per binwidth normalization
+            #if any('varbin' in e for e in var) : 
+            #    normBinW = var[index0][2]
+            #    if normBinW == True:
+            #        hist.Scale(0.1,"width")
             # write the hist
             hist.Write()
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
@@ -275,8 +377,12 @@ if __name__ == '__main__':
         stackableHists = sorttinglist(stackableHists)
         # scale the individual background to data
         
-        if do_alphabetagamma : doalphabetagamma(stackableHists,alpha,beta,gamma) ; sf = 1.0
-        elif ('Data' in All_files.keys() and scale_bkgd_toData ) : sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total)
+        if do_alphabetagamma : 
+            stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
+            if ('Data' in All_files.keys() and scale_bkgd_toData ) : 
+                sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists_,total,apply = False)
+            else : sf = 1.0
+        elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) : sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total,apply=True)
         else : sf = 1.0
         # scale the total backgrounds to data
         total.Scale(sf)
@@ -379,7 +485,7 @@ if __name__ == '__main__':
                 blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
                 blindbox.SetFillColor(ROOT.kBlue+3)
                 blindbox.SetFillStyle(3944)
-                blindbox.Draw()
+                #blindbox.Draw()
                 xblind.append(blindbox) # so it doesn't get deleted
         
         # same for signals 

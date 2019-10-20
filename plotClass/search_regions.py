@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from plotClass.plotting.plotGroups import All_files,varList
+from plotClass.plotting.plotGroups import All_files
 # this is for limit setting
 categories = ['sig','TTS','TTDi','WJ']
 massList = ["1900_100","1600_1100","1900_800","1500_1200","1800_1300","2200_800","1700_1200","2200_100","1500_1000","1900_1000"]

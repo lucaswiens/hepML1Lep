@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--Limit','-L', help='calculate the limit after making the datacards',default=False, action='store_true')
     parser.add_argument('--cmsswdir', help='cmssw directory',default='/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/', metavar='cmsswdir')
     parser.add_argument('--execu', help="wight directory",default='./batch/Limit_exec.sh' ,metavar='execu')
-    parser.add_argument('--sfs', help="the text file that has alpha beta gamma",default='./testalph/alphabetagammaTable.txt' ,metavar='sfs')
+    parser.add_argument('--sfs', help="the text file that has alpha beta gamma",default=None ,metavar='sfs')
     
     binned = False
     args = parser.parse_args()
@@ -157,7 +157,8 @@ if __name__ == '__main__':
                     #print('better significance when merged ', i-1 ,' to ', NBins+1, ' oldsign =  ',prevSigni , ' newsign = ',  signi)
                     bestBin = i-1
                     break 
-            
+            # this is to inforce the best bin to be 96 which corresponding to DNN >= 0.95, this will ignor the significance calculations above
+            bestBin = 96
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
 
