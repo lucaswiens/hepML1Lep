@@ -108,7 +108,7 @@ if __name__ == '__main__':
         lists = []
         signal_files = glob.glob(os.path.join(indirS,signal+'/*SR.root'))
         sf = ROOT.TFile.Open(signal_files[0], "read")
-        shist = sf.Get('Signal_1/'+signal+'/Signal_11900_100sig_SR_nominal')
+        shist = sf.Get('Signal_1/'+signal+'/1900_100sig_SR')
         lists.append(shist)
         mgo = float(signal.split('_')[0])
         mlsp = float(signal.split('_')[1])
@@ -126,7 +126,7 @@ if __name__ == '__main__':
                 if bkg_name == 'Data' : continue 
                 bf = ROOT.TFile.Open(bkgf, "read")
                 #print(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
-                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
+                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR')
                 #print(bhist.Integral())
                 which = ''
                 scalefactor = 1.0
@@ -142,7 +142,7 @@ if __name__ == '__main__':
             NBins = hist.GetNbinsX()
             prevSigni = 0.0
             factor = 1.0 
-            #if mgo < 1400 : factor = 100
+            if mgo < 1400 : factor = 100
             bestBin = 0.0
                 
             for i in range(NBins,1,-1):
@@ -158,10 +158,10 @@ if __name__ == '__main__':
                     bestBin = i-1
                     break 
             # this is to inforce the best bin to be 96 which corresponding to DNN >= 0.95, this will ignor the significance calculations above
-            bestBin = 96
+            bestBin = 90
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
-
+            shist.Scale(1.0/factor)
             sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
             bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
             if sigRate == 0.0 : 

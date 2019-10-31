@@ -114,24 +114,24 @@ All_files = {
     'Signal_1' : 
         {
         'files': ['SMS_T1tttt'] , 
-        'select' : '&& mGo == 1900 && mLSP == 100',
+        'select' : '&& mGo == @mGo && mLSP == @mLSP',
         'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
         "fill": None,
         "line": ROOT.TAttLine(ROOT.kRed+1, ROOT.kSolid, 2),
         "marker":  None,
-        "Label" : "T1t^{4} 1.9/0.1",
+        "Label" : "T1t^{4} @mGo/@mLSP",
         "Stackable" : False
         },
 
     'Signal_2' : 
         {
         'files': ['SMS_T1tttt'] , 
-        'select' : '&& mGo == 1500 && mLSP == 1000',
+        'select' : '&& mGo == @mGo && mLSP == @mLSP',
         'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
         "fill": None,
         "line": ROOT.TAttLine(ROOT.kMagenta+1, ROOT.kSolid, 2),
         "marker": None,
-        "Label" : "T1t^{4} 1.5/1.0",
+        "Label" : "T1t^{4} @mGo/@mLSP",
         "Stackable" : False
         },
 

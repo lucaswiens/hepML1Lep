@@ -106,34 +106,34 @@ if __name__ == '__main__':
                 hist = tdir.Get(hname)
                 if not 'sig' in hname : continue 
                 for obkg in others_bkg : 
-                    if (obkg in hname and '_SR' in hname ): otherSR.Add(hist)
-                    if (obkg in hname and '_CR1' in hname ): otherCR1.Add(hist)
-                    if (obkg in hname and '_CR2' in hname ): otherCR2.Add(hist)
-                    if (obkg in hname and '_CR3' in hname ): otherCR3.Add(hist)
-                    if (obkg in hname and '_CR4' in hname ): otherCR4.Add(hist)
+                    if (obkg in bkg and '_SR' in hname ): otherSR.Add(hist)
+                    if (obkg in bkg and '_CR1' in hname ): otherCR1.Add(hist)
+                    if (obkg in bkg and '_CR2' in hname ): otherCR2.Add(hist)
+                    if (obkg in bkg and '_CR3' in hname ): otherCR3.Add(hist)
+                    if (obkg in bkg and '_CR4' in hname ): otherCR4.Add(hist)
                 #print(hname, hist.Integral())
                 
-                if ('_SR' in hname and not 'Data' in hname): 
+                if ('_SR' in hname and not 'Data' in bkg): 
                     txtSR.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in hname  : TTl_1  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_0), 2)
-                    if 'DiLepTT' in hname    : TTll_1 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_00), 2)
+                    if 'SemiLepTT' in bkg  : TTl_1  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_0), 2)
+                    if 'DiLepTT' in bkg    : TTll_1 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_00), 2)
                 elif '_CR1' in hname : 
                     txtCR1.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
                 elif '_CR2' in hname : 
                     txtCR2.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in hname  : TTl_2  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_1), 2)
-                    if 'DiLepTT' in hname    : TTll_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_2), 2)
-                    if 'Data' in hname       : Data_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_3), 2)
+                    if 'SemiLepTT' in bkg  : TTl_2  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_1), 2)
+                    if 'DiLepTT' in bkg    : TTll_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_2), 2)
+                    if 'Data' in bkg       : Data_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_3), 2)
                 elif '_CR3' in hname : 
                     txtCR3.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in hname : TTl_3  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_4), 2)
-                    if 'DiLepTT' in hname   : TTll_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_5), 2)
-                    if 'Data' in hname     : Data_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_6), 2)
+                    if 'SemiLepTT' in bkg : TTl_3  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_4), 2)
+                    if 'DiLepTT' in bkg   : TTll_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_5), 2)
+                    if 'Data' in bkg     : Data_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_6), 2)
                 elif '_CR4' in hname : 
                     txtCR4.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in hname  : TTl_4  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_7), 2)
-                    if 'DiLepTT' in hname    : TTll_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_8), 2)
-                    if 'Data' in hname       : Data_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_9), 2)
+                    if 'SemiLepTT' in bkg  : TTl_4  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_7), 2)
+                    if 'DiLepTT' in bkg    : TTll_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_8), 2)
+                    if 'Data' in bkg       : Data_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_9), 2)
 
         txtSR.write((60 *('='))+'\n')
         txtSR.write("{:<20}{:<20}{:<20}".format(otherSR.GetTitle(),round(otherSR.IntegralAndError(0, otherSR.GetNbinsX()+1, err_10), 2), round(err_10, 2))+"\n")

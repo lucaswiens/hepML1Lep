@@ -179,8 +179,8 @@ if __name__ == "__main__":
             rExp1SigmaDown = 0
             rExp1SigmaUp = 0
             factor = 1.0
-            #if mGo < 1400:
-            #    factor = 400.0
+            if mGo < 1400:
+                factor = 100.0
             for entry in t:
                 q = entry.quantileExpected
                 if q == 0.5: rExp = entry.limit/factor

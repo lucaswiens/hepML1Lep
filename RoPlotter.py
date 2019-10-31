@@ -245,6 +245,10 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', help='scale factor alpha',default='0.0', metavar='alpha')
     parser.add_argument('--beta', help='scale factor alpha',default='0.0', metavar='beta')
     parser.add_argument('--gamma', help='scale factor alpha',default='0.0', metavar='gamma')
+    parser.add_argument('--mGo1', help='Signal 1 mGo',default=None, metavar='mGo1')
+    parser.add_argument('--mGo2', help='Signal 2 mGo',default=None, metavar='mGo2')
+    parser.add_argument('--mLSP1', help='Signal 1 mLSP',default=None, metavar='mLSP1')
+    parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
 
     args = parser.parse_args()
     subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
@@ -255,7 +259,20 @@ if __name__ == '__main__':
     doRatio = args.doRatio
     YmaX = float(args.YmaX) ; YmiN = float(args.YmiN)
     rmax = float(args.rmax) ; rmin = float(args.rmin)
-    
+    mGo1 = args.mGo1 ; mGo2 = args.mGo2 
+    mLSP1 = args.mLSP1 ; mLSP2 = args.mLSP2 
+
+    if mGo1 == None : 
+        del All_files['Signal_1']
+    else : 
+        All_files['Signal_1']['select'] = All_files['Signal_1']['select'].replace('@mGo',str(mGo1)).replace('@mLSP',str(mLSP1))
+        All_files['Signal_1']['Label'] = All_files['Signal_1']['Label'].replace('@mGo',str(float(mGo1)/1000.0)).replace('@mLSP',str(float(mLSP1)/1000))
+    if mGo2 == None : 
+        del All_files['Signal_2']
+    else : 
+        All_files['Signal_2']['select'] = All_files['Signal_2']['select'].replace('@mGo',str(mGo2)).replace('@mLSP',str(mLSP2))
+        All_files['Signal_2']['Label'] = All_files['Signal_2']['Label'].replace('@mGo',str(float(mGo2)/1000.0)).replace('@mLSP',str(float(mLSP2)/1000))
+
     cut_strings = ''
     cf = open(args.cuts, 'r')
     for cutline in cf : 

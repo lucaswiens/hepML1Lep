@@ -172,11 +172,11 @@ if __name__ == '__main__':
             for v in var : 
                 print (v)
                 # make the hist 
-                hist = make1D(v,All_files[g],g+v+'_'+cutdict+'_nominal')
+                hist = make1D(v,All_files[g],v+'_'+cutdict)
                 # draw the variable to the hist created 
                 if 'Data' in g : lum = '1.0' 
                 else  : lum = lumi
-                chain.Draw(v +' >> '+g+v+'_'+cutdict+'_nominal', scale+'*'+lum+'*(1)',"goff")
+                chain.Draw(v +' >> '+v+'_'+cutdict, scale+'*'+lum+'*(1)',"goff")
                 #print (hist)
                 #hist.Sumw2()
                 hist.Write()

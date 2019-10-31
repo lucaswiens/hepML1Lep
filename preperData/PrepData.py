@@ -59,7 +59,7 @@ class PrepData(object):
             df =  pd.DataFrame()
             for b in bkg_files: 
                 #for block in it:
-                #if "genMET" in b : continue 
+                if "T5qqqq" in b : continue 
                 print(b) 
                 it = uproot.open(b)["sf/t"]
                 p_df = it.pandas.df(self.VARS+["Xsec"])
@@ -74,7 +74,7 @@ class PrepData(object):
                             (bkg_df['GenMET'] > 150 ))]
                                                         
             self.df_all['bkg'] =  bkg_df.loc[(bkg_df['nLep'] == 1) & (bkg_df['Lep_pt'] > 25)& (bkg_df['Selected'] == 1)& (bkg_df['Lep_pt'] > 25)&
-                                    (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 5)& (bkg_df['Jet2_pt'] > 80)&
+                                    (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 3)& (bkg_df['Jet2_pt'] > 80)&
                                     (bkg_df['HT'] > 500)& (bkg_df['LT'] > 250)&(bkg_df['nBJet'] >= 1)]
             # cleanup not needed DFs
             del df
@@ -102,7 +102,7 @@ class PrepData(object):
                 sig_df = pd.concat([p_dfs, dfs], ignore_index=True)
                 dfs = pd.concat([p_dfs, dfs], ignore_index=True)
             self.df_all['sig'] =  sig_df.loc[(sig_df['nLep'] == 1) & (sig_df['Lep_pt'] > 25)& (sig_df['Selected'] == 1)& (sig_df['Lep_pt'] > 25)&
-                                    (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 5)& (sig_df['Jet2_pt'] > 80)&
+                                    (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 3)& (sig_df['Jet2_pt'] > 80)&
                                     (sig_df['HT'] > 500)& (sig_df['LT'] > 250)&(sig_df['nBJet'] >= 1)]
             # rename the column susXsec to Xsec 
             self.df_all['sig'].rename(columns={'susyXsec':'Xsec'},inplace=True)
