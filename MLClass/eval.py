@@ -54,7 +54,7 @@ class eval(object):
         #get the model 
         self.load_model()
        
-        df = read_root(self.infile ,'sf/t',columns=L_varList,flatten=['DLMS_ST','DLMS_HT','DLMS_dPhiLepW','DLMS_nJets30Clean'])
+        df = read_root(self.infile ,'sf/t')#,columns=L_varList)#,flatten=['DLMS_ST','DLMS_HT','DLMS_dPhiLepW','DLMS_nJets30Clean'])
         print ('df loaded')
         print (" going to evalute the score from ",self.pathToModel)
         if not '_SMS_' in self.infile:
@@ -72,13 +72,19 @@ class eval(object):
                 for mm, mult in enumerate(self.ClassList) : 
                     df.loc[:,mult] = prediction[:,mm]
             else : 
-                df = pd.DataFrame(prediction,columns=self.ClassList)
+                scoredf = pd.DataFrame(prediction,columns=self.ClassList)
+                # for root files we will need the Run:Lumi:Event to merge later on with the main tree
+                df = df[['Run', 'Lumi', 'Event']]
+                df = pd.concat([df, scoredf], axis=1)
         else:
             self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
             if not savepredicOnly : 
                 df.loc[:,'DNN'] = self.model.predict(df[self.var_list])
             else :
-                df = pd.DataFrame(self.model.predict(df[self.var_list]),columns=["DNN"])
+                scoredf = pd.DataFrame(self.model.predict(df[self.var_list]),columns=["DNN"])
+                # for root files we will need the Run:Lumi:Event to merge later on with the main tree
+                df = df[['Run','Lumi','Event']]
+                df = pd.concat([df, scoredf], axis=1)
         df.to_root(self.outdir+'/'+self.infile.split("/")[-1],key='sf/t')
         print ("out put fle is wrote to ",self.outdir+'/'+self.infile.split("/")[-1])
 

@@ -39,6 +39,23 @@ def convert1LepDFs(infile,outdir,scores = []):
         df = pd.concat([df,S_df],axis=1, sort=False)
     df.to_root(outdir+'/'+infile.split('/')[-1].replace('.csv','.root'), key='sf/t')    
     del df
+
+def Roconvert1LepDFs(infile,outdir,scores = []):
+    # choose this to load as it has a feature of applying selection while loading the file
+    list_ = ['TTS','TTDi','WJ','sig']
+    df = pd.read_csv(infile,index_col=None)
+    for i , score in enumerate(scores) : 
+        if 'Logs' in score : continue 
+        #print (score)
+        #print (os.path.join(score,infile.split("/")[-1].replace('.csv','_'+score.split('/')[-1]+'.csv')))
+        scoreDF = infile.split("/")[-1]#.replace('.csv','_'+score.split('/')[-1]+'.csv')
+        names = [score.split('/')[-1]+X for X in list_]
+        print (os.path.join(score,scoreDF))
+        S_df = pd.read_csv(os.path.join(score,scoreDF),index_col=None,names=names,skiprows=1)
+        df = pd.concat([df,S_df],axis=1, sort=False)
+    df.to_root(outdir+'/'+infile.split('/')[-1].replace('.csv','.root'), key='sf/t')    
+    del df
+
 def find_all_matching(substring, path):
     result = []
     for root, dirs, files in os.walk(path):
