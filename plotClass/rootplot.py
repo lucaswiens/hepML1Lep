@@ -36,6 +36,26 @@ class rootplot(object) :
         for f in filesList : 
             chain.Add(f)
         return chain
+    def makecutflow(self,Tree = None,cutstring = [], extraCuts=[]) :
+        ''' This Function is to apply selection on specific tree'''
+        from ROOT import TCut
+        
+        CUTtext = open(self.outdir+"/cuts.txt", "w+")
+        CUTtext.write(str(cutstring)+str(extraCuts)+'\n')
+        cutstring = [TCut(x) for x in cutstring or x in extraCuts]
+        cut = [cutstring[x].GetTitle() for x in range(len(cutstring))]
+
+        if Tree ==None : 
+            print ('no Tree founded please cheack')
+            pass  
+        else : 
+            tt_out = Tree.CopyTree("")
+            for i in cut:
+                tt_out = tt_out.CopyTree(i)
+                print(i,tt_out.GetEntries())
+                #del tt_out
+            #return tt_out
+        pass
     def makecuts(self,Tree = None,cutstring = "",extraCuts = "" ) :
         ''' This Function is to apply selection on specific tree'''
         from ROOT import TCut
@@ -45,8 +65,7 @@ class rootplot(object) :
 
         cutstring = TCut(cutstring+extraCuts)
         cut = cutstring.GetTitle()
-        
-        
+
         if Tree ==None : 
             print ('no Tree founded please cheack')
             pass  
@@ -54,7 +73,13 @@ class rootplot(object) :
             tt_out = Tree.CopyTree(cut)
             return tt_out
         pass
-    def chain_and_cut (self,filesList = [],Tname = "sf/t",cutstring = '',extraCuts = ""): 
+    def chain_and_cut (self,filesList,Tname,cutstring ,extraCuts): 
+        '''This function is to make TChain and apply selections at the same time'''
+        chain = self.makeChain(filesList ,Tname)
+        chain = self.makecuts(chain,cutstring,extraCuts)
+        return chain
+        
+    def chain_and_cutflow (self,filesList,Tname,cutstring ,extraCuts): 
         '''This function is to make TChain and apply selections at the same time'''
         chain = self.makeChain(filesList ,Tname)
         chain = self.makecuts(chain,cutstring,extraCuts)
