@@ -166,7 +166,7 @@ if __name__ == "__main__":
         hobs = TH2F('hobs','hobs', 113,-12.5,2812.5, 113,-12.5,2812.5)
         vmx=[]; vmy = []; vxsec = []; vobs = [];  vobsup = []; vobsdown = []; vexp = []; vup = []; vdown = []; vlim = [];
         for x in fileList:
-            #print (x)
+            print (x)
             mGo = int(x[x.find('_mGo')+4:x.find('_mLSP')])
             mLSP = int(x[x.find('_mLSP')+5:x.find('.As')])
             f = TFile.Open(x, 'read')
@@ -180,7 +180,7 @@ if __name__ == "__main__":
             rExp1SigmaUp = 0
             factor = 1.0
             if mGo < 1400:
-                factor = 100.0
+                factor = 1.0
             for entry in t:
                 q = entry.quantileExpected
                 if q == 0.5: rExp = entry.limit/factor

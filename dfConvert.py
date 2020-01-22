@@ -152,7 +152,7 @@ if __name__ == '__main__':
                     print ("Submit job for file {}".format(fc))
     if not batch : 
         if ana == '1Lep' :
-            convert1LepTree(infile,outdir,flatten=True,select="nLep >= 1 && nJets30Clean >= 1 && HT > 500 && LT > 250")
+            convert1LepTree(infile,outdir,flatten=False,select="nLep >= 1 && nJets30Clean >= 1 && HT > 500 && LT > 250")
         elif ana == 'Delp' : 
             array = convertTree(infile, signal=False,passFilePath=True,tlVectors = ['selJet','sel_lep'])
             #print (array)

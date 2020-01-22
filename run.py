@@ -8,20 +8,23 @@ from sklearn.metrics import confusion_matrix
 ## copied from A.Elwood https://github.com/aelwood/hepML/blob/master/MlFunctions/DnnFunctions.py
 from MlFunctions.DnnFunctions import significanceLoss,significanceLossInvert,significanceLoss2Invert,significanceLossInvertSqrt,significanceFull,asimovSignificanceLoss,asimovSignificanceLossInvert,asimovSignificanceFull,truePositive,falsePositive
 
+import os
 
 import argparse
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for nanoAOD', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--indirROOT', help='List of datasets to process',default='/nfs/dust/cms/user/amohamed/susy-desy/CMGSamples/FR_forMVA_nosplit_resTop/', metavar='indirROOT')
-    parser.add_argument('--indirCSV', help='List of datasets to process',default='/nfs/dust/cms/user/amohamed/susy-desy/CMGSamples/FR_forMVA_nosplit_resTop/csvs', metavar='indirCSV')
+    parser.add_argument('--indirROOT', help='List of datasets to process',default='/nfs/dust/cms/user/amohamed/susy-desy/CMGSamples/2017-18/', metavar='indirROOT')
+    parser.add_argument('--indirCSV', help='List of datasets to process',default='/nfs/dust/cms/user/amohamed/susy-desy/CMGSamples/2017-18/csvs', metavar='indirCSV')
     parser.add_argument('--outdir', help='output directory',default=None,metavar='outdir')
-    parser.add_argument('--MultiClass','--MultiC', help='do multiclassification training',default=True, action='store_true')
+    parser.add_argument('--MultiClass','--MultiC', help='do multiclassification training',default=False, action='store_true')
     parser.add_argument('--epoch', help='scale factor alpha',default=1.0, metavar='epoch')
     parser.add_argument('--batchSize', help='scale factor alpha',default=512, metavar='batchSize')
     parser.add_argument('--loadmodel','--loadmodel', help='load a pretrained model to continue training?',default=False, action='store_true')
     parser.add_argument('--pathToModel', help='is model is loaded, define the path to it',default='./testing_300epc_nj3/model/1Lep_DNN_Multiclass', metavar='pathToModel')
     parser.add_argument('--append', help='add extra text to name of every thing',default='',metavar='append')
+    parser.add_argument('--do_parametric',help='Do the training parametrically or not',default=False,action='store_true')
+    parser.add_argument('--nSignal_Cla', help='number of signal classes ',default=1 , metavar='nSignal_Cla')
 
     args = parser.parse_args()
 
@@ -30,12 +33,12 @@ if __name__ == '__main__':
     pathToModel = args.pathToModel
     append= args.append
     ##########################
-
+    if not os.path.exists(args.indirCSV): os.makedirs(args.indirCSV)
     # multiclass or binary 
     MultiClass = args.MultiClass
 
     if MultiClass : 
-        class_names = ['TTSemiLep','TTDiLep','WJets','signal']
+        class_names = ['TTSemiLep','TTDiLep','WJets','signal']#_LDM','signal_HDM']
     else : 
         class_names = ['signal','background']
     ##########################
@@ -50,15 +53,15 @@ if __name__ == '__main__':
             "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
     ##########################
     # start preparing the data if it's not in place
-    Data = PrepData(args.indirROOT,args.indirCSV,VARS,skipexisting = True)
+    Data = PrepData(args.indirROOT,args.indirCSV,VARS,skipexisting = False)
     Data.saveCSV()
     # preper the data and split them into testing sample + training sample
-    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,nSignal_Cla = 1,do_parametric = True,split_Sign_training = False)
+    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,split_Sign_training = False)
     splitted.prepare()
     splitted.split(splitted.df_all['all_sig'],splitted.df_all['all_bkg'])
     ##########################
     # init the modele 
-    scoreing = score('DNN',args.outdir,splitted.test_DF,splitted.train_DF,splitted.class_weights,var_list=var_list,do_multiClass = MultiClass,nSignal_Cla = 1,do_parametric = True,split_Sign_training = False,class_names=class_names)
+    scoreing = score('DNN',args.outdir,splitted.test_DF,splitted.train_DF,splitted.class_weights,var_list=var_list,do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,class_names=class_names)
     # if continue pretrained model
     if loadmodel : 
         append='_2nd'
@@ -66,7 +69,7 @@ if __name__ == '__main__':
     else : 
         # nClass will be ignored in binary classification tasks anywayes
         # loss = None will use the normal cross entropy change it if you want to whatever defined in MlFunctions/DnnFunctions.py
-        scoreing.do_train(nclass =len(class_names),epochs=args.epoch,batch_size=args.batchSize,loss=None)
+        scoreing.do_train(nclass =len(class_names),epochs=int(args.epoch),batch_size=int(args.batchSize),loss=None)
         #scoreing.load_model()
         scoreing.save_model(scoreing.model) # here we need to enforce saving it
     ##########################
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     test_s_df = pd.DataFrame(scoreing.dnn_score_test)
     full_test = pd.concat([scoreing.testDF,test_s_df],axis=1)
     full_train = pd.concat([scoreing.trainDF,train_s_df],axis=1)
-    plott = pandasplot('./testing_300epc_nj3/',var_list)
+    plott = pandasplot(os.path.join(args.outdir,'./testing_300epc_nj3/'),var_list)
     plott.classifierPlot(full_test,full_train,norm=False,logY=True,append='',multiclass=MultiClass)
     #plott.var_plot(full_test,full_train,norm=False,logY=True,append='',multiclass=MultiClass,class_names=class_names)
 
@@ -87,10 +90,9 @@ if __name__ == '__main__':
 
     # 3- the DNN ROC plotters 
     if MultiClass : 
-        scoreing.rocCurve_multi(scoreing.dnn_score_test,label_binarize(splitted.test_DF['isSignal'], classes=[0,1,2,3]),append='MultiClass_Test'+append,n_classes=4)
-        scoreing.rocCurve_multi(scoreing.dnn_score_train,label_binarize(splitted.train_DF['isSignal'], classes=[0,1,2,3]),append='MultiClass_Train'+append,n_classes=4)
-    else : 
-    
+        scoreing.rocCurve_multi(scoreing.dnn_score_test,label_binarize(splitted.test_DF['isSignal'], classes=[x for x in range(len(class_names))]),append='MultiClass_Test'+append,n_classes=len(class_names))
+        scoreing.rocCurve_multi(scoreing.dnn_score_train,label_binarize(splitted.train_DF['isSignal'], classes=[x for x in range(len(class_names))]),append='MultiClass_Train'+append,n_classes=len(class_names))
+    else:
         scoreing.rocCurve(scoreing.dnn_score_test,label_binarize(splitted.test_DF['isSignal'], classes=[0,1]),append='Binary_Test')
         scoreing.rocCurve(scoreing.dnn_score_train,label_binarize(splitted.train_DF['isSignal'], classes=[0,1]),append='Binary_Train')
     

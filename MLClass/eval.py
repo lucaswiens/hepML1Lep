@@ -16,13 +16,15 @@ import pandas as pd
 import numpy as np
 
 class eval(object):
-    def __init__(self,infile,outdir,pathToModel,var_list,do_multiClass = True,ClassList=None,mGo = 0 , mLSP = 0):
+    def __init__(self,infile,outdir,pathToModel,var_list,do_parametric,do_multiClass = True,ClassList=None,mGo = 0 , mLSP = 0, preselect = ''):
         self.infile        =  infile        
         self.outdir        =  outdir       
         self.pathToModel   =  pathToModel   
         self.var_list      =  var_list
         self.do_multiClass =  do_multiClass 
-        self.ClassList = ['TTSemiLep','TTDiLep','WJets','signal']
+        self.preselect     = preselect
+        self.do_parametric = do_parametric
+        self.ClassList     = ClassList
         self.mGo = mGo 
         self.mLSP = mLSP
         if not os.path.exists(self.outdir):
@@ -54,10 +56,10 @@ class eval(object):
         #get the model 
         self.load_model()
        
-        df = read_root(self.infile ,'sf/t')#,columns=L_varList)#,flatten=['DLMS_ST','DLMS_HT','DLMS_dPhiLepW','DLMS_nJets30Clean'])
+        df = read_root(self.infile ,'sf/t',where = self.preselect)#,columns=L_varList)#,flatten=['DLMS_ST','DLMS_HT','DLMS_dPhiLepW','DLMS_nJets30Clean'])
         print ('df loaded')
         print (" going to evalute the score from ",self.pathToModel)
-        if not '_SMS_' in self.infile:
+        if not '_SMS_' in self.infile and self.do_parametric:
             df.loc[:,'mGo'] = float(self.mGo)
             df.loc[:,'mLSP'] = float(self.mLSP)
         print ('prediction will be made to mGo = ',self.mGo,' and mLSP =  ', self.mLSP )

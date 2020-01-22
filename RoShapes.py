@@ -34,9 +34,9 @@ CRs4_cut_strings = sr.CRs_4_cut_strings
 
 selected_vars = sr.selected_var
 
-def make1D(var,style,name):
+def make1D(var,style,name,ranges):
     '''  A functon to make a 1D histogram and set it's style '''
-    hist = ROOT.TH1F(name,name,100,0.0,1.0)
+    hist = ROOT.TH1F(name,name,ranges[0],ranges[1],ranges[2])
     #hist.Draw('goff')
     if style["fill"]:
         style["fill"].Copy(hist)
@@ -89,14 +89,51 @@ if __name__ == '__main__':
     parser.add_argument('--exec', help="wight directory",default='./batch/shape_exec.sh' ,metavar='exec')
     parser.add_argument('--lumi', help='name of the model with out extensions',default='0', metavar='lumi')
     parser.add_argument('--scan', help='signal or background shapes',default=False, action='store_true')
-    parser.add_argument('--batch','-b', help=' set it to true if you want to evaluate paramtric training for each mass point',default=False, action='store_true')
+    parser.add_argument('--batch','-b', help=' set it to true if you want to evaluate paramtric training for each mass point',default=False,action='store_true')
     parser.add_argument('--group','-g', help='which background/signal list to be analyzed',default='SemiLepTT', metavar='group')
     parser.add_argument('--cutdict','-cut' ,help='which cut dicts to be applied SR/CR1/CR2...etc',default='SR', metavar='cutdict')
-    parser.add_argument('--mass','-m' ,help='which cut dicts to be applied',default='1600_1100', metavar='mass')
-
+    parser.add_argument('--mass','-m' ,help='which cut dicts to be applied',default='1500_1000', metavar='mass')
+    parser.add_argument('--doSyst','-syst' ,help='save the systematic shapes',default=False, action='store_true')
+    parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
     
     args = parser.parse_args()
+
+    if int(args.year) != 2016 : 
+        for key in All_files : 
+            All_files[key]['scale']  = All_files[key]['scale'].replace("*nISRttweight","")
+
     indir = args.indir
+    if args.doSyst : 
+        import copy
+        # staff for JEC
+        All_files_Jec_up = copy.deepcopy(All_files)
+        All_files_Jec_dn = copy.deepcopy(All_files)
+        ext_JecUp = args.indir.split("/")[-2]+"JEC_up_"
+        indirJecUp = args.indir.replace(args.indir.split("/")[-2],ext_JecUp)
+        indirJecdown = indirJecUp.replace("JEC_up_","JEC_down_")
+        if not os.path.exists(indirJecUp) or not os.path.exists(indirJecdown) : 
+            print(indirJecUp,"and",indirJecdown, "are not existing but you instructed me to doSyst, check the paths or remove the argument --doSyst/-syst, for the moment i will brack until you decide. Have fun!!" )
+            sys.exit()
+        # staff for other norm Systmatics, 
+        from plotClass.norm_syst import *
+        systList = {"btagSF_b" : btagSF_b,
+                    "btagSF_l" : btagSF_l,
+                    "ISR" : ISR,
+                    "lepSF" : lepSF,
+                    "PU" : PU,
+                    "TTxsec" : TTxsec,
+                    "TTVxsec" : TTVxsec,
+                    "Wpol" : Wpol,
+                    "Wxsec" : Wxsec}
+        # remove the ISR for 2017/2018
+        if int(args.year) != 2016 : 
+            #del systList["ISR"]
+            for syst in systList : 
+                for key in systList[syst] : 
+                    systList[syst][key]['scale_up']  = systList[syst][key]['scale_up'].replace("*nISRttweightsyst_up","").replace("*nISRttweight","")
+                    systList[syst][key]['scale_dn']  = systList[syst][key]['scale_dn'].replace("*nISRttweightsyst_down","").replace("*nISRttweight","")
+        #sys.exit()
+               
     outdir = args.outdir
     execu = args.exec
     logdir = outdir+'/Logs' 
@@ -108,8 +145,10 @@ if __name__ == '__main__':
     
 
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
-
-    if cutdict == 'SR' : cutdict_ = SRs_cut_strings
+    ranges = [50,0.0,1.0]
+    if cutdict == 'SR' : 
+        ranges = [50, 0.0, 1.0] 
+        cutdict_ = SRs_cut_strings
     elif cutdict == 'CR1' : cutdict_ = CRs1_cut_strings
     elif cutdict == 'CR2' : cutdict_ = CRs2_cut_strings
     elif cutdict == 'CR3' : cutdict_ = CRs3_cut_strings
@@ -135,6 +174,9 @@ if __name__ == '__main__':
     if not os.path.exists(massdir): os.makedirs(massdir)
 
     instPlot = rootplot(indir,outdir,All_files=All_files)
+    if args.doSyst : 
+        instPlot_Jec_up = rootplot(indirJecUp,outdir,All_files=All_files_Jec_up)
+        instPlot_Jec_dn = rootplot(indirJecdown,outdir,All_files=All_files_Jec_dn)
     cuttext = open(massdir+"/"+cutdict+".txt", "w+")
     if not batch : 
         cuts = cutdict_['1900_100'] if sig else cutdict_[mass]
@@ -143,17 +185,26 @@ if __name__ == '__main__':
         print ('producing the shapes for :',g, ' for signal mass of : ', mass )
         # fill the dictionary with all the files founded under the indir under each category 
         All_files[g]['files'] = instPlot.group[g]
+        if args.doSyst : 
+            All_files_Jec_up[g]['files'] = instPlot_Jec_up.group[g]
+            All_files_Jec_dn[g]['files'] = instPlot_Jec_dn.group[g]
         # make chain with proposed cuts
         if not sig : 
             extraCuts = All_files[g]['select']
             scale = All_files[g]['scale']
         else : 
             All_files['Signal_1']['files'] = instPlot.group['Signal_1']
+            if args.doSyst : All_files_Jec_up['Signal_1']['files'] = instPlot_Jec_up.group['Signal_1'] ; All_files_Jec_dn['Signal_1']['files'] = instPlot_Jec_dn.group['Signal_1']
             extraCuts = "&& mGo =="+mass.split('_')[0]+ "&& mLSP == "+mass.split('_')[1]
             scale = All_files['Signal_1']['scale']
         print (cuts + extraCuts)
         cuttext.write('cuts applied are :'+cuts + extraCuts+'\n')
         chain = instPlot.chain_and_cut(filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+        if args.doSyst : 
+            chain_Jec_up = instPlot_Jec_up.chain_and_cut(filesList = All_files_Jec_up[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+            chain_Jec_dn = instPlot_Jec_dn.chain_and_cut(filesList = All_files_Jec_dn[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+            print(chain_Jec_up.GetEntries())
+            print(chain_Jec_dn.GetEntries())
         print(chain.GetEntries())
         # create the output root file
         outroot = ROOT.TFile(massdir+"/shapes_{0}_{1}_{2}".format(g,mass,cutdict)+".root","recreate")
@@ -171,12 +222,30 @@ if __name__ == '__main__':
             print (var)
             for v in var : 
                 print (v)
-                # make the hist 
-                hist = make1D(v,All_files[g],v+'_'+cutdict)
                 # draw the variable to the hist created 
                 if 'Data' in g : lum = '1.0' 
                 else  : lum = lumi
-                chain.Draw(v +' >> '+v+'_'+cutdict, scale+'*'+lum+'*(1)',"goff")
+                # make the hist 
+                hist = make1D(v,All_files[g],v+'_'+cutdict+"_nom",ranges)
+                chain.Draw(v +' >> '+v+'_'+cutdict+"_nom", scale+'*'+lum+'*(1)',"goff")
+                if args.doSyst and not 'Data' in g : 
+                    # JEC comes from differnt nTuples
+                    hist_jec_up = make1D(v,All_files_Jec_up[g],v+'_'+cutdict+"_Jec_Up",ranges)
+                    chain_Jec_up.Draw(v +' >> '+v+'_'+cutdict+"_Jec_Up", scale+'*'+lum+'*(1)',"goff")
+                    hist_jec_dn = make1D(v,All_files_Jec_dn[g],v+'_'+cutdict+"_Jec_Down",ranges)
+                    chain_Jec_dn.Draw(v +' >> '+v+'_'+cutdict+"_Jec_Down", scale+'*'+lum+'*(1)',"goff")
+                    hist_jec_up.Write()
+                    hist_jec_dn.Write()
+                    # nomalization systematics
+                    for syst in systList : 
+                        hist_norm_syst_up = make1D(v,All_files[g],v+'_'+cutdict+'_'+syst+"_Up",ranges)
+                        hist_norm_syst_dn = make1D(v,All_files[g],v+'_'+cutdict+'_'+syst+"_Down",ranges)
+                        scale_up = systList[syst][g]['scale_up']
+                        scale_dn = systList[syst][g]['scale_dn']
+                        chain.Draw(v +' >> '+v+'_'+cutdict+'_'+syst+"_Up", scale_up+'*'+lum+'*(1)',"goff")
+                        chain.Draw(v +' >> '+v+'_'+cutdict+'_'+syst+"_Down", scale_dn+'*'+lum+'*(1)',"goff")
+                        hist_norm_syst_up.Write()
+                        hist_norm_syst_dn.Write()
                 #print (hist)
                 #hist.Sumw2()
                 hist.Write()
@@ -197,7 +266,6 @@ if __name__ == '__main__':
                         ##Condor configuration
                         submit_parameters = { 
                             "executable"                : execu,
-                            "arguments"                 : " ".join([wdir,indir, outdir,lumi,g,reg,m]),
                             "universe"                  : "vanilla",
                             "should_transfer_files"     : "YES",
                             "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
@@ -207,6 +275,10 @@ if __name__ == '__main__':
                             #'Requirements'              : 'OpSysAndVer == "CentOS7"',
 
                         }
+                        if args.doSyst :
+                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,"--doSyst"])
+                        else : 
+                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year])
                         job = htcondor.Submit(submit_parameters)
                         #with schedd.transaction() as txn:
                         #        job.queue(txn)
@@ -231,7 +303,6 @@ if __name__ == '__main__':
                         ##Condor configuration
                         submit_parameters = { 
                             "executable"                : execu,
-                            "arguments"                 : " ".join([wdir,indir, outdir,lumi,g,reg,m,'--scan']),
                             "universe"                  : "vanilla",
                             "should_transfer_files"     : "YES",
                             "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
@@ -241,6 +312,10 @@ if __name__ == '__main__':
                             #'Requirements'              : 'OpSysAndVer == "CentOS7"',
 
                         }
+                        if args.doSyst : 
+                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--doSyst','--scan'])
+                        else : 
+                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--scan']),
                         job = htcondor.Submit(submit_parameters)
                         #with schedd.transaction() as txn:
                         #        job.queue(txn)

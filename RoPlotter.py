@@ -21,8 +21,7 @@ import datetime
 from math import hypot, sqrt, ceil
 
 currentDT = datetime.datetime.now()
-
-
+import shutil 
 #from plotClass.plotting.SplitCanv import * 
 
 
@@ -88,7 +87,7 @@ def make1D_bins(binlist,style,name):
     return hist
 
 
-def doScaleBkgNormData(datalist,bkglist,bkgsum,apply = False):
+def doScaleBkgNormData(datalist,bkglist,bkgsum,Apply = False):
     if len(datalist) == 0 : return -1.0
     if len(bkglist)  == 0 : return -1.0
     data = datalist[0]
@@ -99,7 +98,7 @@ def doScaleBkgNormData(datalist,bkglist,bkgsum,apply = False):
     rm = bkg.Integral() - int
     sf = (data.Integral() - rm) / int
     bkgs = bkglist
-    if apply : 
+    if Apply : 
         for h in bkgs:
             h.Scale(sf)
     return sf
@@ -249,11 +248,24 @@ if __name__ == '__main__':
     parser.add_argument('--mGo2', help='Signal 2 mGo',default=None, metavar='mGo2')
     parser.add_argument('--mLSP1', help='Signal 1 mLSP',default=None, metavar='mLSP1')
     parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
+    parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
+    parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
+    
 
     args = parser.parse_args()
     subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
     lumi = args.lumi ; indir = args.indir ; outdire = os.path.join(args.outdir,subdir)
-    if not os.path.exists(outdire) : os.makedirs(outdire)
+    if not os.path.exists(outdire) : os.makedirs(outdire) ; shutil.copy('batch/index.php',outdire)
+    
+    textdire = os.path.join(outdire,'txt')
+    if not os.path.exists(textdire) : os.makedirs(textdire)
+    pngdire = os.path.join(outdire,'png')
+    if not os.path.exists(pngdire): os.makedirs(pngdire)
+    pdfdire = os.path.join(outdire,'pdf')
+    if not os.path.exists(pdfdire) : os.makedirs(pdfdire)
+    epsdire = os.path.join(outdire,'eps')
+    if not os.path.exists(epsdire) : os.makedirs(epsdire)
+
     scale_bkgd_toData = args.scale_bkgd_toData
     do_alphabetagamma = args.do_alphabetagamma
     doRatio = args.doRatio
@@ -300,7 +312,7 @@ if __name__ == '__main__':
 
     tdrstyle.setTDRStyle()
 
-    showRatioErorr = False
+    showRatioErorr = True
     ShowMCerror = True
     CMS_lumi.writeExtraText = 1
 
@@ -311,34 +323,40 @@ if __name__ == '__main__':
     CMS_lumi.cmsTextSize      = 0.75 if doRatio else 0.62
     CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
 
-
-
-    
     # get the plotter class instant 
     instPlot = rootplot(indir,outdire,All_files=All_files)
-    for g in instPlot.group:
-        # fill the dictionary with all the files founded under the indir under each category 
-        All_files[g]['files'] = instPlot.group[g]
+    if int(args.jobs) == 0 : 
+        for g in instPlot.group:
+            # fill the dictionary with all the files founded under the indir under each category 
+            All_files[g]['files'] = instPlot.group[g]
+            # make chain with each background seperatly 
+            chain = instPlot.chain_and_cut(All_files[g]['files'],"sf/t",cut_strings,All_files[g]['select'])
+            # add the chain to each category
+            All_files[g]['chain']  = chain
+            # init empty list of histogram tio be filled in the next loop
+            All_files[g]['hist'] = []
+            All_files[g]['hist_bins'] = []
+    else : 
+        from multiprocessing import Pool
+        pool = Pool(int(args.jobs))
+        myargs = []
+        # make tuple of aruments to be passed to the chain maker
+        for g in instPlot.group:
+            # fill the dictionary with all the files founded under the indir under each category 
+            All_files[g]['files'] = instPlot.group[g]
+            All_files[g]['hist'] = []
+            All_files[g]['hist_bins'] = []
+            myargs.append((All_files[g]['files'],"sf/t",cut_strings,All_files[g]['select']))
+        #print(myargs[0])
         # make chain with each background seperatly 
-        chain = instPlot.chain_and_cut (filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cut_strings,extraCuts = All_files[g]['select'])
-        # add the chain to each category
-        All_files[g]['chain']  = chain
-        # init empty list of histogram tio be filled in the next loop
-        All_files[g]['hist'] = []
-        All_files[g]['hist_bins'] = []
-        
+        retlist = [pool.apply_async(instPlot.chain_and_cut,args = argo) for argo in myargs]
+        #print(retlist)
+        for i , g in enumerate(instPlot.group):
+            All_files[g]['chain']  = retlist[i].get() 
     # create the output root file
     outroot = ROOT.TFile(outdire+"/plots_{0}_{1}_{2}".format(currentDT.year,currentDT.month,currentDT.day)+".root","recreate")
+    
     for i,var in enumerate(varList) :
-        textdire = os.path.join(outdire,'text')
-        if not os.path.exists(textdire) : os.makedirs(textdire)
-
-        pngdire = os.path.join(outdire,'png')
-        if not os.path.exists(pngdire):
-            os.makedirs(pngdire)
-
-        pdfdire = os.path.join(outdire,'pdf')
-        if not os.path.exists(pdfdire) : os.makedirs(pdfdire)
 
         outtext = open(textdire+"/"+var[0]+".txt", "w+")
         print (var[0])
@@ -361,6 +379,7 @@ if __name__ == '__main__':
             # draw the variable to the hist created 
             if 'Data' in key : lum = '1.0' 
             else  : lum = lumi
+            if int(args.year) != 2016 : All_files[key]['scale']  = All_files[key]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
             All_files[key]['chain'].Draw(var[1] +' >> '+key+var[0], All_files[key]['scale']+'*'+lum+'*(1)',"goff")
             #print (hist)
             ROOT.gROOT.ForceStyle()
@@ -379,10 +398,10 @@ if __name__ == '__main__':
                 hist.SetBinContent(0,0)
                 hist.SetBinContent(n+1,0)
             # per binwidth normalization
-            #if any('varbin' in e for e in var) : 
-            #    normBinW = var[index0][2]
-            #    if normBinW == True:
-            #        hist.Scale(0.1,"width")
+            if any('varbin' in e for e in var) : 
+                normBinW = var[index0][2]
+                #if normBinW == True:
+                #    hist.Scale(0.1,"width")
             # write the hist
             hist.Write()
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
@@ -393,16 +412,19 @@ if __name__ == '__main__':
         total.Write()
         stackableHists = sorttinglist(stackableHists)
         # scale the individual background to data
-        
+        apply = False
         if do_alphabetagamma : 
             stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
             if ('Data' in All_files.keys() and scale_bkgd_toData ) : 
-                sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists_,total,apply = False)
+                apply = False
+                sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists_,total,Apply = apply)
             else : sf = 1.0
-        elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) : sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total,apply=True)
+        elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) :
+            apply = True 
+            sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total,Apply=apply)
         else : sf = 1.0
         # scale the total backgrounds to data
-        total.Scale(sf)
+        total.Scale(sf if apply == True else 1.0 )
         total.SetName("totalBKG_scaled")
         # make stack of the background (sorted)
         stack = makeStack(stackableHists)
@@ -539,13 +561,13 @@ if __name__ == '__main__':
             
             if showRatioErorr : 
                 sumMCErrors = total.Clone()
-                sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.5)
+                sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.0)
                 sumMCErrors.SetMarkerSize(0)
                 for j in range(All_files['Data']['hist'][i].GetNbinsX()+2):
                     sumMCErrors.SetBinError(j, sumMCErrors.GetBinError(j)/max(sumMCErrors.GetBinContent(j), 1))
                     sumMCErrors.SetBinContent(j, 1.)
-                sumMCErrors.Draw("E2 same")
-                sumMCErrors.SetFillStyle(1001);
+                sumMCErrors.Draw("PE2 same")
+                sumMCErrors.SetFillStyle(3001);
                 sumMCErrors.SetFillColor(ROOT.kGray);
                 sumMCErrors.SetMarkerStyle(1);
                 sumMCErrors.SetMarkerColor(ROOT.kGray);
@@ -561,7 +583,8 @@ if __name__ == '__main__':
                     
         canv.SaveAs(pngdire+'/'+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+var[0]+'.pdf')
-
+        canv.SaveAs(epsdire+'/'+var[0]+'.eps')
+        
         tDirectory.WriteObject(canv,"TheCanvas")
         #del canv
         outroot.cd('')

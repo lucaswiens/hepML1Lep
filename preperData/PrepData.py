@@ -19,7 +19,7 @@ _df_all_ev={}
 _df_all = {}
 
 class PrepData(object):
-    def __init__(self,inputdir,outdir,VARS,skipexisting = False):
+    def __init__(self,inputdir,outdir,VARS,zerob = False,skipexisting = False):
         self.path = inputdir
         self.outdir = outdir
         self.df_all = {}
@@ -29,6 +29,8 @@ class PrepData(object):
             os.makedirs(self.outdir)
         elif not os.path.exists(outdir):
             os.makedirs(self.outdir)
+        self.zerob = zerob
+
         #self.saveDF_ = saveDF
     
     # this is a function to look for specific pattern in directory and then get back with the list of matched files 
@@ -40,6 +42,7 @@ class PrepData(object):
                     self.result.append(os.path.join(root, thisfile ))
 
     def saveCSV(self):
+
         all_files = self.find_all_matching(".root")
         csv_dir = self.outdir
         sig_files = [ x for x in self.result if 'T1tttt' in x ]
@@ -72,10 +75,15 @@ class PrepData(object):
                             (bkg_df['GenMET'] < 150 ))|
                             ((bkg_df['filename'].isin(['TTJets_SingleLeptonFromT_genMET','TTJets_DiLepton_genMET','TTJets_SingleLeptonFromTbar_genMET'])) &
                             (bkg_df['GenMET'] > 150 ))]
-                                                        
-            self.df_all['bkg'] =  bkg_df.loc[(bkg_df['nLep'] == 1) & (bkg_df['Lep_pt'] > 25)& (bkg_df['Selected'] == 1)& (bkg_df['Lep_pt'] > 25)&
-                                    (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 3)& (bkg_df['Jet2_pt'] > 80)&
-                                    (bkg_df['HT'] > 500)& (bkg_df['LT'] > 250)&(bkg_df['nBJet'] >= 1)]
+            if self.zerob : 
+                print('Zero b analysis mode activated, make sure this is what you want')
+                self.df_all['bkg'] =  bkg_df.loc[(bkg_df['nLep'] == 1) & (bkg_df['Lep_pt'] > 25)& (bkg_df['Selected'] == 1)& (bkg_df['Lep_pt'] > 25)&
+                                                (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 3)& (bkg_df['Jet2_pt'] > 80)&
+                                                (bkg_df['HT'] > 500)& (bkg_df['LT'] > 250)&(bkg_df['nBJet'] == 0)]
+            else : 
+                self.df_all['bkg'] =  bkg_df.loc[(bkg_df['nLep'] == 1) & (bkg_df['Lep_pt'] > 25)& (bkg_df['Selected'] == 1)& (bkg_df['Lep_pt'] > 25)&
+                                                (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 3)& (bkg_df['Jet2_pt'] > 80)&
+                                                (bkg_df['HT'] > 500)& (bkg_df['LT'] > 250)&(bkg_df['nBJet'] >= 1)]                
             # cleanup not needed DFs
             del df
             del p_df
@@ -89,7 +97,7 @@ class PrepData(object):
             print ("self.df_all['sig'] is empty i will look for the input root files to convert them")
             dfs =  pd.DataFrame()
             for s in sig_files: 
-                if "TuneCP2" in s : continue 
+                #if "TuneCP2" in s : continue 
                 if "evVarFriend_SMS_T1ttttCP5_MVA" in s : continue 
                 if '22_points' in s : continue 
                 #if '_15_01' in s : continue
@@ -101,9 +109,14 @@ class PrepData(object):
                 p_dfs['filename'] = np.array(s.split("/")[-1].replace(".root","").replace("evVarFriend_","").replace("_ext",""))
                 sig_df = pd.concat([p_dfs, dfs], ignore_index=True)
                 dfs = pd.concat([p_dfs, dfs], ignore_index=True)
-            self.df_all['sig'] =  sig_df.loc[(sig_df['nLep'] == 1) & (sig_df['Lep_pt'] > 25)& (sig_df['Selected'] == 1)& (sig_df['Lep_pt'] > 25)&
-                                    (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 3)& (sig_df['Jet2_pt'] > 80)&
-                                    (sig_df['HT'] > 500)& (sig_df['LT'] > 250)&(sig_df['nBJet'] >= 1)]
+            if self.zerob : 
+                    self.df_all['sig'] =  sig_df.loc[(sig_df['nLep'] == 1) & (sig_df['Lep_pt'] > 25)& (sig_df['Selected'] == 1)& (sig_df['Lep_pt'] > 25)&
+                                                (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 3)& (sig_df['Jet2_pt'] > 80)&
+                                                (sig_df['HT'] > 500)& (sig_df['LT'] > 250)&(sig_df['nBJet'] == 0)]
+            else : 
+                self.df_all['sig'] =  sig_df.loc[(sig_df['nLep'] == 1) & (sig_df['Lep_pt'] > 25)& (sig_df['Selected'] == 1)& (sig_df['Lep_pt'] > 25)&
+                                                (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 3)& (sig_df['Jet2_pt'] > 80)&
+                                                (sig_df['HT'] > 500)& (sig_df['LT'] > 250)&(sig_df['nBJet'] >= 1)]
             # rename the column susXsec to Xsec 
             self.df_all['sig'].rename(columns={'susyXsec':'Xsec'},inplace=True)
             # cleanup not needed DFs

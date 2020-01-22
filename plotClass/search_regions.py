@@ -10,7 +10,6 @@ for mass in massList :
         small_list.append(mass+cat)
     selected_var.append(small_list)
 
-
 cut_strings = ""
 cut_strings +='(nLep == 1 && Lep_pt > 25)'
 cut_strings +='&& (Selected == 1)'
@@ -42,8 +41,8 @@ ntopCut = '&& nTop_Total_Combined >= 1 '
 AntintopCut = '&& nTop_Total_Combined < 1'
 
 for i,m in enumerate(selected_var) : 
-    SRs_cut_strings[massList[i]]   = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+"))" #+ dPhiCut + ntopCut #&& ("+m[0]+" > 0.8)"
-    CRs_1_cut_strings[massList[i]] = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+"))" + AntidPhiCut #&& ("+m[0]+" <= 0.8)"
+    SRs_cut_strings[massList[i]]   = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+") &&("+m[0]+" > 0.9))" #+ dPhiCut + ntopCut #&& ("+m[0]+" > 0.8)"
+    CRs_1_cut_strings[massList[i]] = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+"))" # && (nJets30Clean <= 7))" #+ AntidPhiCut #&& ("+m[0]+" <= 0.8)"
     CRs_2_cut_strings[massList[i]] = cut_strings+"&&(("+m[1]+">"+m[0]+" ) && ("+m[1]+">"+m[2]+") && ("+m[1]+" >"+m[3]+"))"
     CRs_3_cut_strings[massList[i]] = cut_strings+"&&(("+m[2]+">"+m[0]+" ) && ("+m[2]+">"+m[1]+") && ("+m[2]+" >"+m[3]+"))"
     CRs_4_cut_strings[massList[i]] = cut_strings+"&&(("+m[3]+">"+m[0]+" ) && ("+m[3]+">"+m[1]+") && ("+m[3]+" >"+m[2]+"))"
@@ -60,7 +59,7 @@ All_files = {
         "line": ROOT.TAttLine(ROOT.kRed, ROOT.kSolid, 1),
         "marker": None,
         "Label" : "t#bar{t} ll + jets",
-        "Stackable" : True
+        "Stackable" : True,
         },
 
     'SemiLepTT' : 
@@ -174,3 +173,5 @@ All_files = {
         },
 
 }
+
+

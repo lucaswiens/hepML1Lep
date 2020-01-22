@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import class_weight
 import os
-Mass_points = [[1900,100],[2200,100],[2200,800],[1900,800],[1900,100],[1500,1000],[1500,1200],[1700,1200],[1600,1100],[1800,1300]]
+Mass_points = [[1900,100],[2200,100],[2200,800],[1900,800],[1900,1000],[1500,1000],[1500,1200],[1700,1200],[1600,1100],[1800,1300]]
 signal_Cla = [[[1600,1100],[1800,1300],[1500,1000],[1500,1200],[1700,1200]],[[1900,100],[2200,100],[2200,800],[1900,800],[1900,1000]]]
 to_drop = ['lheHTIncoming', 'genTau_grandmotherId', 'genTau_motherId', 'genLep_grandmotherId',
                'genLep_motherId', 'DiLep_Flag', 'semiLep_Flag', 'GenMET',  'filename']
@@ -81,6 +81,7 @@ class splitDFs(object):
         self.df_all['all_sig'] = pd.DataFrame()
 
         if self.nSignal_Cla > 1 and self.do_multiClass: 
+            print('signal will be splitted into ',self.nSignal_Cla, 'classes')
             self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
             self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
@@ -114,6 +115,7 @@ class splitDFs(object):
             del sigdf
     
         elif self.do_multiClass and not self.split_Sign_training : 
+            print('signal will be taken as ',self.nSignal_Cla, 'class')
             self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
             self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
@@ -142,6 +144,7 @@ class splitDFs(object):
             del sigdf
     
         elif self.split_Sign_training and self.do_multiClass: 
+            print("you choosed to train twice, once per signal class, make sure your configuration does what you need ")
             self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
             self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
@@ -180,6 +183,7 @@ class splitDFs(object):
             else : self.df_all['all_bkg'] = self.bkgDF.copy()
 
         elif not self.do_multiClass : 
+            print("binary classification mode activated, make sure your configuration does what you need ")
             #self.df_all['all_bkg'] = pd.DataFrame()
             for num ,idxs in enumerate(self.list_of_mass_idxs) : 
                 self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
@@ -213,55 +217,17 @@ class splitDFs(object):
     def split(self,sigdfnew,bkgdfnew,train_size=0.6, test_size=0.4, shuffle=True, random_state=0) :
         "Function to split the DFs into testing and training supsets "
         print ('now splitting the samples with the options : ','train_size = ', train_size, 'test_size = ',test_size, 'shuffle = ',shuffle, 'random_state = ',random_state)
-        # write df1 content in file.csv
-        
         _df_all = pd.concat([sigdfnew,bkgdfnew])
         del sigdfnew, bkgdfnew
         _df_all_tr = _df_all.drop(to_drop,axis=1)
-        self.train_DF, self.test_DF = train_test_split(_df_all_tr, train_size=train_size, test_size=test_size, shuffle=shuffle, random_state=random_state)        
+        self.train_DF, self.test_DF = train_test_split(_df_all_tr, train_size=train_size, test_size=test_size, shuffle=shuffle, random_state=random_state)
+        del _df_all_tr
+        print('Done splitting, going to next step')
         self.train_DF = self.train_DF.reset_index(drop=True)
         self.test_DF  = self.test_DF.reset_index(drop=True)
-
+        classes_ = np.unique(self.train_DF['isSignal'])
+        print('Done reindexing, going to next step')
         self.class_weights = class_weight.compute_class_weight('balanced',
-                                                np.unique(self.train_DF['isSignal']),
+                                                classes_,
                                                 self.train_DF['isSignal'])
-        # write the testDF and trainDF in case you want to save time (not too much)
         
-    
-        #if self.do_binary_first : 
-        #    for num ,idxs in enumerate(self.list_of_mass_idxs) : 
-        #            self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
-        #            self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 1
-        #            ## for the last training over all the samples (the multiClass trainig)
-        #            self.df_all['all_sig'] = pd.concat([self.df_all['all_sig'],self.df_all[self.signal_list_names[num]]])
-        #    self.df_all['all_sig'].loc[:,'isSignal'] = 3 
-        #    self.df_all['all_sig'] = self.df_all['all_sig'].reset_index()    
-        #    # for binary classifiers first
-        #    self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
-        #    self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 0
-        #    self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 0
-        #    # save it unchanged for binary classification iterations
-        #    # combine the background for the last step 
-        #    self.df_all['all_bkg'] = self.bkgDF.copy()
-        #    # locate the class number
-        #    self.df_all['all_bkg'].loc[self.SemiLep_TT_index,'isSignal'] = 0
-        #    self.df_all['all_bkg'].loc[self.DiLep_TT_index,'isSignal'] = 1
-        #    self.df_all['all_bkg'].loc[self.WJets_others_index,'isSignal'] = 2
-        #    self.df_all['all_bkg'] = self.df_all['all_bkg'].reset_index()
-        #    ## signal list for binary classifications
-        #    #print signal_list_dfs
-        #    if self.do_parametric :
-        #        signal_list_dfs = [] 
-        #        for name in  self.signal_list_names : 
-        #            signal_list_dfs.append(self.df_all[name])
-        #        self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.df_all['all_bkg'])
-        #    else : self.df_all['all_bkg'] = self.bkgDF.copy()
-        #    ## free up the memeory from all other dfs 
-        #    bkgdf =  self.df_all['all_bkg'].copy()
-        #    sigdf =  self.df_all['all_sig'].copy()
-        #    del self.df_all
-        #    self.df_all = {}
-        #    self.df_all['all_bkg'] = bkgdf.copy()
-        #    self.df_all['all_sig'] = sigdf.copy()
-        #    del bkgdf
-        #    del sigdf

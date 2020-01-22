@@ -180,15 +180,34 @@ void applyStyleToGraph(TGraph * h_g1){
 void overly_DNN_Multi()
 {
 
-      TFile *f1 = TFile::Open("/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/CMGTools/TTHAnalysis/python/plotter/susy-1lep/RcsDevel/datacards_16_BaseLine/limit_scan.root");
+      TFile *f1 = TFile::Open("BaseLine_Limit_Pantelis/limit_scan_35p9.root");//"/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/CMGTools/TTHAnalysis/python/plotter/susy-1lep/RcsDevel/datacards_16_BaseLine/limit_scan.root");
       TGraph *Gr_Exp_NTOP1 =(TGraph*)f1->Get("T1ttttExpectedLimit");
       TH2D *Xsec_hist=(TH2D*)f1->Get("T1ttttObservedExcludedXsec");
 
-      TFile *f3 = TFile::Open("Limits_16_Aug6/datacards/limit_scan.root");
+      TFile *f2 = TFile::Open("BaseLine_Limit_Pantelis/limit_scan_130.root");//"/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/CMGTools/TTHAnalysis/python/plotter/susy-1lep/RcsDevel/datacards_16_BaseLine/limit_scan.root");
+      TGraph *Gr_Exp_NTOP2 =(TGraph*)f2->Get("T1ttttExpectedLimit");
+
+      TFile *f3 = TFile::Open("datacards_16_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
       TGraph *Gr_Exp_NTOP3 =(TGraph*)f3->Get("T1ttttExpectedLimit");
 
-      Gr_Exp_NTOP3->SetLineColor(4);
+
+      TFile *f4 = TFile::Open("datacards_17_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
+      TGraph *Gr_Exp_NTOP4 =(TGraph*)f4->Get("T1ttttExpectedLimit");
       
+      TFile *f5 = TFile::Open("datacards_18_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
+      TGraph *Gr_Exp_NTOP5 =(TGraph*)f5->Get("T1ttttExpectedLimit");
+
+      TFile *f6 = TFile::Open("datacards_FullRunII_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
+      TGraph *Gr_Exp_NTOP6 =(TGraph*)f6->Get("T1ttttExpectedLimit");
+
+    
+
+      Gr_Exp_NTOP2->SetLineColor(6);
+      Gr_Exp_NTOP3->SetLineColor(4);
+      Gr_Exp_NTOP4->SetLineColor(7);
+      Gr_Exp_NTOP5->SetLineColor(8);
+      Gr_Exp_NTOP6->SetLineColor(1);
+
 
       TStyle * TDR = createTdrStyle();
       TDR->cd();
@@ -200,7 +219,12 @@ void overly_DNN_Multi()
 
 
       mg->Add(Gr_Exp_NTOP1,"l");
+      mg->Add(Gr_Exp_NTOP2,"l");
       mg->Add(Gr_Exp_NTOP3,"l");
+      mg->Add(Gr_Exp_NTOP4,"l");
+      mg->Add(Gr_Exp_NTOP5,"l");
+      mg->Add(Gr_Exp_NTOP6,"l");
+
 
 
       mg->SetTitle("; m_{#tildeg} [GeV]; m_{#tilde#chi_{1}^{0}} [GeV]");
@@ -213,13 +237,19 @@ void overly_DNN_Multi()
       leg->SetFillStyle(0);
       leg->SetBorderSize(0);
       leg->SetHeader("T1tttt NLO+NLL exclusion");
-      leg->AddEntry(Gr_Exp_NTOP1, "BaseLine", "l");
-      leg->AddEntry(Gr_Exp_NTOP3, "DNN w #Delta#phi cut", "l");
+      leg->AddEntry(Gr_Exp_NTOP1, "BaseLine 35.9 fb^{-1}", "l");
+      leg->AddEntry(Gr_Exp_NTOP2, "BaseLine 130 fb^{-1}", "l");
+      leg->AddEntry(Gr_Exp_NTOP3, "DNN  35.9 fb^{-1}", "l");
+      leg->AddEntry(Gr_Exp_NTOP4, "DNN  41.9 fb^{-1}", "l");
+      leg->AddEntry(Gr_Exp_NTOP5, "DNN  59.74 fb^{-1}", "l");
+      leg->AddEntry(Gr_Exp_NTOP6, "DNN  137.54 fb^{-1}", "l");
+
+
       leg->Draw();
       
       addText(0.8-0.15,0.995-0.15,0.95,0.996,"35.9 fb^{-1} (13 TeV)",kBlack);
       addText(0.19,0.39,0.86,0.916,"#bf{CMS} #it{Preliminary}",kBlack);
 
-      c11->SaveAs("Limit_DNN_multiClass.pdf");
+      c11->SaveAs("Limit_systmatics161718_all.png");
 
 }

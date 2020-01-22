@@ -4,6 +4,8 @@ eval 'export PATH="/nfs/dust/cms/user/amohamed/anaconda3/bin:$PATH"'
 
 source /nfs/dust/cms/user/amohamed/anaconda3/bin/activate hepML
 
-cd $2
+eval 'cd /nfs/dust/cms/user/amohamed/susy-desy/ML/hepML_1Lep'
 
-./$1
+echo "$@"
+
+python RoPlotter.py "$@"

@@ -3,9 +3,9 @@
 && (!isData || ( (PD_SingleEle && HLT_EleOR) || (PD_SingleMu && (HLT_MuOR) && !(HLT_EleOR) ) || (PD_MET && (HLT_MetOR) && !(HLT_EleOR) && !(HLT_MuOR) )  ))
 && (!isData || METfilters == 1)
 && ( nLep == 2 && Selected == 1 && Selected2 == 1 && nVeto == 0 && Lep_pt > 25 && Lep2_pt > 25 )
-&& (DLMS_nJets30Clean_0 >=3 && DLMS_nJets30Clean_0 <= 6 )
+&& (DLMS_nJets30Clean >=3 && DLMS_nJets30Clean <= 6 )
 && (Jet2_pt > 80 ) 
-&& (DLMS_HT_0>500)
-&& ( DLMS_ST_0>250 )
+&& (DLMS_HT>500)
+&& ( DLMS_ST>250 )
 && (nBJet >= 1)
 && nTop_Total_Combined == 0

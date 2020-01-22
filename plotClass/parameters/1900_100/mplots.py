@@ -6,6 +6,7 @@ varList.append(["1900_100TTS","1900_100TTS","DNN classifier t#bar{t} l",[20,0,1]
 varList.append(["1900_100sig_10bins","1900_100sig","DNN classifier T1t^{4}",[10,0,1],"LogY",["MoreY",1000],'IncludeOverflows'])
 varList.append(["1900_100sig_5bins","1900_100sig","DNN classifier T1t^{4}",[5,0,1],"LogY",["MoreY",1000],'IncludeOverflows'])
 varList.append(["1900_100sig_4bins","1900_100sig","DNN classifier T1t^{4}",[4,0,1],"LogY",["MoreY",1000],'IncludeOverflows'])
+varList.append(["1900_100sig_3bins","1900_100sig","DNN classifier T1t^{4}",[3,0,1],"LogY",["MoreY",1000],'IncludeOverflows',['varbin',[0,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.9,1.0],True]])
 
 varList.append(["CatTT1Lep","(1900_100TTS >1900_100TTDi ) && (1900_100TTS >1900_100sig) && (1900_100TTS >1900_100WJ)","t#bar{t} l + jets Event Category",[2,0.0,2.0],"LogY",["MoreY",1000],'IncludeOverflows'])
 varList.append(["CatTT2Lep","(1900_100TTDi > 1900_100TTS) && (1900_100TTDi >1900_100sig ) && (1900_100TTDi >1900_100WJ )","t#bar{t} ll + jets Event Category",[2,0.0,2.0],"LogY",["MoreY",1000],'IncludeOverflows'])

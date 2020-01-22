@@ -77,11 +77,11 @@ if __name__ == '__main__':
         mass_dir = os.path.join(outdir,bkg_list[0].split('/')[1])
         if not os.path.exists(mass_dir):os.makedirs(mass_dir)
         
-        otherSR = ROOT.TH1F('otherSR','otherSR',100,0.0,1.0)
-        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',100,0.0,1.0)
-        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',100,0.0,1.0)
-        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',100,0.0,1.0)
-        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',100,0.0,1.0)
+        otherSR = ROOT.TH1F('otherSR','otherSR',50,0.0,1.0)
+        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',50,0.0,1.0)
+        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',50,0.0,1.0)
+        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',50,0.0,1.0)
+        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',50,0.0,1.0)
 
         txtSR  = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_SR.txt', "w+")
         txtCR1 = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_CR1.txt', "w+")
@@ -103,8 +103,9 @@ if __name__ == '__main__':
             hList = tdir.GetListOfKeys()
             for i in range(0,len(hList)):
                 hname = (hList)[i].GetName()
+                if not '_nom' in hname: continue
                 hist = tdir.Get(hname)
-                if not 'sig' in hname : continue 
+                if not 'sig' in hname : continue
                 for obkg in others_bkg : 
                     if (obkg in bkg and '_SR' in hname ): otherSR.Add(hist)
                     if (obkg in bkg and '_CR1' in hname ): otherCR1.Add(hist)
@@ -115,25 +116,25 @@ if __name__ == '__main__':
                 
                 if ('_SR' in hname and not 'Data' in bkg): 
                     txtSR.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in bkg  : TTl_1  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_0), 2)
-                    if 'DiLepTT' in bkg    : TTll_1 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_00), 2)
+                    if 'SemiLepTT' in bkg  : TTl_1  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_0), 2)
+                    if 'DiLepTT' in bkg    : TTll_1 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_00), 2)
                 elif '_CR1' in hname : 
                     txtCR1.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
                 elif '_CR2' in hname : 
                     txtCR2.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in bkg  : TTl_2  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_1), 2)
-                    if 'DiLepTT' in bkg    : TTll_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_2), 2)
-                    if 'Data' in bkg       : Data_2 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_3), 2)
+                    if 'SemiLepTT' in bkg  : TTl_2  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_1), 2)
+                    if 'DiLepTT' in bkg    : TTll_2 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_2), 2)
+                    if 'Data' in bkg       : Data_2 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_3), 2)
                 elif '_CR3' in hname : 
                     txtCR3.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in bkg : TTl_3  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_4), 2)
-                    if 'DiLepTT' in bkg   : TTll_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_5), 2)
-                    if 'Data' in bkg     : Data_3 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_6), 2)
+                    if 'SemiLepTT' in bkg : TTl_3  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_4), 2)
+                    if 'DiLepTT' in bkg   : TTll_3 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_5), 2)
+                    if 'Data' in bkg     : Data_3 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_6), 2)
                 elif '_CR4' in hname : 
                     txtCR4.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
-                    if 'SemiLepTT' in bkg  : TTl_4  = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_7), 2)
-                    if 'DiLepTT' in bkg    : TTll_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_8), 2)
-                    if 'Data' in bkg       : Data_4 = round(hist.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_9), 2)
+                    if 'SemiLepTT' in bkg  : TTl_4  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_7), 2)
+                    if 'DiLepTT' in bkg    : TTll_4 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_8), 2)
+                    if 'Data' in bkg       : Data_4 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_9), 2)
 
         txtSR.write((60 *('='))+'\n')
         txtSR.write("{:<20}{:<20}{:<20}".format(otherSR.GetTitle(),round(otherSR.IntegralAndError(0, otherSR.GetNbinsX()+1, err_10), 2), round(err_10, 2))+"\n")
@@ -149,6 +150,7 @@ if __name__ == '__main__':
         txtCR4.write((60 *('='))+'\n')
         txtCR4.write("{:<20}{:<20}{:<20}".format(otherCR4.GetTitle(),round(otherCR4.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_14), 2), round(err_14, 2))+"\n")
         WJ_4 = round(otherCR4.IntegralAndError(0, otherCR4.GetNbinsX()+1, err_14),2)
+        
         del otherSR,otherCR1,otherCR2,otherCR3,otherCR4
 
         import scipy
