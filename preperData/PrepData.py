@@ -19,7 +19,7 @@ _df_all_ev={}
 _df_all = {}
 
 class PrepData(object):
-    def __init__(self,inputdir,outdir,VARS,zerob = False,skipexisting = False):
+    def __init__(self,inputdir,outdir,VARS,skipexisting = False,multib = False):
         self.path = inputdir
         self.outdir = outdir
         self.df_all = {}
@@ -29,8 +29,7 @@ class PrepData(object):
             os.makedirs(self.outdir)
         elif not os.path.exists(outdir):
             os.makedirs(self.outdir)
-        self.zerob = zerob
-
+        self.multib = multib
         #self.saveDF_ = saveDF
     
     # this is a function to look for specific pattern in directory and then get back with the list of matched files 
@@ -45,8 +44,12 @@ class PrepData(object):
 
         all_files = self.find_all_matching(".root")
         csv_dir = self.outdir
-        sig_files = [ x for x in self.result if 'T1tttt' in x ]
-        bkg_files = [ x for x in self.result if not 'T1tttt' in x ] 
+        if  self.multib : 
+            sig_files = [ x for x in self.result if 'T1tttt' in x ]
+            bkg_files = [ x for x in self.result if not 'T1tttt' in x ] 
+        else : 
+            sig_files = [ x for x in self.result if 'T5qqqq' in x ]
+            bkg_files = [ x for x in self.result if not 'T5qqqq' in x ] 
         # check if the DFs are already in place  
         if os.path.exists(csv_dir+'/MultiClass_background.csv') :
             print ("background DF is already in place, no need to produce it again ")
@@ -62,7 +65,7 @@ class PrepData(object):
             df =  pd.DataFrame()
             for b in bkg_files: 
                 #for block in it:
-                if "T5qqqq" in b : continue 
+                if ("T5qqqq" in b or "T1tttt" in b) : continue 
                 print(b) 
                 it = uproot.open(b)["sf/t"]
                 p_df = it.pandas.df(self.VARS+["Xsec"])
@@ -75,7 +78,7 @@ class PrepData(object):
                             (bkg_df['GenMET'] < 150 ))|
                             ((bkg_df['filename'].isin(['TTJets_SingleLeptonFromT_genMET','TTJets_DiLepton_genMET','TTJets_SingleLeptonFromTbar_genMET'])) &
                             (bkg_df['GenMET'] > 150 ))]
-            if self.zerob : 
+            if not self.multib  : 
                 print('Zero b analysis mode activated, make sure this is what you want')
                 self.df_all['bkg'] =  bkg_df.loc[(bkg_df['nLep'] == 1) & (bkg_df['Lep_pt'] > 25)& (bkg_df['Selected'] == 1)& (bkg_df['Lep_pt'] > 25)&
                                                 (bkg_df['nVeto'] == 0)& (bkg_df['nJets30Clean'] >= 3)& (bkg_df['Jet2_pt'] > 80)&
@@ -100,6 +103,8 @@ class PrepData(object):
                 #if "TuneCP2" in s : continue 
                 if "evVarFriend_SMS_T1ttttCP5_MVA" in s : continue 
                 if '22_points' in s : continue 
+                if not self.multib : 
+                    if not "SMS_T5qqqqCP5_MVA" : continue
                 #if '_15_01' in s : continue
                 #for block in it:
                 print(s) 
@@ -109,7 +114,7 @@ class PrepData(object):
                 p_dfs['filename'] = np.array(s.split("/")[-1].replace(".root","").replace("evVarFriend_","").replace("_ext",""))
                 sig_df = pd.concat([p_dfs, dfs], ignore_index=True)
                 dfs = pd.concat([p_dfs, dfs], ignore_index=True)
-            if self.zerob : 
+            if not self.multib : 
                     self.df_all['sig'] =  sig_df.loc[(sig_df['nLep'] == 1) & (sig_df['Lep_pt'] > 25)& (sig_df['Selected'] == 1)& (sig_df['Lep_pt'] > 25)&
                                                 (sig_df['nVeto'] == 0)& (sig_df['nJets30Clean'] >= 3)& (sig_df['Jet2_pt'] > 80)&
                                                 (sig_df['HT'] > 500)& (sig_df['LT'] > 250)&(sig_df['nBJet'] == 0)]

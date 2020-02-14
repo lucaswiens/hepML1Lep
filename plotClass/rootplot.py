@@ -37,7 +37,7 @@ class rootplot(object) :
             chain.Add(f)
         return chain
     def makecutflow(self,Tree = None,cutstring = [], extraCuts=[]) :
-        ''' This Function is to apply selection on specific tree'''
+        ''' This Function is to apply selection on specific tree''' ## Don't use, not yet ready
         from ROOT import TCut
         
         CUTtext = open(self.outdir+"/cuts.txt", "w+")

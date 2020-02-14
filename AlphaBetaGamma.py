@@ -77,11 +77,11 @@ if __name__ == '__main__':
         mass_dir = os.path.join(outdir,bkg_list[0].split('/')[1])
         if not os.path.exists(mass_dir):os.makedirs(mass_dir)
         
-        otherSR = ROOT.TH1F('otherSR','otherSR',50,0.0,1.0)
-        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',50,0.0,1.0)
-        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',50,0.0,1.0)
-        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',50,0.0,1.0)
-        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',50,0.0,1.0)
+        otherSR = ROOT.TH1F('otherSR','otherSR',100,0.0,1.0)
+        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',100,0.0,1.0)
+        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',100,0.0,1.0)
+        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',100,0.0,1.0)
+        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',100,0.0,1.0)
 
         txtSR  = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_SR.txt', "w+")
         txtCR1 = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_CR1.txt', "w+")

@@ -12,7 +12,7 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptTitle(0)
 
 from plotClass.rootplot  import rootplot
-from plotClass.plotting.plotGroups import All_files
+
 from plotClass.plotting import tdrstyle,CMS_lumi
 
 import os 
@@ -250,9 +250,18 @@ if __name__ == '__main__':
     parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
     parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
     parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
+    parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')
     
 
+
+
     args = parser.parse_args()
+
+    if args.mb : 
+        from plotClass.plotting.plotGroups import All_files
+    else : 
+        from plotClass.plotting.plotGroups_0b import All_files
+
     subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
     lumi = args.lumi ; indir = args.indir ; outdire = os.path.join(args.outdir,subdir)
     if not os.path.exists(outdire) : os.makedirs(outdire) ; shutil.copy('batch/index.php',outdire)
@@ -274,16 +283,17 @@ if __name__ == '__main__':
     mGo1 = args.mGo1 ; mGo2 = args.mGo2 
     mLSP1 = args.mLSP1 ; mLSP2 = args.mLSP2 
 
-    if mGo1 == None : 
-        del All_files['Signal_1']
-    else : 
-        All_files['Signal_1']['select'] = All_files['Signal_1']['select'].replace('@mGo',str(mGo1)).replace('@mLSP',str(mLSP1))
-        All_files['Signal_1']['Label'] = All_files['Signal_1']['Label'].replace('@mGo',str(float(mGo1)/1000.0)).replace('@mLSP',str(float(mLSP1)/1000))
-    if mGo2 == None : 
-        del All_files['Signal_2']
-    else : 
-        All_files['Signal_2']['select'] = All_files['Signal_2']['select'].replace('@mGo',str(mGo2)).replace('@mLSP',str(mLSP2))
-        All_files['Signal_2']['Label'] = All_files['Signal_2']['Label'].replace('@mGo',str(float(mGo2)/1000.0)).replace('@mLSP',str(float(mLSP2)/1000))
+    if 'Signal_1' in All_files.keys() or 'Signal_2' in All_files.keys() : 
+        if mGo1 == None : 
+            del All_files['Signal_1']
+        else : 
+            All_files['Signal_1']['select'] = All_files['Signal_1']['select'].replace('@mGo',str(mGo1)).replace('@mLSP',str(mLSP1))
+            All_files['Signal_1']['Label'] = All_files['Signal_1']['Label'].replace('@mGo',str(float(mGo1)/1000.0)).replace('@mLSP',str(float(mLSP1)/1000))
+        if mGo2 == None : 
+            del All_files['Signal_2']
+        else : 
+            All_files['Signal_2']['select'] = All_files['Signal_2']['select'].replace('@mGo',str(mGo2)).replace('@mLSP',str(mLSP2))
+            All_files['Signal_2']['Label'] = All_files['Signal_2']['Label'].replace('@mGo',str(float(mGo2)/1000.0)).replace('@mLSP',str(float(mLSP2)/1000))
 
     cut_strings = ''
     cf = open(args.cuts, 'r')
@@ -400,11 +410,14 @@ if __name__ == '__main__':
             # per binwidth normalization
             if any('varbin' in e for e in var) : 
                 normBinW = var[index0][2]
-                #if normBinW == True:
-                #    hist.Scale(0.1,"width")
+                bins = var[index0][1]
+                if normBinW == True:
+                    nbins = hist.GetNbinsX()
+                    for bin in range(0,nbins+1):
+                        hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
             # write the hist
-            hist.Write()
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+            hist.Write()
         # make the total BKG hist to be used for ratio calculation
         total = hadd1ds(stackableHists,do_alphabetagamma)
         outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
@@ -524,7 +537,7 @@ if __name__ == '__main__':
                 blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
                 blindbox.SetFillColor(ROOT.kBlue+3)
                 blindbox.SetFillStyle(3944)
-                #blindbox.Draw()
+                blindbox.Draw()
                 xblind.append(blindbox) # so it doesn't get deleted
         
         # same for signals 

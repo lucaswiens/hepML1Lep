@@ -1,4 +1,4 @@
 Requirements = OpSysAndVer == "CentOS7"
-Request_GPUs = 3
+Request_GPUs = 1
 +RequestRuntime = 43200
 queue 

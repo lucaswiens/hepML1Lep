@@ -197,7 +197,7 @@ void overly_DNN_Multi()
       TFile *f5 = TFile::Open("datacards_18_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
       TGraph *Gr_Exp_NTOP5 =(TGraph*)f5->Get("T1ttttExpectedLimit");
 
-      TFile *f6 = TFile::Open("datacards_FullRunII_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
+      TFile *f6 = TFile::Open("datacards_161718_syst/datacards/limit_scan.root");//testLimits_alpha_nT/datacards/limit_scan.root");
       TGraph *Gr_Exp_NTOP6 =(TGraph*)f6->Get("T1ttttExpectedLimit");
 
     
@@ -250,6 +250,6 @@ void overly_DNN_Multi()
       addText(0.8-0.15,0.995-0.15,0.95,0.996,"35.9 fb^{-1} (13 TeV)",kBlack);
       addText(0.19,0.39,0.86,0.916,"#bf{CMS} #it{Preliminary}",kBlack);
 
-      c11->SaveAs("Limit_systmatics161718_all.png");
+      c11->SaveAs("Limit_systmatics161718_all_2.png");
 
 }

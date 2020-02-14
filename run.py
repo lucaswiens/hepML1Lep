@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--append', help='add extra text to name of every thing',default='',metavar='append')
     parser.add_argument('--do_parametric',help='Do the training parametrically or not',default=False,action='store_true')
     parser.add_argument('--nSignal_Cla', help='number of signal classes ',default=1 , metavar='nSignal_Cla')
+    parser.add_argument('--multib','--mb', help='multiple b analysis or 0b',default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -38,28 +39,43 @@ if __name__ == '__main__':
     MultiClass = args.MultiClass
 
     if MultiClass : 
-        class_names = ['TTSemiLep','TTDiLep','WJets','signal']#_LDM','signal_HDM']
+        if args.multib : 
+            class_names = ['TTSemiLep','TTDiLep','WJets','signal']#_LDM','signal_HDM']
+        else :  class_names = ['TTJets','WJets','signal']
     else : 
         class_names = ['signal','background']
     ##########################
-    # variables to be used in the training 
-    var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'nLep', 'Lep_pt', 'Selected', 'nVeto', 'LT', 'HT', 'nBCleaned_TOTAL','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","mGo", "mLSP"]
+    
+    if args.multib : 
+        # variables to be used in the training 
+        var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'nLep', 'Lep_pt', 'Selected', 'nVeto', 'LT', 'HT', 'nBCleaned_TOTAL','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","mGo", "mLSP"]
+        # variables to be used in while transfere DFs
+        VARS = ["MET","MT","Jet2_pt","Jet1_pt","nLep","Lep_pt","Selected","nVeto","LT","HT",
+                "nBCleaned_TOTAL","nBJet","nTop_Total_Combined","nJets30Clean","dPhi","met_caloPt",
+                "lheHTIncoming","genTau_grandmotherId","genTau_motherId","genLep_grandmotherId",
+                "genLep_motherId","DiLep_Flag","semiLep_Flag","genWeight","sumOfWeights","btagSF",
+                "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
+    else :  
+        # variables to be used in the training 
+        var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWTight","mGo", "mLSP"]
+        # variables to be used in while transfere DFs
+        VARS = ["MET","MT","Jet2_pt","Jet1_pt","nLep","Lep_pt","Selected","nVeto","LT","HT","W_fromHadTop_dRb","W_fromHadTop_dRb_2","W_fromHadTop_dRb_3","W_fromHadTop_dRb_4",
+                "nBCleaned_TOTAL","nBJet","nTop_Total_Combined","nJets30Clean","dPhi","met_caloPt","nWLoose","nWMedium","nWTight","nWVeryTight",
+                "lheHTIncoming","genTau_grandmotherId","genTau_motherId","genLep_grandmotherId",
+                "genLep_motherId","DiLep_Flag","semiLep_Flag","genWeight","sumOfWeights","btagSF",
+                "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
 
-    # variables to be used in while transfere DFs
-    VARS = ["MET","MT","Jet2_pt","Jet1_pt","nLep","Lep_pt","Selected","nVeto","LT","HT",
-            "nBCleaned_TOTAL","nBJet","nTop_Total_Combined","nJets30Clean","dPhi","met_caloPt",
-            "lheHTIncoming","genTau_grandmotherId","genTau_motherId","genLep_grandmotherId",
-            "genLep_motherId","DiLep_Flag","semiLep_Flag","genWeight","sumOfWeights","btagSF",
-            "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
     ##########################
     # start preparing the data if it's not in place
-    Data = PrepData(args.indirROOT,args.indirCSV,VARS,skipexisting = False)
+    Data = PrepData(args.indirROOT,args.indirCSV,VARS,skipexisting = False,multib = args.multib)
     Data.saveCSV()
     # preper the data and split them into testing sample + training sample
-    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,split_Sign_training = False)
+    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,split_Sign_training = False,multib = args.multib)
     splitted.prepare()
     splitted.split(splitted.df_all['all_sig'],splitted.df_all['all_bkg'])
     ##########################
+    print(splitted.test_DF.groupby(['isSignal']).size())
+    print(splitted.train_DF.groupby(['isSignal']).size())
     # init the modele 
     scoreing = score('DNN',args.outdir,splitted.test_DF,splitted.train_DF,splitted.class_weights,var_list=var_list,do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,class_names=class_names)
     # if continue pretrained model

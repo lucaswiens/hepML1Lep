@@ -39,8 +39,8 @@ Wxsec = {
         
     'WJ' : 
         {
-        'scale_up' : '1.3*1000.0/sumOfWeights*genWeight*Xsec*1*btagSF*puRatio*lepSF',
-        'scale_dn' : '0.7*1000.0/sumOfWeights*genWeight*Xsec*1*btagSF*puRatio*lepSF',
+        'scale_up' : '1.5*1000.0/sumOfWeights*genWeight*Xsec*1*btagSF*puRatio*lepSF',
+        'scale_dn' : '0.5*1000.0/sumOfWeights*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         },
 
     'DY' : 

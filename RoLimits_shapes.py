@@ -245,7 +245,8 @@ if __name__ == '__main__':
         datacard.write('\n')
         datacard.write("{:20}".format("Jec_ shape"))
         for i in range(len(bkg_hists_SR)-1) : 
-            datacard.write("{:20}".format(str(1.0)))
+            if not "WJ" in bkg_hists_names[i] : datacard.write("{:20}".format(str(1.0)))
+            else : datacard.write("{:20}".format("-"))
         datacard.write('\n')
         datacard.write("{:20}".format("btagSF_b_ shape"))
         for i in range(len(bkg_hists_SR)-1) : 

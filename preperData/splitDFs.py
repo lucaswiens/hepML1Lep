@@ -13,7 +13,7 @@ to_drop = ['lheHTIncoming', 'genTau_grandmotherId', 'genTau_motherId', 'genLep_g
                'genLep_motherId', 'DiLep_Flag', 'semiLep_Flag', 'GenMET',  'filename']
 
 class splitDFs(object):
-    def __init__(self,signalDF, bkgDF,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,split_Sign_training = False):
+    def __init__(self,signalDF, bkgDF,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,split_Sign_training = False,multib = False):
         self.signalDF = signalDF
         self.bkgDF = bkgDF
         #self.do_binary_first = do_binary_first
@@ -21,18 +21,22 @@ class splitDFs(object):
         self.nSignal_Cla =nSignal_Cla
         self.do_parametric = do_parametric
         self.split_Sign_training = split_Sign_training
+        self.multib = multib
     # function to get the index of each class of background
     def classidxs(self):
         """
         function to find idex for each  bkg class for multiclass training
         """
-        self.SemiLep_TT_index   = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')].index
-        self.DiLep_TT_index     = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_DiLepton')].index
-        #QCD_index        = self.bkgDF[self.bkgDF['filename'].str.contains('QCD')].index
-        self.WJets_others_index = self.bkgDF[~ self.bkgDF['filename'].str.contains('TTJets')].index
-
+        if self.multib : 
+            self.class_0   = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')].index
+            self.class_1     = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_DiLepton')].index
+            #QCD_index        = self.bkgDF[self.bkgDF['filename'].str.contains('QCD')].index
+            self.class_2 = self.bkgDF[~ self.bkgDF['filename'].str.contains('TTJets')].index
+        else : 
+            self.class_0   = self.bkgDF[~(self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index#self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom') | self.bkgDF['filename'].str.contains('TTJets_DiLepton'))].index
+            self.class_1 = self.bkgDF[self.bkgDF['filename'].str.contains('WJetsToLNu_')].index
+            self.class_2     = None #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            
         print (self.signalDF.groupby(['mGo','mLSP']).size())
-
         ## this is very usful when you need to sample specific class to match with other class (overSample Signal to backgound for example)        
     from sklearn.utils import shuffle
     def _overbalance(self,train_s,train_bkg):
@@ -82,19 +86,21 @@ class splitDFs(object):
 
         if self.nSignal_Cla > 1 and self.do_multiClass: 
             print('signal will be splitted into ',self.nSignal_Cla, 'classes')
-            self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
-            self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
-            self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
+            self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
+            self.bkgDF.loc[self.class_1,'isSignal'] = 1
+            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             for num ,idxs in enumerate(self.list_of_mass_idxs) : 
                     self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
                     for j ,i in  enumerate(signal_Cla[0]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            self.signalDF.loc[idxs,'isSignal'] = 3
+                            if self.class_2 != None : self.signalDF.loc[idxs,'isSignal'] = 3
+                            else : self.signalDF.loc[idxs,'isSignal'] = 2
                     for j ,i in  enumerate(signal_Cla[1]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            self.signalDF.loc[idxs,'isSignal'] = 4
+                            if self.class_2 != None : self.signalDF.loc[idxs,'isSignal'] = 4
+                            else : self.signalDF.loc[idxs,'isSignal'] = 3
             self.df_all['all_sig'] = self.signalDF.copy()
             self.df_all['all_sig'] = self.df_all['all_sig'].dropna()
             if self.do_parametric : 
@@ -116,13 +122,14 @@ class splitDFs(object):
     
         elif self.do_multiClass and not self.split_Sign_training : 
             print('signal will be taken as ',self.nSignal_Cla, 'class')
-            self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
-            self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
-            self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
+            self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
+            self.bkgDF.loc[self.class_1,'isSignal'] = 1
+            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             
             for num ,idxs in enumerate(self.list_of_mass_idxs) :
                 self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
-                self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 3
+                if self.class_2 != None : self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 3
+                else :self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 2
                 ## for the last training over all the samples (the multiClass trainig)
                 self.df_all['all_sig'] = pd.concat([self.df_all['all_sig'],self.df_all[self.signal_list_names[num]]])
                 #del self.df_all[self.signal_list_names[num]]
@@ -145,9 +152,9 @@ class splitDFs(object):
     
         elif self.split_Sign_training and self.do_multiClass: 
             print("you choosed to train twice, once per signal class, make sure your configuration does what you need ")
-            self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
-            self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 1
-            self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 2
+            self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
+            self.bkgDF.loc[self.class_1,'isSignal'] = 1
+            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             self.df_all['sig_1'] = self.signalDF.copy()
             self.df_all['sig_2'] = self.signalDF.copy()
             for num ,idxs in enumerate(self.list_of_mass_idxs) : 
@@ -155,11 +162,13 @@ class splitDFs(object):
                     for j ,i in  enumerate(signal_Cla[0]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            self.df_all['sig_1'].loc[idxs,'isSignal'] = 3
+                            if self.class_2 != None : self.df_all['sig_1'].loc[idxs,'isSignal'] = 3
+                            else : self.df_all['sig_1'].loc[idxs,'isSignal'] = 2
                     for j ,i in  enumerate(signal_Cla[1]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            self.df_all['sig_2'].loc[idxs,'isSignal'] = 3
+                            if self.class_2 != None : self.df_all['sig_2'].loc[idxs,'isSignal'] = 3
+                            else : self.df_all['sig_2'].loc[idxs,'isSignal'] = 2
             self.df_all['all_sig_1'] = self.df_all['sig_1'].copy()
             self.df_all['all_sig_2'] = self.df_all['sig_2'].copy()
             self.df_all['all_sig_1'] = self.df_all['all_sig_1'].dropna()
@@ -193,9 +202,9 @@ class splitDFs(object):
                 #del self.df_all[self.signal_list_names[num]]
             # if doing binary classification then overwrite the bkgclass numbers by 0 and signal to 1 
             self.df_all['all_sig'] = self.df_all['all_sig'].reset_index()    
-            self.bkgDF.loc[self.SemiLep_TT_index,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
-            self.bkgDF.loc[self.DiLep_TT_index,'isSignal'] = 0
-            self.bkgDF.loc[self.WJets_others_index,'isSignal'] = 0
+            self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
+            self.bkgDF.loc[self.class_1,'isSignal'] = 0
+            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 0
             if self.do_parametric : 
                 signal_list_dfs = [] 
                 for name in  self.signal_list_names : 
@@ -227,7 +236,10 @@ class splitDFs(object):
         self.test_DF  = self.test_DF.reset_index(drop=True)
         classes_ = np.unique(self.train_DF['isSignal'])
         print('Done reindexing, going to next step')
+        #if self.multib : 
         self.class_weights = class_weight.compute_class_weight('balanced',
-                                                classes_,
-                                                self.train_DF['isSignal'])
-        
+                                                                classes_,
+                                                                self.train_DF['isSignal'])
+        #else :
+        #    self.class_weights = class_weight.compute_sample_weight('balanced',
+        #                                                            self.train_DF['isSignal'])

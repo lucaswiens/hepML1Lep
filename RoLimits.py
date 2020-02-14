@@ -84,6 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('--cmsswdir', help='cmssw directory',default='/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/', metavar='cmsswdir')
     parser.add_argument('--execu', help="wight directory",default='./batch/Limit_exec.sh' ,metavar='execu')
     parser.add_argument('--sfs', help="the text file that has alpha beta gamma",default=None ,metavar='sfs')
+    parser.add_argument('--year','--Y', help="Year of the data taken",default=None ,metavar="year")
     
     binned = False
     args = parser.parse_args()
@@ -95,7 +96,6 @@ if __name__ == '__main__':
     execu = args.execu   
     sfs = args.sfs
 
-
     if not os.path.exists(outdir): os.makedirs(outdir)
     
     datacardsdir = os.path.join(outdir,'datacards/combinedCards')
@@ -105,10 +105,60 @@ if __name__ == '__main__':
     text = open(outdir+"/background_comp.txt", "w+")
 
     for signal in signal_List : 
+        systList = { 
+                "Jec_Up"            :    []  ,
+                "Jec_Down"          :    []  ,
+                "btagSF_b_Up"       :    []  ,
+                "btagSF_b_Down"     :    []  ,
+                "btagSF_l_Up"       :    []  ,
+                "btagSF_l_Down"     :    []  ,
+                "ISR_Up"            :    []  ,
+                "ISR_Down"          :    []  ,
+                "lepSF_Up"          :    []  ,
+                "lepSF_Down"        :    []  ,
+                "PU_Up"             :    []  ,
+                "PU_Down"           :    []  ,
+                "TTxsec_Up"         :    []  ,
+                "TTxsec_Down"       :    []  ,
+                "TTVxsec_Up"        :    []  ,
+                "TTVxsec_Down"      :    []  ,
+                "Wpol_Up"           :    []  ,
+                "Wpol_Down"         :    []  ,
+                "Wxsec_Up"          :    []  ,
+                "Wxsec_Down"        :    []
+                }
+        SigsystList = { 
+                "Jec_Up"            :    []  ,
+                "Jec_Down"          :    []  ,
+                "btagSF_b_Up"       :    []  ,
+                "btagSF_b_Down"     :    []  ,
+                "btagSF_l_Up"       :    []  ,
+                "btagSF_l_Down"     :    []  ,
+                "ISR_Up"            :    []  ,
+                "ISR_Down"          :    []  ,
+                "lepSF_Up"          :    []  ,
+                "lepSF_Down"        :    []  ,
+                "Wpol_Up"           :    []  ,
+                "Wpol_Down"         :    []  ,
+                }
+        if int(args.year) != 2016 : 
+            systList.pop('ISR_Up', None)
+            systList.pop('ISR_Down', None)
+            SigsystList.pop('ISR_Up', None)
+            SigsystList.pop('ISR_Down', None)
+        intersection_syst = set(systList).intersection(set(SigsystList))
+        #print(intersection_syst)
+
         lists = []
         signal_files = glob.glob(os.path.join(indirS,signal+'/*SR.root'))
+        if not signal_files : 
+            print("cannot find this file for ", signal,"will escape it, please check")
+            continue
         sf = ROOT.TFile.Open(signal_files[0], "read")
-        shist = sf.Get('Signal_1/'+signal+'/1900_100sig_SR')
+        shist = sf.Get('Signal_1/'+signal+'/1900_100sig_SR_nom')
+        for skey in SigsystList : 
+            SigsystList[skey].append(sf.Get('Signal_1/'+signal+'/1900_100sig_SR_'+skey))
+
         lists.append(shist)
         mgo = float(signal.split('_')[0])
         mlsp = float(signal.split('_')[1])
@@ -121,12 +171,18 @@ if __name__ == '__main__':
             bkg_files_SR = glob.glob(os.path.join(indirB,bkg+'/*SR.root'))
             #print (bkg_files_SR)
             hist = ROOT.TH1F('background','background',100,0.0,1.0)
+            for key in systList : 
+                systList[key].append(ROOT.TH1F('background_'+key,'background_'+key,100,0.0,1.0))
+            #print(systList)
+            
             for bkgf in bkg_files_SR : 
                 bkg_name = bkgf.split('/')[-1].split('_')[1]
                 if bkg_name == 'Data' : continue 
                 bf = ROOT.TFile.Open(bkgf, "read")
                 #print(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
-                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR')
+                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR_nom')
+                for key in systList : 
+                    systList[key].append(bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR_'+key))
                 #print(bhist.Integral())
                 which = ''
                 scalefactor = 1.0
@@ -134,7 +190,15 @@ if __name__ == '__main__':
                 elif bkg_name == 'SemiLepTT' :which = 'alpha'
                 elif bkg_name != 'Data' : which = 'gamma'
                 scalefactor = float(getSFs(sfs,mass=bkg,which=which))
+                #print(bkg,bkgf)
+                #print(bkg)
                 bhist.Scale(scalefactor)
+                for key in systList : 
+                    for i,syst in enumerate(systList[key]) : 
+                        if i == 0 : continue
+                        syst.Scale(scalefactor)
+                        systList[key][0].Add(syst)
+                    del systList[key][1:]
                 hist.Add(bhist)
                 lists.append(hist)
                 #blisthist.append(bhist)
@@ -142,14 +206,16 @@ if __name__ == '__main__':
             NBins = hist.GetNbinsX()
             prevSigni = 0.0
             factor = 1.0 
-            if mgo < 1400 : factor = 100
+            if mgo < 1400 : factor = 1.0
             bestBin = 0.0
                 
-            for i in range(NBins,1,-1):
+            for i in range(NBins,90,-1):
                 s = shist.Integral(i,NBins+1)/factor
                 b = hist.Integral(i,NBins+1)
+
                 signi = simpleAsimov(s ,b)
-                if signi > prevSigni : 
+
+                if signi > prevSigni or b < 1.0: 
                     #print('better significance when merged ', i ,' to ', NBins+1, ' oldsign =  ',prevSigni , ' newsign = ',  signi)
                     bestBin = i
                     prevSigni = signi
@@ -158,12 +224,27 @@ if __name__ == '__main__':
                     bestBin = i-1
                     break 
             # this is to inforce the best bin to be 96 which corresponding to DNN >= 0.95, this will ignor the significance calculations above
-            bestBin = 90
+            #bestBin = 90
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
             shist.Scale(1.0/factor)
             sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
             bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
+            
+            for key in systList : 
+                syst_int = systList[key][0].Integral(bestBin,NBins+1)
+                systList[key].append(syst_int)
+                impact = round((syst_int/(bkgRate+0.01)),2)
+                invimpact = round((1/(impact+0.001)),2)
+                systList[key].append(impact if impact >= 1.0 else invimpact )
+
+            for key in SigsystList : 
+                syst_int = SigsystList[key][0].Integral(bestBin,NBins+1)
+                SigsystList[key].append(syst_int)
+                impact = round((syst_int/((sigRate)+0.01))/factor,2)
+                invimpact = round((1/(impact+0.001)),2)
+                SigsystList[key].append(impact if impact >= 1.0 else invimpact )
+
             if sigRate == 0.0 : 
                 print ('Signal',mgo,mlsp, 'has zero rate will not write the datacard for it ')
                 continue 
@@ -172,100 +253,57 @@ if __name__ == '__main__':
             alphaE  = float(getSFs(sfs,mass=bkg,which='alphaE')) + 1.0
             betaE  = float(getSFs(sfs,mass=bkg,which='betaE')) + 1.0
             gammaE  = float(getSFs(sfs,mass=bkg,which='gammaE')) + 1.0
-            if not binned :
-                datacard = open(datacardsdir+ '/T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+'.txt', 'w'); 
-                datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(bestBin),str(NBins+1)))
-                datacard.write("imax 1 number of bins \n")
-                datacard.write("jmax * number of processes minus 1 \n")
-                datacard.write("kmax * number of nuisance parameters \n")
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("shapes *    ch1  FAKE \n");
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<12}{:<12}".format("bin","ch1")+'\n')
-                datacard.write("{:<12}{:<12}".format("observation",round(hist.Integral(bestBin,NBins+1),2))+'\n')    
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("bin","ch1","ch1")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("process",'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),"background")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("process",'0',"1")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("rate",round(sigRate,2),round(bkgRate,2))+'\n')
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("MCstats"+'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+' lnN',round(1.0+(sigerr/((sigRate/factor)+0.01)),2),'-')+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("MCstatsbackground lnN",'-',round(1.0+(bkgerr/(bkgRate+0.01)),2))+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("sigSyst lnN",1.2,'-')+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("alphauncert lnN",'-',alphaE)+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("betauncert lnN",'-',betaE)+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("gammauncert lnN",'-',gammaE)+'\n')
-
-            else : 
-                binsdir = os.path.join(outdir,'datacards/T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)))
-                if not os.path.exists(binsdir) : os.makedirs(binsdir)
-                datacard = open(binsdir+'/LastBin.txt', 'w'); 
-                datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(bestBin),str(NBins+1)))
-                datacard.write("imax 1 number of bins \n")
-                datacard.write("jmax * number of processes minus 1 \n")
-                datacard.write("kmax * number of nuisance parameters \n")
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("shapes *    ch1  FAKE \n");
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<12}{:<12}".format("bin","ch1")+'\n')
-                datacard.write("{:<12}{:<12}".format("observation",round(hist.Integral(50,NBins+1),2))+'\n')    
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("bin","ch1","ch1")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("process",'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),"background")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("process",'0',"1")+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("rate",round(sigRate,2),round(bkgRate,2))+'\n')
-                datacard.write(130*'-')
-                datacard.write('\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("MCstats"+'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+' lnN',round(1.0+(sigerr/((sigRate/factor)+0.01)),2),'-')+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("MCstatsbackground lnN",'-',round(1.0+(bkgerr/(bkgRate+0.01)),2))+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("sigSyst lnN",1.2,'-')+'\n')
-                datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
-                
-                for i in range(50,bestBin):
-                    binsigRate = shist.GetBinContent(i)
-                    binbkgRate = hist.GetBinContent(i)
-                    binsigerr =  shist.GetBinError(i)
-                    binbkgerr =  hist.GetBinError(i)
-                    datacard = open(binsdir+'/bin_'+str(i)+'.txt', 'w'); 
-                    datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(1),str(bestBin)))
-                    datacard.write("imax 1 number of bins \n")
-                    datacard.write("jmax * number of processes minus 1 \n")
-                    datacard.write("kmax * number of nuisance parameters \n")
-                    datacard.write(130*'-')
-                    datacard.write('\n')
-                    datacard.write("shapes *    ch1  FAKE \n");
-                    datacard.write(130*'-')
-                    datacard.write('\n')
-                    datacard.write("{:<12}{:<12}".format("bin","ch1")+'\n')
-                    datacard.write("{:<12}{:<12}".format("observation",round(hist.Integral(50,NBins+1),2))+'\n')    
-                    datacard.write(130*'-')
-                    datacard.write('\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("bin","ch1","ch1")+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("process",'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+'_'+str(i),"background"+'_'+str(i))+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("process",'0',"1")+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("rate",round(binsigRate,2),round(binbkgRate,2))+'\n')
-                    datacard.write(130*'-')
-                    datacard.write('\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("MCstats"+'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+'_'+str(i)+' lnN',round(1.0+(binsigerr/((binsigRate/factor)+0.01)),2),'-')+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("MCstatsbackground"+'_'+str(i)+" lnN",'-',round(1.0+(binbkgerr/(binbkgRate+0.01)),2))+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("sigSyst"+'_'+str(i)+" lnN",1.2,'-')+'\n')
-                    datacard.write("{:<80}{:<40}{:<40}".format("bkguncert"+'_'+str(i)+" lnN",'-',1.1)+'\n')
-
-
+            #del systList , SigsystList
+            datacard = open(datacardsdir+ '/T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+'.txt', 'w'); 
+            datacard.write("## Datacard for signal %s (with bins from  %s to %s)\n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),str(bestBin),str(NBins+1)))
+            datacard.write("imax 1 number of bins \n")
+            datacard.write("jmax * number of processes minus 1 \n")
+            datacard.write("kmax * number of nuisance parameters \n")
+            datacard.write(130*'-')
+            datacard.write('\n')
+            datacard.write("shapes *    ch1  FAKE \n");
+            datacard.write(130*'-')
+            datacard.write('\n')
+            datacard.write("{:<12}{:<12}".format("bin","ch1")+'\n')
+            datacard.write("{:<12}{:<12}".format("observation",round(hist.Integral(bestBin,NBins+1),2))+'\n')    
+            datacard.write(130*'-')
+            datacard.write('\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("bin","ch1","ch1")+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("process",'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp)),"background")+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("process",'0',"1")+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("rate",round(sigRate,2),round(bkgRate,2))+'\n')
+            datacard.write(130*'-')
+            datacard.write('\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("MCstats"+'T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))+' lnN',round(1.0+(sigerr/((sigRate)+0.01)),2),'-')+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("MCstatsbackground lnN",'-',round(1.0+(bkgerr/(bkgRate+0.01)),2))+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("lumi lnN",str(1.023 if int(args.year) == 2017 else 1.025),str(1.023 if int(args.year) == 2017 else 1.025))+'\n')
+            datacard.write("{:<62}{:<30}{:<30}".format("DNNshape lnN",str(1.1),str(1.1))+'\n')
+            for syst in systList : 
+                if "Down" in syst : continue
+                if syst in intersection_syst : 
+                    sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
+                    bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
+                else :
+                    bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+" lnN",'-',str(round(bkgVar,2)))+'\n')
+            for syst in SigsystList : 
+                if "Down" in syst : continue
+                if syst in intersection_syst : continue # already taken into account in the previous loop
+                else :
+                    sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+" lnN",str(round(sigVar,2)),'-')+'\n')
+            
+            #datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
+            #datacard.write("{:<62}{:<30}{:<30}".format("alphauncert lnN",'-',alphaE)+'\n')
+            #datacard.write("{:<62}{:<30}{:<30}".format("betauncert lnN",'-',betaE)+'\n')
+            #datacard.write("{:<62}{:<30}{:<30}".format("gammauncert lnN",'-',gammaE)+'\n')
 
     if Limit : 
         print ('limit will be calculated on HTC from ', datacardsdir)
         print ('in this step you will need a valid cmssw dir with higgscombne tools compiled, please check https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/ ')
         print ('you have scpecified CMSSW in this place, ', cmsswdir )
-
+        
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir) :  os.makedirs(logdir)
         schedd = htcondor.Schedd()
@@ -300,9 +338,5 @@ if __name__ == '__main__':
             #        break    
             #    except: 
             #        pass
-
-
-
-                
                 
                 

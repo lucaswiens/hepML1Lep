@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-
-import ROOT
-import time
-import array
-import operator
-import uproot
-import os
-os.environ["KERAS_BACKEND"] = "tensorflow"
-import keras
-from keras.models import model_from_json
-import pandas as pd
 import argparse
+import os
+
+missing = ['../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016E_17Jul2018.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016H_17Jul2018_v1.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016G_17Jul2018.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016D_17Jul2018.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016C_17Jul2018.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleMuon_Run2016H_17Jul2018_v1.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleMuon_Run2016G_17Jul2018.root',
+           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016B_17Jul2018_v2.root']
 
 
 def load_model(pathToModel):
@@ -26,90 +25,61 @@ def load_model(pathToModel):
     return model
 
 
-def Predict_Keras(infile,var_list,class_list, mgo = 0.0,mlsp = 0.0,model = None) : 
+def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) : 
 
     model = load_model(model)
     model.compile(loss='sparse_categorical_crossentropy',metrics=['accuracy'],optimizer='adam')
-
-
-    outbranch = [str(int(mgo))+"_"+str(int(mlsp))+x for x in class_list]
     
     it = uproot.open(infile)["sf/t"]
-    file_out = ROOT.TFile.Open(infile, "UPDATE")
-    tree_out = file_out.Get("sf/t")
-    TT1l_val = array.array('f', [0.])
-    TT2l_val = array.array('f', [0.])
-    WJet_val = array.array('f', [0.])
-    Sign_val = array.array('f', [0.])
+    file_in = ROOT.TFile(infile, "READ")
+    tree_in = file_in.Get("sf/t")
+    file_out = ROOT.TFile(os.path.join(outdir,infile.split("/")[-1]), "RECREATE")
+    #tree_out = file_out.Get("sf/t")
+    TT1l_val = array.array('f', 10*[0.])
+    TT2l_val = array.array('f', 10*[0.])
+    WJet_val = array.array('f', 10*[0.])
+    Sign_val = array.array('f', 10*[0.])
 
-    if ((not "T1tttt" in infile)  and (not 'T5qqqq' in infile)) : 
-        p_df = it.pandas.df(var_list)
-        p_df.loc[:,'mGo'] = mgo
-        p_df.loc[:,'mLSP'] = mlsp
+    tree_in.SetBranchStatus("*_0b",0);    
+    tree_in.SetBranchStatus("*TTS",0)
+    tree_in.SetBranchStatus("*WJ",0)
+    tree_in.SetBranchStatus("*TTDi",0)
+    tree_in.SetBranchStatus("*sig",0)
+
+
+    if ('T5qqqq' in infile) : 
+        return
+    elif (not "T1tttt" in infile) : 
+        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.reset_index(drop=True)
+        prediction = pd.DataFrame()
+        for i,mass in enumerate(masslist) : 
+            mgo = mass[0] ; mlsp = mass[1]
+            p_df.loc[:,'mGo'] = mgo
+            p_df.loc[:,'mLSP'] = mlsp
+            prediction_ = pd.DataFrame(model.predict_proba(p_df[var_list+['mGo','mLSP']].values),columns=['TTS_'+str(i), 'TTDi_'+str(i), 'WJ_'+str(i),'Sig_'+str(i)])
+            prediction = pd.concat([prediction,prediction_],axis=1)
     else :
-        #masslist = [[1900,100],[2200,100],[2200,800],[1900,800],[1900,1000],[1500,1000],[1500,1200],[1700,1200],[1600,1100],[1800,1300]]
-        #TT1l_dict = {} ; TT2l_dict = {} ; WJet_dict = {} ; Sign_dict = {}
         var_list.append('mGo')
         var_list.append('mLSP')
-        p_df = it.pandas.df(var_list)
-        #for mass in masslist : 
-            #mgo = str(mass[0]); mlsp = str(mass[1])
-        TT1l_1900_100  = tree_out.Branch('1900_100TTS', TT1l_val, '1900_100TTS/F')
-        TT1l_1900_1000 = tree_out.Branch('1900_1000TTS', TT1l_val, '1900_1000TTS/F')
-        TT1l_1900_800  = tree_out.Branch('1900_800TTS', TT1l_val, '1900_800TTS/F')
-        TT1l_2200_100  = tree_out.Branch('2200_100TTS', TT1l_val, '2200_100TTS/F')
-        TT1l_2200_800  = tree_out.Branch('2200_800TTS', TT1l_val, '2200_800TTS/F')
-        TT1l_1500_1000 = tree_out.Branch('1500_1000TTS', TT1l_val, '1500_1000TTS/F')
-        TT1l_1500_1200 = tree_out.Branch('1500_1200TTS', TT1l_val, '1500_1200TTS/F')
-        TT1l_1600_1100 = tree_out.Branch('1600_1100TTS', TT1l_val, '1600_1100TTS/F')
-        TT1l_1700_1200 = tree_out.Branch('1700_1200TTS', TT1l_val, '1700_1200TTS/F')
-        TT1l_1800_1300 = tree_out.Branch('1800_1300TTS', TT1l_val, '1800_1300TTS/F')
+        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.reset_index(drop=True)
+        prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
 
-        TT2l_1900_100  = tree_out.Branch('1900_100TTDi', TT2l_val, '1900_100TTDi/F')
-        TT2l_1900_1000 = tree_out.Branch('1900_1000TTDi', TT2l_val, '1900_1000TTDi/F')
-        TT2l_1900_800  = tree_out.Branch('1900_800TTDi', TT2l_val, '1900_800TTDi/F')
-        TT2l_2200_100  = tree_out.Branch('2200_100TTDi', TT2l_val, '2200_100TTDi/F')
-        TT2l_2200_800  = tree_out.Branch('2200_800TTDi', TT2l_val, '2200_800TTDi/F')
-        TT2l_1500_1000 = tree_out.Branch('1500_1000TTDi', TT2l_val, '1500_1000TTDi/F')
-        TT2l_1500_1200 = tree_out.Branch('1500_1200TTDi', TT2l_val, '1500_1200TTDi/F')
-        TT2l_1600_1100 = tree_out.Branch('1600_1100TTDi', TT2l_val, '1600_1100TTDi/F')
-        TT2l_1700_1200 = tree_out.Branch('1700_1200TTDi', TT2l_val, '1700_1200TTDi/F')
-        TT2l_1800_1300 = tree_out.Branch('1800_1300TTDi', TT2l_val, '1800_1300TTDi/F')
+    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
-        WJet_1900_100  = tree_out.Branch('1900_100WJ', WJet_val, '1900_100WJ/F')
-        WJet_1900_1000 = tree_out.Branch('1900_1000WJ', WJet_val, '1900_1000WJ/F')
-        WJet_1900_800  = tree_out.Branch('1900_800WJ', WJet_val, '1900_800WJ/F')
-        WJet_2200_100  = tree_out.Branch('2200_100WJ', WJet_val, '2200_100WJ/F')
-        WJet_2200_800  = tree_out.Branch('2200_800WJ', WJet_val, '2200_800WJ/F')
-        WJet_1500_1000 = tree_out.Branch('1500_1000WJ', WJet_val, '1500_1000WJ/F')
-        WJet_1500_1200 = tree_out.Branch('1500_1200WJ', WJet_val, '1500_1200WJ/F')
-        WJet_1600_1100 = tree_out.Branch('1600_1100WJ', WJet_val, '1600_1100WJ/F')
-        WJet_1700_1200 = tree_out.Branch('1700_1200WJ', WJet_val, '1700_1200WJ/F')
-        WJet_1800_1300 = tree_out.Branch('1800_1300WJ', WJet_val, '1800_1300WJ/F')
+    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS[10]/F')
+    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi[10]/F')
+    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ[10]/F')
+    Sign  = tree_out.Branch('sig', Sign_val, 'sig[10]/F')
 
-        Sign_1900_100  = tree_out.Branch('1900_100sig', Sign_val, '1900_100sig/F')
-        Sign_1900_1000 = tree_out.Branch('1900_1000sig', Sign_val, '1900_1000sig/F')
-        Sign_1900_800  = tree_out.Branch('1900_800sig', Sign_val, '1900_800sig/F')
-        Sign_2200_100  = tree_out.Branch('2200_100sig', Sign_val, '2200_100sig/F')
-        Sign_2200_800  = tree_out.Branch('2200_800sig', Sign_val, '2200_800sig/F')
-        Sign_1500_1000 = tree_out.Branch('1500_1000sig', Sign_val, '1500_1000sig/F')
-        Sign_1500_1200 = tree_out.Branch('1500_1200sig', Sign_val, '1500_1200sig/F')
-        Sign_1600_1100 = tree_out.Branch('1600_1100sig', Sign_val, '1600_1100sig/F')
-        Sign_1700_1200 = tree_out.Branch('1700_1200sig', Sign_val, '1700_1200sig/F')
-        Sign_1800_1300 = tree_out.Branch('1800_1300sig', Sign_val, '1800_1300sig/F')
-
-    prediction = model.predict_proba(p_df.values)
-
+    
+    prediction['Event'] = p_df['Event']
+    prediction['Run'] =  p_df['Run']
+    prediction['Lumi'] =  p_df['Lumi']
     #print(prediction)
-
-    TT1l_name = outbranch[0]
-    newbranch_TT1l = tree_out.Branch(TT1l_name, TT1l_val, TT1l_name+'/F')
-    TT2l_name = outbranch[1]
-    newbranch_TT2l = tree_out.Branch(TT2l_name, TT2l_val, TT2l_name+'/F')
-    WJet_name = outbranch[2]
-    newbranch_WJet =tree_out.Branch(WJet_name, WJet_val, WJet_name+'/F')
-    Sign_name = outbranch[3]
-    newbranch_Sign = tree_out.Branch(Sign_name, Sign_val, Sign_name+'/F')
 
     t_start = time.time()
 
@@ -118,64 +88,41 @@ def Predict_Keras(infile,var_list,class_list, mgo = 0.0,mlsp = 0.0,model = None)
     for i_ev in range(tree_out.GetEntries()):
         #print i_ev
         if i_ev % 10000 == 0:
-            print ('Event', i_ev)
+            print ('Event', i_ev,"/",tree_out.GetEntries())
             t_current = time.time()
-            print ('Time', t_current- t_start)
+            print ('Time', t_current - t_start)
             t_start = t_current
-
-        TT1l_val[0] = prediction[i_ev][0]
-        TT2l_val[0] = prediction[i_ev][1]
-        WJet_val[0] = prediction[i_ev][2]
-        Sign_val[0] = prediction[i_ev][3]
-
-        newbranch_TT1l.Fill()
-        newbranch_TT2l.Fill()
-        newbranch_WJet.Fill()
-        newbranch_Sign.Fill()
-
+        #tree_out.GetEntry(i_ev)
+        tree_out.GetEntry(i_ev)
+        #if not ((tree_out.nLep == 1) & (tree_out.nJets30Clean >= 3)& (tree_out.Selected == 1)& (tree_out.nVeto == 0)& (tree_out.HT > 500)& (tree_out.LT > 250)) : continue
+        """ the selections cuts in pandas seeme to keep all the events order similer to Tcut in root,
+        to save time i keep the ordering with event numbers which i checked to be 100% similer to the order in pandas
+        you can check that by un commenting the next couple of lines and you will see"""
+        #df_idx = prediction.loc[(prediction['Event'] == tree_out.Event )&(prediction['Run'] == tree_out.Run)&(prediction['Lumi'] == tree_out.Lumi)].index
+        #print(df_idx, i_ev)
         if (("T1tttt" in infile)  or ('T5qqqq' in infile)) : 
-            TT1l_1900_100.Fill()
-            TT1l_1900_1000.Fill()
-            TT1l_1900_800.Fill()
-            TT1l_2200_100.Fill()
-            TT1l_2200_800.Fill()
-            TT1l_1500_1000.Fill()
-            TT1l_1500_1200.Fill()
-            TT1l_1600_1100.Fill()
-            TT1l_1700_1200.Fill()
-            TT1l_1800_1300.Fill()
-            TT2l_1900_100.Fill()
-            TT2l_1900_1000.Fill()
-            TT2l_1900_800.Fill()
-            TT2l_2200_100.Fill()
-            TT2l_2200_800.Fill()
-            TT2l_1500_1000.Fill()
-            TT2l_1500_1200.Fill()
-            TT2l_1600_1100.Fill()
-            TT2l_1700_1200.Fill()
-            TT2l_1800_1300.Fill()
-            WJet_1900_100.Fill()
-            WJet_1900_1000.Fill()
-            WJet_1900_800.Fill()
-            WJet_2200_100.Fill()
-            WJet_2200_800.Fill()
-            WJet_1500_1000.Fill()
-            WJet_1500_1200.Fill()
-            WJet_1600_1100.Fill()
-            WJet_1700_1200.Fill()
-            WJet_1800_1300.Fill()
-            Sign_1900_100 .Fill()
-            Sign_1900_1000.Fill()
-            Sign_1900_800.Fill()
-            Sign_2200_100.Fill()
-            Sign_2200_800.Fill()
-            Sign_1500_1000.Fill()
-            Sign_1500_1200.Fill()
-            Sign_1600_1100.Fill()
-            Sign_1700_1200.Fill()
-            Sign_1800_1300.Fill()
+            for i in range(len(masslist)) : 
+                TT1l_val[i] = prediction['TTS'][i_ev]
+                TT2l_val[i] = prediction['TTDi'][i_ev]
+                WJet_val[i] = prediction['WJ'][i_ev]
+                Sign_val[i] = prediction['Sig'][i_ev]
 
+            TT1l.Fill()
+            TT2l.Fill()
+            WJet.Fill()
+            Sign.Fill()
 
+        else : 
+            for i in range(len(masslist)) :
+                TT1l_val[i] = prediction['TTS_'+str(i)][i_ev]
+                TT2l_val[i] = prediction['TTDi_'+str(i)][i_ev]
+                WJet_val[i] = prediction['WJ_'+str(i)][i_ev]
+                Sign_val[i] = prediction['Sig_'+str(i)][i_ev]
+            TT1l.Fill()
+            TT2l.Fill()
+            WJet.Fill()
+            Sign.Fill()
+    file_out.mkdir('sf')
     file_out.cd('sf')
     #file_out.Delete("t;1")
     #file_out.Delete("sf/t;1")
@@ -195,55 +142,77 @@ def find_all_matching(substring, path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate DNN with scikit-learn')
     parser.add_argument('--indir', help='List of datasets to process',default=None, metavar='indir')
+    parser.add_argument('--outdir', help='output directory',default=None, metavar='outdir')
     parser.add_argument('--infile', help='infile to process',default=None, metavar='infile')
     parser.add_argument('--exec', help="wight directory", default='./batch/append_exec.sh', metavar='exec')
     parser.add_argument('--batchMode','-b', help='Batch mode.',default=False, action='store_true')
     parser.add_argument('--model', help='model to be used',default=None, metavar='model')
+    parser.add_argument('--nevt', help='number of events per job',default=0, metavar='nevt')
 
 
     args = parser.parse_args()
 
-    masslist = [[1900,100],[2200,100],[2200,800],[1900,800],[1900,1000],[1500,1000],[1500,1200],[1700,1200],[1600,1100],[1800,1300]]
+    masslist = [[1500,1000],[1500,1200],[1600,1100],[1700,1200],[1800,1300],[1900,100],[1900,800],[1900,1000],[2200,100],[2200,800]]
 
     var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'nLep', 'Lep_pt', 'Selected', 'nVeto', 'LT', 'HT', 'nBCleaned_TOTAL','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]#,"mGo", "mLSP"]
     
     wdir = os.getcwd()
+    
+    outdir = os.path.join(args.outdir,os.path.basename(os.path.normpath(args.indir)))
 
+    if not os.path.exists(outdir):
+            os.makedirs(outdir) 
 
     if not args.batchMode and args.infile: 
-        fout = args.infile
-        if ( "T1tttt" in fout or 'T5qqqq' in fout) :
-            Predict_Keras(fout,var_list,['TTS','TTDi', 'WJ', 'sig'], mgo = 0.0,mlsp = 0.0,model = args.model)
+        import ROOT
+        import time
+        import array
+        import operator
+        import uproot
+        os.environ["KERAS_BACKEND"] = "tensorflow"
+        import keras
+        from keras.models import model_from_json
+        import pandas as pd
+        
+        
+        if ( "T1tttt" in args.infile or 'T5qqqq' in args.infile) :
+            Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
         else : 
-            for mass in masslist : 
-                mgo = mass[0] ; mlsp = mass[1]
-                Predict_Keras(fout,var_list,['TTS','TTDi', 'WJ', 'sig'], mgo = mgo,mlsp = mlsp,model = args.model)
+            Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
     else : 
         
-        logdir = args.indir+'/Logs' 
+
+        logdir = outdir+'/Logs' 
         if not os.path.exists(logdir):
             os.makedirs(logdir) 
         import htcondor    
         schedd = htcondor.Schedd()  
+        sub = htcondor.Submit("")
 
         Filenamelist = find_all_matching(".root",args.indir) 
-        print (Filenamelist)
-        for fc in Filenamelist : 
-            ##Condor configuration
-            submit_parameters = { 
-                "executable"                : args.exec,
-                "arguments"                 : " ".join([fc,wdir,args.model]),
-                "universe"                  : "vanilla",
-                "should_transfer_files"     : "YES",
-                "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
-                "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
-                "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
-                "when_to_transfer_output"   : "ON_EXIT",
-                'Requirements'              : 'OpSysAndVer == "CentOS7"',
+        #print (Filenamelist)
 
-             }
-            job = htcondor.Submit(submit_parameters)
-            with schedd.transaction() as txn:
-                    job.queue(txn)
-                    print ("Submit job for file {}".format(fc))
+        sub["executable"]               = args.exec
+        sub["universe"]                 = "vanilla"
+        sub["should_transfer_files"]    = "YES"
+        sub["log"]                      = "{}/job_$(Cluster)_$(Process).log".format(logdir)
+        sub["output"]                   = "{}/job_$(Cluster)_$(Process).out".format(logdir)
+        sub["error"]                    = "{}/job_$(Cluster)_$(Process).err".format(logdir)
+        sub["when_to_transfer_output"]  = "ON_EXIT"
+        sub['Requirements']             = 'OpSysAndVer == "CentOS7"'
 
+        while(True):
+            try: 
+                with schedd.transaction() as txn:
+                    for fc in Filenamelist : 
+                        print(fc)
+                        sub["arguments"] = " ".join([fc,wdir,args.model,args.outdir,args.indir])
+                        sub.queue(txn)
+                    print ("Submit jobs for the batch system")
+                break
+            except: 
+                pass
+
+
+
+        

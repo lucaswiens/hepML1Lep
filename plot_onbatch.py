@@ -41,9 +41,10 @@ if __name__ == '__main__':
     parser.add_argument('--exec', help="excutable", default='./batch/plotter_exec.sh', metavar='exec')
     parser.add_argument('--lumi','-L' ,help="", default="35.9", metavar='lumi')
     parser.add_argument('--outdir' ,help="outputdir", default=None, metavar='outdir')
-    parser.add_argument('--scale' ,help="scal MC to Data or using alpha/beta/gamma", default=False, action='store_true')
+    parser.add_argument('--scale' ,help="if YES scale MC to Data, if not use alpha/beta/gamma", default=False, action='store_true')
     parser.add_argument('--param','--parameter' ,help="parameters directory", default=None, metavar='param')
     parser.add_argument('--abg' ,help="text file that has the alpha/beta/gamma values to be used", default=None, metavar='abg')
+    parser.add_argument('--only' ,help="choose a cut text to run with it only", default=None, metavar='only')
     parser.add_argument('--blind' ,help="to blind the inclusive distributions",default=False,action='store_true')
     parser.add_argument('--blindall' ,help="to blind the all distributions",default=False,action='store_true')
     args = parser.parse_args()
@@ -56,7 +57,13 @@ if __name__ == '__main__':
         year = "2018"
     else : print("lumi must be in [35.9,41.9,59.74]") ; sys.exit() 
     
+    
+        
     cmd = " --indir "+args.indir+" --lumi "+args.lumi+ " --YmaX 0.0  --YmiN 0.1 --rmax 1.95 --rmin 0.05 --doRatio --year "+year
+    
+    if not "_0b" in args.param : 
+        cmd+= ' --mb '
+
     cmd+=" --cuts "+args.param+"/inclusive.txt --varList "+args.param+"/baseplots.py"
     if args.scale : 
         cmd+= " --scale_bkgd_toData "
@@ -74,32 +81,40 @@ if __name__ == '__main__':
     for mdir in list_masses_ : 
         #to retrive the common options in the cmd
         cmd = cmd_
-        myFiles = glob.glob(mdir+'/*.txt')
+        if args.only != None : 
+            myFiles = glob.glob(mdir+"/*"+args.only+"*.txt")
+        else : myFiles = glob.glob(mdir+"/*.txt")
         mgo = str(mdir.split("/")[-1]).split("_")[0]
         mlsp = str(mdir.split("/")[-1]).split("_")[1]
         cmd+=" --mGo1 "+mgo+" --mLSP1 "+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
-        alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
-        beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
-        gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
-        cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
+
+        if not args.scale : 
+            alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
+            beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
+            gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
+            cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
         if args.blind : 
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
         else : 
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
-        
-        zerob_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
-        zerob_cmd = zerob_cmd.replace("inclusive.txt","0bCS.txt")
-        diLepCS_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
-        diLepCS_cmd = diLepCS_cmd.replace("inclusive.txt","2LCS.txt")
-
-        cmd_array.append(incl_cmd)
-        cmd_array.append(zerob_cmd)
-        cmd_array.append(diLepCS_cmd)
+        if args.only == None : 
+            if os.path.exists(args.param+"/0bCS.txt") : 
+                zerob_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                zerob_cmd = zerob_cmd.replace("inclusive.txt","0bCS.txt")
+                cmd_array.append(zerob_cmd)
+            if os.path.exists(args.param+"/2LCS.txt") : 
+                diLepCS_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                diLepCS_cmd = diLepCS_cmd.replace("inclusive.txt","2LCS.txt")
+                cmd_array.append(diLepCS_cmd)
+            cmd_array.append(incl_cmd)
         
         for mcut in myFiles : 
+            incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
             othercmd = cmd+" --mvarList "+mdir+"/mplots.py "
+            if "inclusive" in mcut : 
+                othercmd.replace("mplots.py","mplots_blind.py")
             othercmd+= " --mcuts "+mcut
-            if 'Sig.txt' in mcut or "Sig_lastbin.txt" in mcut : othercmd +=' --blind '
+            if ('Sig.txt' in mcut or "Sig_lastbin.txt" in mcut) and not "Anti" in mcut : othercmd +=' --blind '
             cmd_array.append(othercmd)
             
     

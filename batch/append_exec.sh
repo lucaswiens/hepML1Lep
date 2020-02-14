@@ -8,4 +8,4 @@ source /nfs/dust/cms/user/amohamed/anaconda3/bin/activate hepML
 
 cd $2
 
-/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python append_DNN.py --infile $1  --model $3
+/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python append_DNN.py --infile $1  --model $3 --outdir $4 --indir $5

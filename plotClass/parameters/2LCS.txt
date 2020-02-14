@@ -8,4 +8,3 @@
 && (DLMS_HT>500)
 && ( DLMS_ST>250 )
 && (nBJet >= 1)
-&& nTop_Total_Combined == 0

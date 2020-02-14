@@ -145,9 +145,9 @@ if __name__ == '__main__':
     
 
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
-    ranges = [50,0.0,1.0]
+    ranges = [100,0.0,1.0]
     if cutdict == 'SR' : 
-        ranges = [50, 0.0, 1.0] 
+        ranges = [100, 0.0, 1.0] 
         cutdict_ = SRs_cut_strings
     elif cutdict == 'CR1' : cutdict_ = CRs1_cut_strings
     elif cutdict == 'CR2' : cutdict_ = CRs2_cut_strings
@@ -252,83 +252,69 @@ if __name__ == '__main__':
         outroot.cd('')
         outroot.Close()
     elif batch :
+        cmd_array = []
         print('batch mode activated ...')
         regions = ['SR','CR1','CR2','CR3','CR4']
         schedd = htcondor.Schedd()  
-            
+        #sub = htcondor.Submit("")
+        ##Condor configuration
+        
         if not sig : 
             print('going to run on backgrounds')
             mList = masslist('mass_list.txt')
             for m in mList : 
-                for g in instPlot.group :
-                    if  'Sig' in g : continue
-                    for reg in regions : 
-                        ##Condor configuration
-                        submit_parameters = { 
-                            "executable"                : execu,
-                            "universe"                  : "vanilla",
-                            "should_transfer_files"     : "YES",
-                            "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
-                            "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
-                            "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
-                            "when_to_transfer_output"   : "ON_EXIT",
-                            #'Requirements'              : 'OpSysAndVer == "CentOS7"',
+                for reg in regions : 
 
-                        }
-                        if args.doSyst :
-                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,"--doSyst"])
-                        else : 
-                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year])
-                        job = htcondor.Submit(submit_parameters)
-                        #with schedd.transaction() as txn:
-                        #        job.queue(txn)
-                        #        print ("Submit job for file {}".format(fc))
-                        print('going to submit the jobs to HTC')
-                        #while(True):
-                        #    try: 
-                        with schedd.transaction() as txn:
-                            job.queue(txn)
+                    if args.doSyst :
+                        for g in instPlot.group :
+                            if  'Sig' in g : continue
+                            cmd_array.append(" ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,"--doSyst"]))
                             print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
-                        #        break    
-                        #    except: 
-                        #        pass
+                    else : 
+                        for g in instPlot.group :
+                            if  'Sig' in g : continue
+                            cmd_array.append(" ".join([wdir,indir,outdir,lumi,g,reg,m,args.year]))
+                            print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
+
         else : 
             regions = ['SR']
             mList = masslist('mass_list_all.txt')
             print('going to run on signals')
             for m in mList : 
-                for g in instPlot.group :
-                    if g != 'Signal_1' : continue
-                    for reg in regions : 
+                #for g in instPlot.group :
+                #    if g != 'Signal_1' : continue
+                #    for reg in regions : 
                         ##Condor configuration
-                        submit_parameters = { 
-                            "executable"                : execu,
-                            "universe"                  : "vanilla",
-                            "should_transfer_files"     : "YES",
-                            "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
-                            "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
-                            "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
-                            "when_to_transfer_output"   : "ON_EXIT",
-                            #'Requirements'              : 'OpSysAndVer == "CentOS7"',
-
-                        }
-                        if args.doSyst : 
-                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--doSyst','--scan'])
-                        else : 
-                            submit_parameters["arguments"]= " ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--scan']),
-                        job = htcondor.Submit(submit_parameters)
-                        #with schedd.transaction() as txn:
-                        #        job.queue(txn)
-                        #        print ("Submit job for file {}".format(fc))
-                        print('going to submit the jobs to HTC')
-                        #while(True):
-                        #    try: 
-                        with schedd.transaction() as txn:
-                            job.queue(txn)
-                            print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
-                        #        break    
-                        #    except: 
-                        #        pass
-
-
+                if args.doSyst : 
+                    for g in instPlot.group :
+                        if g != 'Signal_1' : continue
+                        for reg in regions : 
+                            cmd_array.append(" ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--doSyst','--scan']))
+                            #print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
+                else : 
+                    for g in instPlot.group :
+                        if g != 'Signal_1' : continue
+                        for reg in regions : 
+                            cmd_array.append(" ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--scan']))
+                            #print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
+        
+        
+        for comd in cmd_array : 
+            submit_parameters = { 
+                "executable"                : execu,
+                "arguments"                 : comd,
+                "universe"                  : "vanilla",
+                "should_transfer_files"     : "YES",
+                "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
+                "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
+                "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
+                "when_to_transfer_output"   : "ON_EXIT",
+                #'Requirements'              : 'OpSysAndVer == "CentOS7"',
+            }
+            job = htcondor.Submit(submit_parameters)
+            #print('going to submit the jobs to HTC')
+            with schedd.transaction() as txn:
+                job.queue(txn)
+                print ("Submit job for configurations of {}".format(comd))
+    
 

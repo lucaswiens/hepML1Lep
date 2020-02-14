@@ -19,6 +19,8 @@ from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint ,EarlyStopping , ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
 #from __future__ import division
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import keras
 from sklearn.preprocessing import StandardScaler
@@ -61,22 +63,27 @@ class score(object):
     # # Train XGB / DNN / etc.  
 
     # This is a nice isolated set of actions, so we will put them into a method right away
-    def TrainXGB(self,train_DF,test_DF, n_estimators=150, max_depth=3, min_child_weight=1,seed=0):
+    def TrainXGB(self,train_DF,test_DF, n_estimators=150, max_depth=3, min_child_weight=1,seed=0,multi=False,nclass = 4,class_weights=None):
         """ With training and testing DataFrame, and a list of variables with which to train and evaluate, produce the 
             score series for both the training and testing sets
         """
-        
-        
         # Create XGB object with the hyperparameters desired
         xgb = XGBClassifier(n_estimators=n_estimators,
                             max_depth=max_depth, 
                             min_child_weight=min_child_weight,
-                            seed=seed)
-
+                            objective='multi:softprob',#'multi:softmax',
+                            num_class=nclass,
+                            seed=seed,
+                            verbose_eval=True,
+                            verbosity=1,)
+                            #tree_method='gpu_hist',
+                            #gpu_id = 0)
         # Fit to the training set, making sure to include event weights
-        xgb.fit(train_DF[self.var_list], # X
-                train_DF["isSignal"], # yii
-                sample_weight=train_DF["training_weight"], # weights
+        history = xgb.fit(train_DF[self.var_list], # X
+                train_DF["isSignal"],
+                verbose=True,
+                eval_metric='logloss', # yii
+                sample_weight=class_weights, # weights
                 )
         
                 # Score the testing set
@@ -85,7 +92,7 @@ class score(object):
         Xg_score_train = xgb.predict(train_DF[self.var_list])#[:,0] # predict_proba returns [prob_bkg, prob_sig] which have the property prob_bkg+prob_sig = 1 so we only need one. Chose signal-ness
         Xg_score_test = pd.Series(Xg_score_test, index=test_DF.index) 
         Xg_score_train = pd.Series(Xg_score_train, index=train_DF.index) 
-        return Xg_score_train, Xg_score_test
+        return Xg_score_train, Xg_score_test,history , xgb
 
 
     def TrainDNN(self,train_DF,test_DF,multi=False,nclass = 4,epochs=200,batch_size=1024,useDropOut = False,class_weights=None,loss=None):
@@ -95,6 +102,9 @@ class score(object):
         NDIM = len(self.var_list)
         DNN = Sequential()
         DNN.add(Dense(256, input_dim=NDIM, kernel_initializer='uniform', activation='relu'))
+        if useDropOut : 
+            DNN.add(Dropout(0.1))
+        DNN.add(Dense(256, kernel_initializer='uniform', activation='relu'))
         if useDropOut : 
             DNN.add(Dropout(0.1))
         DNN.add(Dense(256, kernel_initializer='uniform', activation='relu'))
@@ -160,31 +170,37 @@ class score(object):
         elif self.score == 'XGB' : 
             #Run XGB
             print('let\'s do XGBoost training')
-            self.Xg_score_train, self.Xg_score_test = self.TrainEval(self.trainDF, 
+            self.Xg_score_train, self.Xg_score_test,self.history ,self.model = self.TrainXGB(self.trainDF, 
                                               self.testDF,
                                               n_estimators=200, 
                                               max_depth=3,
                                               min_child_weight=1,
                                               seed=0,
-                                              cla = 'xgb')
+                                              multi =self.do_multiClass,
+                                              nclass = nclass,
+                                              class_weights = self.class_weights)
         
     def save_model(self,model_toSave,append=''):
         '''Save the model'''
         output=os.path.join(self.outdir,'model')
         if not os.path.exists(output): os.makedirs(output)
-        # serialize model to JSON
-        model_json = model_toSave.to_json()
-        string = '1Lep_DNN_'
-        if self.do_multiClass : 
-            string += 'Multiclass'
+        if self.score == "DNN" : 
+            # serialize model to JSON
+            model_json = model_toSave.to_json()
+            string = '1Lep_DNN_'
+            if self.do_multiClass : 
+                string += 'Multiclass'
+            else : 
+                string += 'Binary'
+            with open(output+'/'+string+append+".json", "w") as json_file:
+                json_file.write(model_json)
+            # serialize weights to HDF5
+            model_toSave.save_weights(output+'/'+string+append+".h5")
+            print("Saved model to disk")
+            json_file.close()
         else : 
-            string += 'Binary'
-        with open(output+'/'+string+append+".json", "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model_toSave.save_weights(output+'/'+string+append+".h5")
-        print("Saved model to disk")
-        json_file.close()
+            import pickle
+            pickle.dump(model_toSave, open(output+'/'+string+append+".pkl", "wb"))
         
     def load_model(self,pathToModel,loss=None):
         '''Load a previously saved model (in h5 format)'''
