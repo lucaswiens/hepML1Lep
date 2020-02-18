@@ -33,6 +33,10 @@ CRs3_cut_strings = sr.CRs_3_cut_strings
 CRs4_cut_strings = sr.CRs_4_cut_strings
 
 selected_vars = sr.selected_var
+massList = sr.massList
+mass_map = {}
+for i, m in enumerate(massList): 
+    mass_map[m] = i    
 
 def make1D(var,style,name,ranges):
     '''  A functon to make a 1D histogram and set it's style '''
@@ -216,9 +220,9 @@ if __name__ == '__main__':
         error = ROOT.Double(0.)
         for var in selected_vars :
             if not sig : 
-                if mass+'sig' != var[0]: continue
+                if 'sig['+str(mass_map[mass])+"]" != var[0]: continue
             if sig :
-                if not var[0]=='1900_100sig'  : continue
+                if not var[0]=='sig[0]'  : continue
             print (var)
             for v in var : 
                 print (v)
@@ -226,24 +230,24 @@ if __name__ == '__main__':
                 if 'Data' in g : lum = '1.0' 
                 else  : lum = lumi
                 # make the hist 
-                hist = make1D(v,All_files[g],v+'_'+cutdict+"_nom",ranges)
-                chain.Draw(v +' >> '+v+'_'+cutdict+"_nom", scale+'*'+lum+'*(1)',"goff")
+                hist = make1D(v,All_files[g],v[:-3]+'_'+cutdict+"_nom",ranges)
+                chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+"_nom", scale+'*'+lum+'*(1)',"goff")
                 if args.doSyst and not 'Data' in g : 
                     # JEC comes from differnt nTuples
-                    hist_jec_up = make1D(v,All_files_Jec_up[g],v+'_'+cutdict+"_Jec_Up",ranges)
-                    chain_Jec_up.Draw(v +' >> '+v+'_'+cutdict+"_Jec_Up", scale+'*'+lum+'*(1)',"goff")
-                    hist_jec_dn = make1D(v,All_files_Jec_dn[g],v+'_'+cutdict+"_Jec_Down",ranges)
-                    chain_Jec_dn.Draw(v +' >> '+v+'_'+cutdict+"_Jec_Down", scale+'*'+lum+'*(1)',"goff")
+                    hist_jec_up = make1D(v,All_files_Jec_up[g],v[:-3]+'_'+cutdict+"_Jec_Up",ranges)
+                    chain_Jec_up.Draw(v +' >> '+v[:-3]+'_'+cutdict+"_Jec_Up", scale+'*'+lum+'*(1)',"goff")
+                    hist_jec_dn = make1D(v,All_files_Jec_dn[g],v[:-3]+'_'+cutdict+"_Jec_Down",ranges)
+                    chain_Jec_dn.Draw(v +' >> '+v[:-3]+'_'+cutdict+"_Jec_Down", scale+'*'+lum+'*(1)',"goff")
                     hist_jec_up.Write()
                     hist_jec_dn.Write()
                     # nomalization systematics
                     for syst in systList : 
-                        hist_norm_syst_up = make1D(v,All_files[g],v+'_'+cutdict+'_'+syst+"_Up",ranges)
-                        hist_norm_syst_dn = make1D(v,All_files[g],v+'_'+cutdict+'_'+syst+"_Down",ranges)
+                        hist_norm_syst_up = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Up",ranges)
+                        hist_norm_syst_dn = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Down",ranges)
                         scale_up = systList[syst][g]['scale_up']
                         scale_dn = systList[syst][g]['scale_dn']
-                        chain.Draw(v +' >> '+v+'_'+cutdict+'_'+syst+"_Up", scale_up+'*'+lum+'*(1)',"goff")
-                        chain.Draw(v +' >> '+v+'_'+cutdict+'_'+syst+"_Down", scale_dn+'*'+lum+'*(1)',"goff")
+                        chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Up", scale_up+'*'+lum+'*(1)',"goff")
+                        chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Down", scale_dn+'*'+lum+'*(1)',"goff")
                         hist_norm_syst_up.Write()
                         hist_norm_syst_dn.Write()
                 #print (hist)
@@ -264,7 +268,6 @@ if __name__ == '__main__':
             mList = masslist('mass_list.txt')
             for m in mList : 
                 for reg in regions : 
-
                     if args.doSyst :
                         for g in instPlot.group :
                             if  'Sig' in g : continue

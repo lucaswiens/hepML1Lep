@@ -45,7 +45,7 @@ def bkgToUse(mgo,mlsp) :
     elif (mgo > 1800 and mgo <=1900 and mlsp >= 1000): mass = '1800_1300'
     elif (mgo >= 1700 and mgo <= 1800 and mlsp >= 1000 ) : mass = '1700_1200'
     elif (mgo >= 1600 and mgo < 1700 and mlsp >= 1000 ) : mass = '1600_1100'
-    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1000' 
+    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1200' 
     else : 
         print(mgo,' ',mlsp, 'could not fit into any of you modes please check')
         mass = ''
@@ -155,9 +155,9 @@ if __name__ == '__main__':
             print("cannot find this file for ", signal,"will escape it, please check")
             continue
         sf = ROOT.TFile.Open(signal_files[0], "read")
-        shist = sf.Get('Signal_1/'+signal+'/1900_100sig_SR_nom')
+        shist = sf.Get('Signal_1/'+signal+'/sig_SR_nom')
         for skey in SigsystList : 
-            SigsystList[skey].append(sf.Get('Signal_1/'+signal+'/1900_100sig_SR_'+skey))
+            SigsystList[skey].append(sf.Get('Signal_1/'+signal+'/sig_SR_'+skey))
 
         lists.append(shist)
         mgo = float(signal.split('_')[0])
@@ -180,9 +180,9 @@ if __name__ == '__main__':
                 if bkg_name == 'Data' : continue 
                 bf = ROOT.TFile.Open(bkgf, "read")
                 #print(bkg_name+'/'+bkg+'/'+bkg_name+bkg+'sig_SR_nominal')
-                bhist = bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR_nom')
+                bhist = bf.Get(bkg_name+'/'+bkg+'/sig_SR_nom')
                 for key in systList : 
-                    systList[key].append(bf.Get(bkg_name+'/'+bkg+'/'+bkg+'sig_SR_'+key))
+                    systList[key].append(bf.Get(bkg_name+'/'+bkg+'/sig_SR_'+key))
                 #print(bhist.Integral())
                 which = ''
                 scalefactor = 1.0

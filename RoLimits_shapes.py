@@ -45,7 +45,7 @@ def bkgToUse(mgo,mlsp) :
     elif (mgo > 1800 and mgo <=1900 and mlsp >= 1000): mass = '1800_1300'
     elif (mgo >= 1700 and mgo <= 1800 and mlsp >= 1000 ) : mass = '1700_1200'
     elif (mgo >= 1600 and mgo < 1700 and mlsp >= 1000 ) : mass = '1600_1100'
-    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1000' 
+    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1200' 
     else : 
         print(mgo,' ',mlsp, 'could not fit into any of you modes please check')
         mass = ''
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # outfile.Close()
     # Step 5 make total background shapes -- only for the nominals -- to be used in blind analysis when you use the backgroud shapes instead of data
     outfile.cd()
-    total_bkg_hist = outfile.Get("VV/2200_100/2200_100sig_SR_nom").Clone()
+    total_bkg_hist = outfile.Get("VV/2200_100/sig_SR_nom").Clone()
     total_bkg_hist.SetTitle("total background")
     hists = {}
     for key in channels_dict : 
@@ -182,7 +182,7 @@ if __name__ == '__main__':
     text = open(outdir+"/background_comp.txt", "w+")
     os.system("cp "+args.infile.replace(".root","_scaled.root")+" "+datacardsdir)
     for signal in signal_List : 
-        shist = shapes.Get('Signal_1/'+signal+'/1900_100sig_SR_nom')
+        shist = shapes.Get('Signal_1/'+signal+'/sig_SR_nom')
         mgo = float(signal.split('_')[0])
         mlsp = float(signal.split('_')[1])
         bkgToUse_ = bkgToUse(mgo,mlsp)
@@ -191,14 +191,14 @@ if __name__ == '__main__':
         text.write("{:<10}{:<10}{:<10}{:<10}{:<10}{:<10}".format('mgo',mgo,'mlsp',mlsp,'bkgToUse', bkgToUse_)+"\n")
         for bkg in background_List : 
             if bkg != bkgToUse_ : continue 
-            bkg_hists_SR = [x.GetName()+"/"+bkg+"/"+bkg+"sig_SR_nom" for x in shapes.GetListOfKeys() if not 'Signal_1' in x.GetName()]
+            bkg_hists_SR = [x.GetName()+"/"+bkg+"/sig_SR_nom" for x in shapes.GetListOfKeys() if not 'Signal_1' in x.GetName()]
             bkg_hists_norms = []
             bkg_hists_names = []
             for bkghist in bkg_hists_SR : 
                 bhist = shapes.Get(bkghist)
                 bkg_hists_norms.append(round(bhist.Integral(),2))
                 bkg_hists_names.append(bkghist.split('/')[0])
-        data_hist_name = "background/"+bkgToUse_+"/"+bkgToUse_+"sig_SR_nom" if args.blind else "Data/"+bkgToUse_+"/"+bkgToUse_+"sig_SR_nom"
+        data_hist_name = "background/"+bkgToUse_+"/sig_SR_nom" if args.blind else "Data/"+bkgToUse_+"/sig_SR_nom"
         shape_file_name = args.infile.replace(".root","_scaled.root")
         data_hist = shapes.Get(data_hist_name)
         datacard.write("## Datacard for signal %s \n"%('T1tttt_Scan_mGo' +str(int(mgo))+ '_mLSP'+str(int(mlsp))))
@@ -209,8 +209,8 @@ if __name__ == '__main__':
         datacard.write('\n')
         datacard.write("shapes\tdata_obs\tch1\t %s \t %s \n"%(shape_file_name,data_hist_name))
         datacard.write("observation\t"+str(round(data_hist.Integral(),2))+'\n')
-        datacard.write("shapes\t * \t ch1 \t"+shape_file_name+"\t$PROCESS/"+bkgToUse_+"/"+bkgToUse_+"sig_SR_nom\t $PROCESS/"+bkgToUse_+"/"+bkgToUse_+"sig_SR_$SYSTEMATIC\n")
-        datacard.write("shapes\tSignal_1\tch1\t"+shape_file_name+"\t$PROCESS/"+signal+"/1900_100sig_SR_nom\t$PROCESS/"+signal+"/1900_100sig_SR_$SYSTEMATIC\n")
+        datacard.write("shapes\t * \t ch1 \t"+shape_file_name+"\t$PROCESS/"+bkgToUse_+"/sig_SR_nom\t $PROCESS/"+bkgToUse_+"/sig_SR_$SYSTEMATIC\n")
+        datacard.write("shapes\tSignal_1\tch1\t"+shape_file_name+"\t$PROCESS/"+signal+"/sig_SR_nom\t$PROCESS/"+signal+"/sig_SR_$SYSTEMATIC\n")
         datacard.write(130*'-')
         datacard.write('\n')
         datacard.write("{:<20}".format("bin"))

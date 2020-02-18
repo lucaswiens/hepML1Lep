@@ -396,6 +396,7 @@ if __name__ == '__main__':
             All_files[key]['hist'].append(hist) 
             if All_files[key]['Stackable'] : stackableHists.append(hist)
             if 'Sig' in key : SignalHists.append(hist)
+            if (hist.GetSumw2N() == 0) : hist.Sumw2(ROOT.kTRUE)
             # check the overflow bins 
             if any('IncludeOverflows' in e for e in var) :
                 n = hist.GetNbinsX()
@@ -413,8 +414,9 @@ if __name__ == '__main__':
                 bins = var[index0][1]
                 if normBinW == True:
                     nbins = hist.GetNbinsX()
-                    for bin in range(0,nbins+1):
-                        hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
+                    #for bin in range(0,nbins+1):
+                    #    hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
+                    hist.Scale(0.1,"width");
             # write the hist
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
             hist.Write()
@@ -480,6 +482,13 @@ if __name__ == '__main__':
         if any('MoreY' in e for e in var) : 
             index1,_ = findItem(var , 'MoreY')
             stack.SetMaximum(var[index1][1]*stack.GetMaximum())
+        if any('YmiN' in e for e in var) : 
+            index1,_ = findItem(var , 'YmiN')
+            YmiN = var[index1][1]
+        if any('YmiN' in e for e in var) : 
+            index1,_ = findItem(var , 'YmiN')
+            YmiN = var[index1][1]
+
         stack.SetMinimum(YmiN)
         stack.GetXaxis().SetTitleOffset(1.1)
         stack.GetXaxis().SetLabelOffset(0.007)

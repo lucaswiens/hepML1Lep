@@ -2,12 +2,12 @@
 from plotClass.plotting.plotGroups import All_files
 # this is for limit setting
 categories = ['sig','TTS','TTDi','WJ']
-massList = ["1900_100","1600_1100","1900_800","1500_1200","1800_1300","2200_800","1700_1200","2200_100","1500_1000","1900_1000"]
+massList = ["1500_1000","1500_1200","1600_1100","1700_1200","1800_1300","1900_100","1900_800","1900_1000","2200_100","2200_800"]
 selected_var = []
-for mass in massList : 
+for i in range(0, len(massList)):
     small_list = []
     for cat in categories : 
-        small_list.append(mass+cat)
+        small_list.append(cat+"["+str(i)+"]")
     selected_var.append(small_list)
 
 cut_strings = ""
@@ -41,7 +41,7 @@ ntopCut = '&& nTop_Total_Combined >= 1 '
 AntintopCut = '&& nTop_Total_Combined < 1'
 
 for i,m in enumerate(selected_var) : 
-    SRs_cut_strings[massList[i]]   = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+") &&("+m[0]+" >= 0.9))" #+ dPhiCut + ntopCut #&& ("+m[0]+" > 0.8)"
+    SRs_cut_strings[massList[i]]   = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+") && (nJets30Clean <= 7))"# &&("+m[0]+" >= 0.9))" #+ dPhiCut + ntopCut #&& ("+m[0]+" > 0.8)"
     CRs_1_cut_strings[massList[i]] = cut_strings+"&&(("+m[0]+">"+m[1]+" ) && ("+m[0]+">"+m[2]+") && ("+m[0]+" >"+m[3]+"))" # && (nJets30Clean <= 7))" #+ AntidPhiCut #&& ("+m[0]+" <= 0.8)"
     CRs_2_cut_strings[massList[i]] = cut_strings+"&&(("+m[1]+">"+m[0]+" ) && ("+m[1]+">"+m[2]+") && ("+m[1]+" >"+m[3]+"))"
     CRs_3_cut_strings[massList[i]] = cut_strings+"&&(("+m[2]+">"+m[0]+" ) && ("+m[2]+">"+m[1]+") && ("+m[2]+" >"+m[3]+"))"

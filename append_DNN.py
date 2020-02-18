@@ -2,16 +2,6 @@
 import argparse
 import os
 
-missing = ['../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016E_17Jul2018.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016H_17Jul2018_v1.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016G_17Jul2018.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016D_17Jul2018.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016C_17Jul2018.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleMuon_Run2016H_17Jul2018_v1.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleMuon_Run2016G_17Jul2018.root',
-           '../../CMGSamples/UL_FRs_Dec19/2016_FR_/evVarFriend_SingleElectron_Run2016B_17Jul2018_v2.root']
-
-
 def load_model(pathToModel):
     '''Load a previously saved model (in h5 format)'''
     #print (" Loading the model from ",pathToModel)
@@ -40,7 +30,7 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     WJet_val = array.array('f', 10*[0.])
     Sign_val = array.array('f', 10*[0.])
 
-    tree_in.SetBranchStatus("*_0b",0);    
+    #tree_in.SetBranchStatus("*_0b",0);    
     tree_in.SetBranchStatus("*TTS",0)
     tree_in.SetBranchStatus("*WJ",0)
     tree_in.SetBranchStatus("*TTDi",0)
@@ -158,10 +148,7 @@ if __name__ == '__main__':
     
     wdir = os.getcwd()
     
-    outdir = os.path.join(args.outdir,os.path.basename(os.path.normpath(args.indir)))
 
-    if not os.path.exists(outdir):
-            os.makedirs(outdir) 
 
     if not args.batchMode and args.infile: 
         import ROOT
@@ -174,13 +161,19 @@ if __name__ == '__main__':
         from keras.models import model_from_json
         import pandas as pd
         
-        
+        outdir = args.outdir
+        if not os.path.exists(outdir):
+            os.makedirs(outdir) 
+
         if ( "T1tttt" in args.infile or 'T5qqqq' in args.infile) :
             Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
         else : 
             Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
     else : 
         
+        outdir = os.path.join(args.outdir,os.path.basename(os.path.normpath(args.indir)))
+        if not os.path.exists(outdir):
+            os.makedirs(outdir) 
 
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir):
@@ -206,7 +199,7 @@ if __name__ == '__main__':
                 with schedd.transaction() as txn:
                     for fc in Filenamelist : 
                         print(fc)
-                        sub["arguments"] = " ".join([fc,wdir,args.model,args.outdir,args.indir])
+                        sub["arguments"] = " ".join([fc,wdir,args.model,outdir,args.indir])
                         sub.queue(txn)
                     print ("Submit jobs for the batch system")
                 break

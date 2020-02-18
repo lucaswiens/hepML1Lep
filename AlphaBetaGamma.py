@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
         a = unumpy.umatrix([[TTl_2,TTll_2,WJ_2],[TTl_3,TTll_3,WJ_3],[TTl_4,TTll_4,WJ_4]],[[err_1,err_2,err_12],[err_4,err_5,err_13],[err_7,err_8,err_14]])
         
-        b = unumpy.umatrix([[Data_2],[Data_3],[Data_4]],[[0],[0],[0]])
+        b = unumpy.umatrix([[Data_2],[Data_3],[Data_4]],[[err_3],[err_6],[err_9]])
 
         #fun = lambda x: np.linalg.norm(np.dot(a,x)-b)
         #Y = minimize(fun, np.zeros(n), method='L-BFGS-B', bounds=[(0.,None) for x in range(n)])
@@ -185,10 +185,10 @@ if __name__ == '__main__':
         latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(bkg_list[0].split('/')[1].replace('_','\\_')+' & '             ,'SemiLepTT' ,' &'                       ,'DiLepTT' ,' &'                       ,'others' ,' &'                       ,'Data' ,' ')+" \\\\ \n")
         latexalphabetagamma.write('\\hline\\hline \n')
 
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('SemiLepTTCat & '  ,TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2)+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('DiLepTTCat & '    ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3)+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('othersCat &'     ,TTl_4       ,' $\pm$ '+str(round(err_7,2))+'& ' ,TTll_4    ,'  $\pm$ '+str(round(err_8,2)) +'& ',WJ_4     ,' $\pm$ '+str(round(err_14,2)) +'& ',Data_4)+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}".format('SigCat &'        ,TTl_1       ,' $\pm$ '+str(round(err_0,2))+'& ' ,TTll_1    ,'  $\pm$ '+str(round(err_00,2)) +'& ',WJ_1     ,' $\pm$ '+str(round(err_000,2)) +'& ','---')+"\\\\ \n")
+        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SemiLepTTCat & '  ,TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('DiLepTTCat & '    ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3,'$\pm$'+str(round(err_6,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('othersCat &'     ,TTl_4       ,' $\pm$ '+str(round(err_7,2))+'& ' ,TTll_4    ,'  $\pm$ '+str(round(err_8,2)) +'& ',WJ_4     ,' $\pm$ '+str(round(err_14,2)) +'& ',Data_4,'$\pm$'+str(round(err_9,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SigCat &'        ,TTl_1       ,' $\pm$ '+str(round(err_0,2))+'& ' ,TTll_1    ,'  $\pm$ '+str(round(err_00,2)) +'& ',WJ_1     ,' $\pm$ '+str(round(err_000,2)) +'& ','---','$\pm$ ---')+"\\\\ \n")
 
         latexalphabetagamma.write('\\hline\\hline \n')
 

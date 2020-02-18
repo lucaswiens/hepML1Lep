@@ -101,23 +101,20 @@ class score(object):
         """
         NDIM = len(self.var_list)
         DNN = Sequential()
-        DNN.add(Dense(256, input_dim=NDIM, kernel_initializer='uniform', activation='relu'))
+        DNN.add(Dense(64, input_dim=NDIM, kernel_initializer='uniform', activation='relu'))
         if useDropOut : 
             DNN.add(Dropout(0.1))
-        DNN.add(Dense(256, kernel_initializer='uniform', activation='relu'))
+        DNN.add(Dense(64, kernel_initializer='uniform', activation='relu'))
         if useDropOut : 
             DNN.add(Dropout(0.1))
-        DNN.add(Dense(256, kernel_initializer='uniform', activation='relu'))
-        if useDropOut : 
-            DNN.add(Dropout(0.1))
-        DNN.add(Dense(256, kernel_initializer='uniform', activation='relu'))
+        DNN.add(Dense(64, kernel_initializer='uniform', activation='relu'))
         # Compile model
         if multi == False :
             if useDropOut : 
                 DNN.add(Dropout(0.1))
             DNN.add(Dense(1, kernel_initializer='uniform', activation='sigmoid'))
             # if you want to change the loss function in the first stage
-            if loss is not None : 
+            if loss != None : 
                 DNN.compile(loss=loss,metrics=['accuracy'], optimizer=Adam(lr=0.0001))
             else : 
                 DNN.compile(loss='binary_crossentropy',metrics=['accuracy'], optimizer=Adam(lr=0.0001))
@@ -249,8 +246,8 @@ class score(object):
         #fig = plt.figure(figsize=(4, 4))
         plt.subplot(1, 2, 1)
         # Extract loss on training and validation dataset and plot them together
-        plt.plot(epochs, history.history["loss"], "o-", label="Training")
-        plt.plot(epochs, history.history["val_loss"], "o-", label="Validation")
+        plt.plot(epochs, history.history["loss"], "-", label="Training")
+        plt.plot(epochs, history.history["val_loss"], "-", label="Validation")
         plt.xlabel("Epochs"), plt.ylabel("Loss")
         #plt.yscale("log")
         #plt.xlim(0,40)
@@ -265,8 +262,8 @@ class score(object):
         plt.subplot(1, 2, 2)
         #fig = plt.figure(figsize=(4, 4))
         # Extract loss on training and validation dataset and plot them together
-        plt.plot(epochs, history.history["acc"], "o-", label="Training")
-        plt.plot(epochs, history.history["val_acc"], "o-", label="Validation")
+        plt.plot(epochs, history.history["acc"], "-", label="Training")
+        plt.plot(epochs, history.history["val_acc"], "-", label="Validation")
         plt.xlabel("Epochs"), plt.ylabel("Accuracy")
         #plt.yscale("log")
         #plt.ylim(0.5,0.95)

@@ -28,11 +28,34 @@ class rootplot(object) :
                             textsample.write("{:<20}{:<20}".format(" ",rf)+"\n")
                             self.group.setdefault(g,[]).append(rf)
         
-
+    
     def makeChain (self, filesList = [],Tname = "sf/t") : 
         ''' This function takes a group of files and add then to one Tchain
             to get one chain for each background kind'''
         chain = ROOT.TChain(Tname)
+        '''# create a list of all the extended samples
+        extlist = [e for e in filesList if e.find("_ext") != -1]
+        # create a list of all the nominal samples
+        nomlist = [e.replace(e[e.find("_ext"):],'.root') for e in extlist if e.replace(e[e.find("_ext"):],'.root') in filesList]
+        # drop any redundentcy
+        nomlist = list(dict.fromkeys(nomlist))
+        # make a list of list of nom + ext samples
+        unifiedlist = []
+        for x in nomlist : 
+            unifiedlist.append([x]+[y for y in extlist if x.replace(".root","_ext") in y ])
+        # merge the weights for nom + ext 
+        if len(unifiedlist) != 0 : 
+            for list_ in unifiedlist : 
+                new_sumW = 0
+                old_weight = 0
+                for file_ in list_ : 
+                    f = ROOT.TFile.Open(file_)
+                    tree = f.Get('sf/t')
+                    tree.GetEntry(0)
+                    w = tree.sumOfWeights
+                    if not w == old_weight : 
+                        new_sumW += w
+                    old_weight = w '''
         for f in filesList : 
             chain.Add(f)
         return chain

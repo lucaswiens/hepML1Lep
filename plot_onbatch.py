@@ -84,19 +84,21 @@ if __name__ == '__main__':
         if args.only != None : 
             myFiles = glob.glob(mdir+"/*"+args.only+"*.txt")
         else : myFiles = glob.glob(mdir+"/*.txt")
-        mgo = str(mdir.split("/")[-1]).split("_")[0]
-        mlsp = str(mdir.split("/")[-1]).split("_")[1]
-        cmd+=" --mGo1 "+mgo+" --mLSP1 "+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
-
+        if "_" in str(mdir.split("/")[-1]):
+            mgo = str(mdir.split("/")[-1]).split("_")[0]
+            mlsp = str(mdir.split("/")[-1]).split("_")[1]
+            cmd+=" --mGo1 "+mgo+" --mLSP1 "+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
+        else : cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
         if not args.scale : 
             alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
             beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
             gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
             cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
-        if args.blind : 
+        if args.blind and os.path.exists(mdir+"/mplots_blind.py"): 
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
-        else : 
+        elif not args.blind and os.path.exists(mdir+"/mplots.py"): 
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+        else : incl_cmd = cmd
         if args.only == None : 
             if os.path.exists(args.param+"/0bCS.txt") : 
                 zerob_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
@@ -109,15 +111,15 @@ if __name__ == '__main__':
             cmd_array.append(incl_cmd)
         
         for mcut in myFiles : 
-            incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
-            othercmd = cmd+" --mvarList "+mdir+"/mplots.py "
-            if "inclusive" in mcut : 
-                othercmd.replace("mplots.py","mplots_blind.py")
+            othercmd = cmd
+            if "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots_blind.py "
+            elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") : 
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "    
             othercmd+= " --mcuts "+mcut
-            if ('Sig.txt' in mcut or "Sig_lastbin.txt" in mcut) and not "Anti" in mcut : othercmd +=' --blind '
+            if ('Sig.txt' in mcut or "Sig_lastbin.txt" in mcut or "Sig_ge6.txt" in mcut) and not "Anti" in mcut : othercmd +=' --blind '
             cmd_array.append(othercmd)
             
-    
     cmd_array = [x.replace("//","/") for x in cmd_array]
     
     logdir = os.path.join(args.outdir,'Logs')
@@ -154,3 +156,4 @@ if __name__ == '__main__':
             break
         except: 
             pass
+    

@@ -26,6 +26,8 @@ if __name__ == '__main__':
     parser.add_argument('--do_parametric',help='Do the training parametrically or not',default=False,action='store_true')
     parser.add_argument('--nSignal_Cla', help='number of signal classes ',default=1 , metavar='nSignal_Cla')
     parser.add_argument('--multib','--mb', help='multiple b analysis or 0b',default=False, action='store_true')
+    parser.add_argument('--rm','--ranodom', help='if randomize the signal mass to the backgorund or do oversampeling',default=False, action='store_true')
+
 
     args = parser.parse_args()
 
@@ -41,7 +43,7 @@ if __name__ == '__main__':
     if MultiClass : 
         if args.multib : 
             class_names = ['TTSemiLep','TTDiLep','WJets','signal']#_LDM','signal_HDM']
-        else :  class_names = ['TTJets','WJets','signal']
+        else :  class_names = ['TTJets','WJets','QCD','signal']
     else : 
         class_names = ['signal','background']
     ##########################
@@ -70,9 +72,9 @@ if __name__ == '__main__':
     Data = PrepData(args.indirROOT,args.indirCSV,VARS,skipexisting = False,multib = args.multib)
     Data.saveCSV()
     # preper the data and split them into testing sample + training sample
-    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,split_Sign_training = False,multib = args.multib)
+    splitted = splitDFs(Data.df_all['sig'],Data.df_all['bkg'],do_multiClass = MultiClass,ranomMass = args.rm,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,split_Sign_training = False,multib = args.multib)
     splitted.prepare()
-    splitted.split(splitted.df_all['all_sig'],splitted.df_all['all_bkg'])
+    splitted.split(splitted.df_all['all_sig'],splitted.df_all['all_bkg'],train_size=0.8, test_size=0.2)
     ##########################
     print(splitted.test_DF.groupby(['isSignal']).size())
     print(splitted.train_DF.groupby(['isSignal']).size())

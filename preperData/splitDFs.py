@@ -13,7 +13,7 @@ to_drop = ['lheHTIncoming', 'genTau_grandmotherId', 'genTau_motherId', 'genLep_g
                'genLep_motherId', 'DiLep_Flag', 'semiLep_Flag', 'GenMET',  'filename']
 
 class splitDFs(object):
-    def __init__(self,signalDF, bkgDF,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,split_Sign_training = False,multib = False):
+    def __init__(self,signalDF, bkgDF,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,ranomMass = False,split_Sign_training = False,multib = False):
         self.signalDF = signalDF
         self.bkgDF = bkgDF
         #self.do_binary_first = do_binary_first
@@ -22,6 +22,7 @@ class splitDFs(object):
         self.do_parametric = do_parametric
         self.split_Sign_training = split_Sign_training
         self.multib = multib
+        self.ranomMass = ranomMass
     # function to get the index of each class of background
     def classidxs(self):
         """
@@ -29,13 +30,13 @@ class splitDFs(object):
         """
         if self.multib : 
             self.class_0   = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')].index
-            self.class_1     = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_DiLepton')].index
+            self.class_1   = self.bkgDF[self.bkgDF['filename'].str.contains('TTJets_DiLepton')].index
             #QCD_index        = self.bkgDF[self.bkgDF['filename'].str.contains('QCD')].index
-            self.class_2 = self.bkgDF[~ self.bkgDF['filename'].str.contains('TTJets')].index
+            self.class_2   = self.bkgDF[~ self.bkgDF['filename'].str.contains('TTJets')].index
         else : 
-            self.class_0   = self.bkgDF[~(self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index#self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom') | self.bkgDF['filename'].str.contains('TTJets_DiLepton'))].index
-            self.class_1 = self.bkgDF[self.bkgDF['filename'].str.contains('WJetsToLNu_')].index
-            self.class_2     = None #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            
+            self.class_0   = self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_'))].index#self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom') | self.bkgDF['filename'].str.contains('TTJets_DiLepton'))].index
+            self.class_1   = self.bkgDF[self.bkgDF['filename'].str.contains('WJetsToLNu_')].index
+            self.class_2   = np.array([]) #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            # #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            
         print (self.signalDF.groupby(['mGo','mLSP']).size())
         ## this is very usful when you need to sample specific class to match with other class (overSample Signal to backgound for example)        
     from sklearn.utils import shuffle
@@ -65,6 +66,14 @@ class splitDFs(object):
             new_bkg_train = pd.concat([new_bkg_train, bkg_df], ignore_index=True)
         return new_bkg_train
 
+    def _fit_sign_mass(self,signals_df,bkg_df):
+        """
+        Return Oversampled dataset for parametric training
+        """
+        bkg_df = bkg_df.copy()
+        bkg_df.loc[:,'mGo'] = np.random.choice(list(signals_df['mGo']), len(bkg_df))
+        bkg_df.loc[:,'mLSP'] = np.random.choice(list(signals_df['mLSP']), len(bkg_df))
+        return bkg_df
         
     def sigidxs(self):
         '''
@@ -88,18 +97,18 @@ class splitDFs(object):
             print('signal will be splitted into ',self.nSignal_Cla, 'classes')
             self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.class_1,'isSignal'] = 1
-            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
+            if self.class_2.size != 0 : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             for num ,idxs in enumerate(self.list_of_mass_idxs) : 
                     self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
                     for j ,i in  enumerate(signal_Cla[0]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            if self.class_2 != None : self.signalDF.loc[idxs,'isSignal'] = 3
+                            if self.class_2.size != 0 : self.signalDF.loc[idxs,'isSignal'] = 3
                             else : self.signalDF.loc[idxs,'isSignal'] = 2
                     for j ,i in  enumerate(signal_Cla[1]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            if self.class_2 != None : self.signalDF.loc[idxs,'isSignal'] = 4
+                            if self.class_2.size != 0 : self.signalDF.loc[idxs,'isSignal'] = 4
                             else : self.signalDF.loc[idxs,'isSignal'] = 3
             self.df_all['all_sig'] = self.signalDF.copy()
             self.df_all['all_sig'] = self.df_all['all_sig'].dropna()
@@ -108,7 +117,13 @@ class splitDFs(object):
                 for name in  self.signal_list_names : 
                     signal_list_dfs.append(self.df_all[name])
                     #print signal_list_dfs
-                self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                if not self.ranomMass : 
+                    print(" you choosed parametric training and the signal mass will be oversampling the background")
+                    self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                    self.df_all['all_sig'] = self.df_all['all_sig'].sample(10*len(self.df_all['all_sig'].index), replace=True)
+                else : 
+                    print(" you choosed parametric training and the signal mass will be randomized to the background")
+                    self.df_all['all_bkg'] = self._fit_sign_mass(self.df_all['all_sig'],self.bkgDF)
             else : self.df_all['all_bkg'] = self.bkgDF.copy()
             ## free up the memeory from all other dfs 
             bkgdf =  self.df_all['all_bkg'].copy()
@@ -124,11 +139,11 @@ class splitDFs(object):
             print('signal will be taken as ',self.nSignal_Cla, 'class')
             self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.class_1,'isSignal'] = 1
-            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
+            if self.class_2.size != 0 : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             
             for num ,idxs in enumerate(self.list_of_mass_idxs) :
                 self.df_all[self.signal_list_names[num]] = self.signalDF.loc[idxs ,:]
-                if self.class_2 != None : self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 3
+                if self.class_2.size != 0 : self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 3
                 else :self.df_all[self.signal_list_names[num]].loc[:,'isSignal'] = 2
                 ## for the last training over all the samples (the multiClass trainig)
                 self.df_all['all_sig'] = pd.concat([self.df_all['all_sig'],self.df_all[self.signal_list_names[num]]])
@@ -138,7 +153,15 @@ class splitDFs(object):
                 for name in  self.signal_list_names : 
                     signal_list_dfs.append(self.df_all[name])
                 #print signal_list_dfs
-                self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                if not self.ranomMass : 
+                    print(" you choosed parametric training and the signal mass will be oversampling the background")
+                    self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                    self.df_all['all_sig'] = self.df_all['all_sig'].sample(
+                        10*len(self.df_all['all_sig'].index), replace=True)
+                else : 
+                    print(" you choosed parametric training and the signal mass will be randomized to the background")
+                    self.df_all['all_bkg'] = self._fit_sign_mass(self.df_all['all_sig'],self.bkgDF)
+
             else : self.df_all['all_bkg'] = self.bkgDF.copy()
             ## free up the memeory from all other dfs 
             bkgdf =  self.df_all['all_bkg'].copy()
@@ -154,7 +177,7 @@ class splitDFs(object):
             print("you choosed to train twice, once per signal class, make sure your configuration does what you need ")
             self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.class_1,'isSignal'] = 1
-            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 2
+            if self.class_2.size != 0 : self.bkgDF.loc[self.class_2,'isSignal'] = 2
             self.df_all['sig_1'] = self.signalDF.copy()
             self.df_all['sig_2'] = self.signalDF.copy()
             for num ,idxs in enumerate(self.list_of_mass_idxs) : 
@@ -162,12 +185,12 @@ class splitDFs(object):
                     for j ,i in  enumerate(signal_Cla[0]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            if self.class_2 != None : self.df_all['sig_1'].loc[idxs,'isSignal'] = 3
+                            if self.class_2.size != 0 : self.df_all['sig_1'].loc[idxs,'isSignal'] = 3
                             else : self.df_all['sig_1'].loc[idxs,'isSignal'] = 2
                     for j ,i in  enumerate(signal_Cla[1]) : 
                         if str(i[0]) in self.signal_list_names[num] and str(i[1]) in self.signal_list_names[num] : 
                             print (i , j ,self.signal_list_names[num])
-                            if self.class_2 != None : self.df_all['sig_2'].loc[idxs,'isSignal'] = 3
+                            if self.class_2.size != 0 : self.df_all['sig_2'].loc[idxs,'isSignal'] = 3
                             else : self.df_all['sig_2'].loc[idxs,'isSignal'] = 2
             self.df_all['all_sig_1'] = self.df_all['sig_1'].copy()
             self.df_all['all_sig_2'] = self.df_all['sig_2'].copy()
@@ -185,10 +208,17 @@ class splitDFs(object):
                     for scla in signal_Cla[1] :
                         if name == 'Sig_'+str(scla[0])+'_'+str(scla[1]) : 
                                 signal_list_dfs_2.append(self.df_all[name])
-                    
-                    #print signal_list_dfs
-                self.df_all['all_bkg_1'] = self._overbalance_bkg(signal_list_dfs_1,self.bkgDF)
-                self.df_all['all_bkg_2'] = self._overbalance_bkg(signal_list_dfs_2,self.bkgDF)
+                if not self.ranomMass : 
+                    print(" you choosed parametric training and the signal mass will be oversampling the background")
+                    self.df_all['all_bkg_1'] = self._overbalance_bkg(signal_list_dfs_1,self.bkgDF)
+                    self.df_all['all_bkg_2'] = self._overbalance_bkg(signal_list_dfs_2,self.bkgDF)
+                    self.df_all['all_sig_1'] = self.df_all['all_sig_1'].sample(10*len(self.df_all['all_sig_1'].index), replace=True)
+                    self.df_all['all_sig_2'] = self.df_all['all_sig_2'].sample(10*len(self.df_all['all_sig_2'].index), replace=True)
+                else : 
+                    print(" you choosed parametric training and the signal mass will be randomized to the background")
+                    self.df_all['all_bkg_1'] = self._fit_sign_mass(signal_list_dfs_1,self.bkgDF)
+                    self.df_all['all_bkg_2'] = self._fit_sign_mass(signal_list_dfs_2,self.bkgDF)
+
             else : self.df_all['all_bkg'] = self.bkgDF.copy()
 
         elif not self.do_multiClass : 
@@ -204,13 +234,20 @@ class splitDFs(object):
             self.df_all['all_sig'] = self.df_all['all_sig'].reset_index()    
             self.bkgDF.loc[self.class_0,'isSignal'] = 0 #pd.Series(np.zeros(self.bkgDF.shape[0]), index=self.bkgDF.index)
             self.bkgDF.loc[self.class_1,'isSignal'] = 0
-            if self.class_2 != None : self.bkgDF.loc[self.class_2,'isSignal'] = 0
+            if self.class_2.size != 0 : self.bkgDF.loc[self.class_2,'isSignal'] = 0
             if self.do_parametric : 
                 signal_list_dfs = [] 
                 for name in  self.signal_list_names : 
                     signal_list_dfs.append(self.df_all[name])
                 #print signal_list_dfs
-                self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                if not self.ranomMass : 
+                    print(" you choosed parametric training and the signal mass will be oversampling the background")
+                    self.df_all['all_bkg'] = self._overbalance_bkg(signal_list_dfs,self.bkgDF)
+                    self.df_all['all_sig'] = self.df_all['all_sig'].sample(10*len(self.df_all['all_sig'].index), replace=True)
+                else :
+                    print(" you choosed parametric training and the signal mass will be randomized to the background")
+                    self.df_all['all_bkg'] = self._fit_sign_mass(signal_list_dfs,self.bkgDF)
+
             else : self.df_all['all_bkg'] = self.bkgDF.copy()
             del self.bkgDF
             ## free up the memeory from all other dfs 
