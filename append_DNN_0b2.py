@@ -27,22 +27,16 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     file_out.mkdir('sf')
     file_out.cd('sf')
     #tree_out = file_out.Get("sf/t")
-    TT1l_val = array.array('f', 10*[0.])
-    TT2l_val = array.array('f', 10*[0.])
+    TTJ_val = array.array('f', 10*[0.])
     WJet_val = array.array('f', 10*[0.])
     Sign_val = array.array('f', 10*[0.])
 
-    #tree_in.SetBranchStatus("*_0b",0);    
-    tree_in.SetBranchStatus("*TTS",0)
-    tree_in.SetBranchStatus("*WJ",0)
-    tree_in.SetBranchStatus("*TTDi",0)
-    tree_in.SetBranchStatus("*sig",0)
+    tree_in.SetBranchStatus("*_0b",0);    
 
-
-    if ('T5qqqq' in infile) : 
+    if ("T1tttt" in infile) : 
         return
-    elif (not "T1tttt" in infile) : 
-        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
+    elif (not 'T5qqqq' in infile) : 
+        p_df = it.pandas.df(var_list+['Selected','nLep','nVeto','Event','Run','Lumi'])
         p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame()
@@ -50,22 +44,21 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
             mgo = mass[0] ; mlsp = mass[1]
             p_df.loc[:,'mGo'] = mgo
             p_df.loc[:,'mLSP'] = mlsp
-            prediction_ = pd.DataFrame(model.predict_proba(p_df[var_list+['mGo','mLSP']].values),columns=['TTS_'+str(i), 'TTDi_'+str(i), 'WJ_'+str(i),'Sig_'+str(i)])
+            prediction_ = pd.DataFrame(model.predict_proba(p_df[var_list+['mGo','mLSP']].values),columns=['TTJ_'+str(i), 'WJ_'+str(i),'Sig_'+str(i)])
             prediction = pd.concat([prediction,prediction_],axis=1)
     else :
         var_list.append('mGo')
         var_list.append('mLSP')
-        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
+        p_df = it.pandas.df(var_list+['Selected','nLep','nVeto','Event','Run','Lumi'])
         p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
-        prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
+        prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTJ','WJ','Sig'])
 
     tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
-    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS[10]/F')
-    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi[10]/F')
-    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ[10]/F')
-    Sign  = tree_out.Branch('sig', Sign_val, 'sig[10]/F')
+    TTJ  = tree_out.Branch('TTJ_0b', TTJ_val, 'TTJ_0b[10]/F')
+    WJet  = tree_out.Branch('WJ_0b', WJet_val, 'WJ_0b[10]/F')
+    Sign  = tree_out.Branch('sig_0b', Sign_val, 'sig_0b[10]/F')
 
     
     prediction['Event'] = p_df['Event']
@@ -94,26 +87,24 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
         #print(df_idx, i_ev)
         if (("T1tttt" in infile)  or ('T5qqqq' in infile)) : 
             for i in range(len(masslist)) : 
-                TT1l_val[i] = prediction['TTS'][i_ev]
-                TT2l_val[i] = prediction['TTDi'][i_ev]
+                TTJ_val[i] = prediction['TTJ'][i_ev]
                 WJet_val[i] = prediction['WJ'][i_ev]
                 Sign_val[i] = prediction['Sig'][i_ev]
 
-            TT1l.Fill()
-            TT2l.Fill()
+            TTJ.Fill()
             WJet.Fill()
             Sign.Fill()
 
         else : 
             for i in range(len(masslist)) :
-                TT1l_val[i] = prediction['TTS_'+str(i)][i_ev]
-                TT2l_val[i] = prediction['TTDi_'+str(i)][i_ev]
+                TTJ_val[i] = prediction['TTJ_'+str(i)][i_ev]
                 WJet_val[i] = prediction['WJ_'+str(i)][i_ev]
                 Sign_val[i] = prediction['Sig_'+str(i)][i_ev]
-            TT1l.Fill()
-            TT2l.Fill()
+            TTJ.Fill()
             WJet.Fill()
             Sign.Fill()
+    #file_out.mkdir('sf')
+    #file_out.cd('sf')
     #file_out.Delete("t;1")
     #file_out.Delete("sf/t;1")
     tree_out.Write("t", ROOT.TObject.kOverwrite)
@@ -134,7 +125,7 @@ if __name__ == '__main__':
     parser.add_argument('--indir', help='List of datasets to process',default=None, metavar='indir')
     parser.add_argument('--outdir', help='output directory',default=None, metavar='outdir')
     parser.add_argument('--infile', help='infile to process',default=None, metavar='infile')
-    parser.add_argument('--exec', help="wight directory", default='./batch/append_exec.sh', metavar='exec')
+    parser.add_argument('--exec', help="wight directory", default='./batch/append_exec_0b.sh', metavar='exec')
     parser.add_argument('--batchMode','-b', help='Batch mode.',default=False, action='store_true')
     parser.add_argument('--model', help='model to be used',default=None, metavar='model')
     parser.add_argument('--nevt', help='number of events per job',default=0, metavar='nevt')
@@ -144,7 +135,7 @@ if __name__ == '__main__':
 
     masslist = [[1500,1000],[1500,1200],[1600,1100],[1700,1200],[1800,1300],[1900,100],[1900,800],[1900,1000],[2200,100],[2200,800]]
 
-    var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'nLep', 'Lep_pt', 'Selected', 'nVeto', 'LT', 'HT', 'nBCleaned_TOTAL','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]#,"mGo", "mLSP"]
+    var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWTight"]#,"mGo", "mLSP"]
     
     wdir = os.getcwd()
     
@@ -166,9 +157,9 @@ if __name__ == '__main__':
             os.makedirs(outdir) 
 
         if ( "T1tttt" in args.infile or 'T5qqqq' in args.infile) :
-            Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
+            Predict_Keras(args.infile,outdir,var_list,['TTJ', 'WJ', 'sig'],masslist,model = args.model)
         else : 
-            Predict_Keras(args.infile,outdir,var_list,['TTS','TTDi', 'WJ', 'sig'],masslist,model = args.model)
+            Predict_Keras(args.infile,outdir,var_list,['TTJ', 'WJ', 'sig'],masslist,model = args.model)
     else : 
         
         outdir = os.path.join(args.outdir,os.path.basename(os.path.normpath(args.indir)))

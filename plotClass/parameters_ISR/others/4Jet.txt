@@ -1,1 +1,1 @@
-&& (nJets30Clean == 4)
+&& (nJets30Clean > 3) && (nJets30Clean <= 4)

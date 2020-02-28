@@ -43,7 +43,7 @@ if __name__ == '__main__':
     if MultiClass : 
         if args.multib : 
             class_names = ['TTSemiLep','TTDiLep','WJets','signal']#_LDM','signal_HDM']
-        else :  class_names = ['TTJets','WJets','QCD','signal']
+        else :  class_names = ['TTJets','WJets','signal']
     else : 
         class_names = ['signal','background']
     ##########################

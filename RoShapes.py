@@ -105,6 +105,9 @@ if __name__ == '__main__':
     if int(args.year) != 2016 : 
         for key in All_files : 
             All_files[key]['scale']  = All_files[key]['scale'].replace("*nISRttweight","")
+    else : 
+        All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
+        All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
 
     indir = args.indir
     if args.doSyst : 
@@ -136,7 +139,10 @@ if __name__ == '__main__':
                 for key in systList[syst] : 
                     systList[syst][key]['scale_up']  = systList[syst][key]['scale_up'].replace("*nISRttweightsyst_up","").replace("*nISRttweight","")
                     systList[syst][key]['scale_dn']  = systList[syst][key]['scale_dn'].replace("*nISRttweightsyst_down","").replace("*nISRttweight","")
-        #sys.exit()
+        else : 
+            for syst in systList : 
+                systList[syst]["DiLepTT"]['scale_up']  = systList[syst]["DiLepTT"]['scale_up'].replace('/sumOfWeights*',"/sumOfWeights2*")
+                systList[syst]["DiLepTT"]['scale_dn']  = systList[syst]["DiLepTT"]['scale_dn'].replace('/sumOfWeights*',"/sumOfWeights2*")
                
     outdir = args.outdir
     execu = args.exec
@@ -232,7 +238,7 @@ if __name__ == '__main__':
                 # make the hist 
                 hist = make1D(v,All_files[g],v[:-3]+'_'+cutdict+"_nom",ranges)
                 chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+"_nom", scale+'*'+lum+'*(1)',"goff")
-                if args.doSyst and not 'Data' in g : 
+                if args.doSyst : 
                     # JEC comes from differnt nTuples
                     hist_jec_up = make1D(v,All_files_Jec_up[g],v[:-3]+'_'+cutdict+"_Jec_Up",ranges)
                     chain_Jec_up.Draw(v +' >> '+v[:-3]+'_'+cutdict+"_Jec_Up", scale+'*'+lum+'*(1)',"goff")
@@ -241,15 +247,16 @@ if __name__ == '__main__':
                     hist_jec_up.Write()
                     hist_jec_dn.Write()
                     # nomalization systematics
-                    for syst in systList : 
-                        hist_norm_syst_up = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Up",ranges)
-                        hist_norm_syst_dn = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Down",ranges)
-                        scale_up = systList[syst][g]['scale_up']
-                        scale_dn = systList[syst][g]['scale_dn']
-                        chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Up", scale_up+'*'+lum+'*(1)',"goff")
-                        chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Down", scale_dn+'*'+lum+'*(1)',"goff")
-                        hist_norm_syst_up.Write()
-                        hist_norm_syst_dn.Write()
+                    if not 'Data' in g : 
+                        for syst in systList : 
+                            hist_norm_syst_up = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Up",ranges)
+                            hist_norm_syst_dn = make1D(v,All_files[g],v[:-3]+'_'+cutdict+'_'+syst+"_Down",ranges)
+                            scale_up = systList[syst][g]['scale_up']
+                            scale_dn = systList[syst][g]['scale_dn']
+                            chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Up", scale_up+'*'+lum+'*(1)',"goff")
+                            chain.Draw(v +' >> '+v[:-3]+'_'+cutdict+'_'+syst+"_Down", scale_dn+'*'+lum+'*(1)',"goff")
+                            hist_norm_syst_up.Write()
+                            hist_norm_syst_dn.Write()
                 #print (hist)
                 #hist.Sumw2()
                 hist.Write()

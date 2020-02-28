@@ -90,12 +90,15 @@ def make1D_bins(binlist,style,name):
 def doScaleBkgNormData(datalist,bkglist,bkgsum,Apply = False):
     if len(datalist) == 0 : return -1.0
     if len(bkglist)  == 0 : return -1.0
-    data = datalist[0]
+    data = datalist
     bkg  = bkgsum
     int = 0
     for l in bkglist : 
        int+= l.Integral()
     rm = bkg.Integral() - int
+    if rm == 0 : 
+        print('total background integral equals zero, will not plot the hist')
+        return 0.0
     sf = (data.Integral() - rm) / int
     bkgs = bkglist
     if Apply : 
@@ -109,11 +112,13 @@ def sorttinglist(Hlist) :
     #print "sotred List : " , sortedHList
     return sortedHList
 
-def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=True,uncertHist = None ):
+def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=True,uncertHist = None ,showCount=False):
     sigEntries = signalHists
     bgEntries = BKGHists
     dataEntry = DataHists
     legWidth= 0.36 if columns > 1 else 0.18
+    if showCount : 
+        legWidth*= 1.4
     nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0 
     height = (.20 + textSize*max(nentries-3, 0))
     if columns > 1:
@@ -130,13 +135,22 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     leg.SetNColumns(columns)
     entries = []
     if dataEntry:
-    	entries.append((DataHists,'', 'LPE'))
+        if showCount : 
+            entries.append((DataHists,str(DataHists.GetTitle())+' [N='+str(round(DataHists.Integral(),0))+']', 'LPE'))
+        else : 
+            entries.append((DataHists,'', 'LPE'))
     if signalHists : 
         for sigplot in signalHists:
-            entries.append((sigplot,'', 'LE'))
+            if showCount : 
+                entries.append((sigplot,str(sigplot.GetTitle())+' [N='+str(round(sigplot.Integral(),0))+']', 'LE'))
+            else : 
+                entries.append((sigplot,'', 'LE'))
     if bgEntries : 
         for bplot in bgEntries:
-            entries.append((bplot,'', 'F'))
+            if showCount:
+                entries.append((bplot,str(bplot.GetTitle())+' [N='+str(round(bplot.Integral(),0))+']', 'F'))
+            else : 
+                entries.append((bplot,'', 'F'))
     #if totalError:
     #    entries.append((totalError, "Total unc.", "F"))
     nrows = int(ceil(len(entries)/float(columns)))
@@ -145,7 +159,7 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
             i = r+c*nrows
             if i >= len(entries):
                 break
-            #print(entries[i])   
+            #print(entries[i]) 
             leg.AddEntry(*entries[i])
     if showSF:
         leg.AddEntry('SF', 'SF: {0}'.format(round(sf, 2)), '')
@@ -250,10 +264,9 @@ if __name__ == '__main__':
     parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
     parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
     parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
-    parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')
-    
-
-
+    parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')    
+    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
+    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')    
 
     args = parser.parse_args()
 
@@ -301,13 +314,15 @@ if __name__ == '__main__':
         if cutline.startswith("#") : continue
         cutline = str(cutline).strip()
         cut_strings+= cutline 
-    
+    adcuts = ''
     if args.mcuts != None : 
         mcf = open(args.mcuts, 'r')
         for cutline in mcf : 
             if cutline.startswith("#") : continue
             cutline = str(cutline).strip()
-            cut_strings+= cutline 
+            if cutline.startswith("Add") : 
+                adcuts+= cutline.split(":")[-1]
+            else : cut_strings+= cutline 
 
     if args.blind : 
         del All_files['Data']
@@ -330,9 +345,15 @@ if __name__ == '__main__':
     CMS_lumi.extraText  = 'Preliminary'
     CMS_lumi.lumi_sqrtS = '13 TeV'
     CMS_lumi.lumiTextSize     = 0.6 if doRatio else 0.52
-    CMS_lumi.cmsTextSize      = 0.75 if doRatio else 0.62
+    CMS_lumi.cmsTextSize      = 0.9 if doRatio else 0.8
     CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
 
+    if int(args.year) != 2016 : 
+        All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
+        All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
+    if int(args.year) == 2016 :
+        All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
+        All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
     # get the plotter class instant 
     instPlot = rootplot(indir,outdire,All_files=All_files)
     if int(args.jobs) == 0 : 
@@ -389,13 +410,14 @@ if __name__ == '__main__':
             # draw the variable to the hist created 
             if 'Data' in key : lum = '1.0' 
             else  : lum = lumi
-            if int(args.year) != 2016 : All_files[key]['scale']  = All_files[key]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
-            All_files[key]['chain'].Draw(var[1] +' >> '+key+var[0], All_files[key]['scale']+'*'+lum+'*(1)',"goff")
+            addicut = "1"
+            if any('AddCut' in e for e in var) : 
+                index0,_ = findItem(var , 'AddCut')
+                addicut = var[index0][1] 
+
+            All_files[key]['chain'].Draw(var[1] +' >> '+key+var[0], All_files[key]['scale']+'*'+lum+'*(Sum$('+adcuts+addicut+'))',"goff")
             #print (hist)
             ROOT.gROOT.ForceStyle()
-            All_files[key]['hist'].append(hist) 
-            if All_files[key]['Stackable'] : stackableHists.append(hist)
-            if 'Sig' in key : SignalHists.append(hist)
             if (hist.GetSumw2N() == 0) : hist.Sumw2(ROOT.kTRUE)
             # check the overflow bins 
             if any('IncludeOverflows' in e for e in var) :
@@ -410,6 +432,7 @@ if __name__ == '__main__':
                 hist.SetBinContent(n+1,0)
             # per binwidth normalization
             if any('varbin' in e for e in var) : 
+                index0,_ = findItem(var , 'varbin')
                 normBinW = var[index0][2]
                 bins = var[index0][1]
                 if normBinW == True:
@@ -418,6 +441,10 @@ if __name__ == '__main__':
                     #    hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
                     hist.Scale(0.1,"width");
             # write the hist
+            All_files[key]['hist'].append(hist) 
+            if All_files[key]['Stackable'] : stackableHists.append(hist)
+            if 'Sig' in key : SignalHists.append(hist)
+
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
             hist.Write()
         # make the total BKG hist to be used for ratio calculation
@@ -432,12 +459,13 @@ if __name__ == '__main__':
             stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
             if ('Data' in All_files.keys() and scale_bkgd_toData ) : 
                 apply = False
-                sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists_,total,Apply = apply)
+                sf = doScaleBkgNormData(All_files['Data']['hist'][i],stackableHists_,total,Apply = apply)
             else : sf = 1.0
         elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) :
             apply = True 
-            sf = doScaleBkgNormData(All_files['Data']['hist'],stackableHists,total,Apply=apply)
+            sf = doScaleBkgNormData(All_files['Data']['hist'][i],stackableHists,total,Apply=apply)
         else : sf = 1.0
+        if sf == 0.0 : continue
         # scale the total backgrounds to data
         total.Scale(sf if apply == True else 1.0 )
         total.SetName("totalBKG_scaled")
@@ -500,7 +528,7 @@ if __name__ == '__main__':
         stack.GetXaxis().SetLabelFont(42)
         stack.GetXaxis().SetLabelSize(0.04)
         stack.GetYaxis().SetTitleFont(42)
-        stack.GetYaxis().SetTitleSize(0.05)
+        stack.GetYaxis().SetTitleSize(0.06)
         stack.GetYaxis().SetTitleOffset(1.2)
         stack.GetYaxis().SetLabelFont(42)
         stack.GetYaxis().SetLabelSize(0.05)
@@ -567,11 +595,11 @@ if __name__ == '__main__':
             pull.GetYaxis().SetRangeUser(rmin,rmax)
             pull.GetYaxis().SetDecimals(True)
             pull.SetLabelSize(0.14, "XY")
-            pull.GetXaxis().SetTitleSize(.1)
-            pull.GetYaxis().SetTitleSize(.11)
+            pull.GetXaxis().SetTitleSize(.14)
+            pull.GetYaxis().SetTitleSize(.14)
             pull.GetYaxis().SetLabelSize(0.11)
             pull.GetXaxis().SetLabelSize(0.11)
-            pull.GetYaxis().SetTitleOffset(0.6)
+            pull.GetYaxis().SetTitleOffset(0.5)
             pull.GetYaxis().SetNdivisions(505)
             
             pull.Draw("EP")
@@ -599,7 +627,7 @@ if __name__ == '__main__':
         CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
 
         doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
-                 All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2, uncertHist=totaluncert if ShowMCerror else None)
+                 All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
         if any('LogY' in e for e in var) :
             ROOT.gPad.SetLogy()
                     

@@ -1,8 +1,8 @@
 
-(nLep == 2 && Lep_pt > 20)
+(nLep == 2 && Lep_pt > 40)
 && (Selected == 1 && Selected2 == 1)
 && (nVeto == 0 )
 && ( !isData || (HLT_EleOR || HLT_MuOR || HLT_MetOR))
 && (!isData || ( (PD_SingleEle && HLT_EleOR) || (PD_SingleMu && (HLT_MuOR) && !(HLT_EleOR) ) || (PD_MET && (HLT_MetOR) && !(HLT_EleOR) && !(HLT_MuOR) )  ))
 && (!isData || METfilters == 1)
-&& ((Mll != 0 || (Mll > 80 && Mll > 100 )))
+&& ((Mll > 80 && Mll < 100 ))

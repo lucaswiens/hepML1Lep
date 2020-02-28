@@ -47,6 +47,9 @@ if __name__ == '__main__':
     parser.add_argument('--only' ,help="choose a cut text to run with it only", default=None, metavar='only')
     parser.add_argument('--blind' ,help="to blind the inclusive distributions",default=False,action='store_true')
     parser.add_argument('--blindall' ,help="to blind the all distributions",default=False,action='store_true')
+    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
+    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')  
+
     args = parser.parse_args()
 
     if args.lumi == "35.9" : 
@@ -60,7 +63,13 @@ if __name__ == '__main__':
     
         
     cmd = " --indir "+args.indir+" --lumi "+args.lumi+ " --YmaX 0.0  --YmiN 0.1 --rmax 1.95 --rmin 0.05 --doRatio --year "+year
-    
+
+    if args.showSF : 
+        cmd += " --showSF "
+
+    if args.showCount : 
+        cmd += " --showCount "
+
     if not "_0b" in args.param : 
         cmd+= ' --mb '
 

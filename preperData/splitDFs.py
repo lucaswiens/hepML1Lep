@@ -34,7 +34,7 @@ class splitDFs(object):
             #QCD_index        = self.bkgDF[self.bkgDF['filename'].str.contains('QCD')].index
             self.class_2   = self.bkgDF[~ self.bkgDF['filename'].str.contains('TTJets')].index
         else : 
-            self.class_0   = self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_'))].index#self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom') | self.bkgDF['filename'].str.contains('TTJets_DiLepton'))].index
+            self.class_0   = self.bkgDF[~(self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index#self.bkgDF[(self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom') | self.bkgDF['filename'].str.contains('TTJets_DiLepton'))].index
             self.class_1   = self.bkgDF[self.bkgDF['filename'].str.contains('WJetsToLNu_')].index
             self.class_2   = np.array([]) #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            # #self.bkgDF[~ (self.bkgDF['filename'].str.contains('TTJets_SingleLeptonFrom')|self.bkgDF['filename'].str.contains('WJetsToLNu_'))].index            
         print (self.signalDF.groupby(['mGo','mLSP']).size())
@@ -274,6 +274,8 @@ class splitDFs(object):
         classes_ = np.unique(self.train_DF['isSignal'])
         print('Done reindexing, going to next step')
         #if self.multib : 
+        #self.train_DF = self.train_DF.dropna()
+        #self.test_DF = self.test_DF.dropna()
         self.class_weights = class_weight.compute_class_weight('balanced',
                                                                 classes_,
                                                                 self.train_DF['isSignal'])

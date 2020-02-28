@@ -22,6 +22,7 @@ class rootplot(object) :
 
         for g in self.All_files :
             textsample.write(g+" : "+"\n") 
+            textsample.write("{:<20}{:<20}".format(" ",self.All_files[g]['scale'])+"\n")
             for f in self.All_files[g]['files']:
                     for rf in self.rootList:
                         if f in rf : 

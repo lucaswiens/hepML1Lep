@@ -49,10 +49,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for nanoAOD', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--infile', help='List of datasets to process', metavar='infile')
     parser.add_argument('--outdir', help='output dir', metavar='outdir')
+    parser.add_argument('--syst', help='systematics',default="nom", metavar='syst')
+    
     
     args = parser.parse_args()
     infile = args.infile
-    outdir = args.outdir
+    syst = args.syst
+    outdir = os.path.join(args.outdir,syst)
+     
 
     if not os.path.exists(outdir):os.makedirs(outdir)
     if os.path.exists(outdir+'/alphabetagammaTable.tex'):
@@ -103,7 +107,12 @@ if __name__ == '__main__':
             hList = tdir.GetListOfKeys()
             for i in range(0,len(hList)):
                 hname = (hList)[i].GetName()
-                if not '_nom' in hname: continue
+                if "Data" in bkg : 
+                    if "Jec" in syst : 
+                        if not '_'+syst in hname: continue
+                    elif not '_nom' in hname: continue
+                else : 
+                    if not '_'+syst in hname: continue
                 hist = tdir.Get(hname)
                 if not 'sig' in hname : continue
                 for obkg in others_bkg : 
