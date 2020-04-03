@@ -1,0 +1,2 @@
+&& (sigHDM >TTDi ) && (sigHDM >TTS) && (sigHDM >WJ)&& (sigHDM >sigLDM)
+&& (nJets30Clean < 7)

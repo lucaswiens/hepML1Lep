@@ -1,2 +1,2 @@
-&& (2200_100sig_0b >2200_100TTJ_0b) && (2200_100sig_0b >2200_100WJ_0b)
-&& (nJets30Clean <= 6)
+&& (sig_0b[8] >TTJ_0b[8]) && (sig_0b[8] >WJ_0b[8])
+&& (nJets30Clean <= 5)

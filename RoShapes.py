@@ -11,9 +11,9 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptTitle(0)
 
 from plotClass.rootplot  import rootplot
-from plotClass.search_regions import All_files
+from plotClass.SRs.search_regions import All_files
 
-import plotClass.search_regions as sr
+import plotClass.SRs.search_regions as sr
 
 import os 
 import datetime
@@ -23,7 +23,6 @@ from math import hypot, sqrt, ceil
 currentDT = datetime.datetime.now()
 
 import argparse
-import htcondor
 
 
 SRs_cut_strings =  sr.SRs_cut_strings
@@ -105,10 +104,10 @@ if __name__ == '__main__':
     if int(args.year) != 2016 : 
         for key in All_files : 
             All_files[key]['scale']  = All_files[key]['scale'].replace("*nISRttweight","")
-    else : 
-        All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
-        All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
-
+    elif int(args.year) == 2018 :
+        for key in All_files: 
+            if "Data" in key or "Signal_" in key : continue 
+            All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
     indir = args.indir
     if args.doSyst : 
         import copy
@@ -139,10 +138,14 @@ if __name__ == '__main__':
                 for key in systList[syst] : 
                     systList[syst][key]['scale_up']  = systList[syst][key]['scale_up'].replace("*nISRttweightsyst_up","").replace("*nISRttweight","")
                     systList[syst][key]['scale_dn']  = systList[syst][key]['scale_dn'].replace("*nISRttweightsyst_down","").replace("*nISRttweight","")
-        else : 
+        elif int(args.year) == 2018 :
             for syst in systList : 
-                systList[syst]["DiLepTT"]['scale_up']  = systList[syst]["DiLepTT"]['scale_up'].replace('/sumOfWeights*',"/sumOfWeights2*")
-                systList[syst]["DiLepTT"]['scale_dn']  = systList[syst]["DiLepTT"]['scale_dn'].replace('/sumOfWeights*',"/sumOfWeights2*")
+                for key in systList[syst] : 
+                    if "Data" in key or "Signal_" in key : continue 
+                    systList[syst][key]['scale_up']  = systList[syst][key]['scale_up'].replace("*lepSF","").replace("*lepSF*HEM_MC_SF","")
+                    systList[syst][key]['scale_dn']  = systList[syst][key]['scale_dn'].replace("*lepSF","").replace("*lepSF*HEM_MC_SF","")
+                
+        #sys.exit()
                
     outdir = args.outdir
     execu = args.exec
@@ -155,14 +158,18 @@ if __name__ == '__main__':
     
 
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
-    ranges = [100,0.0,1.0]
+    ranges = [1000,0.0,1.0]
     if cutdict == 'SR' : 
-        ranges = [100, 0.0, 1.0] 
+        ranges = [1000, 0.0, 1.0] 
         cutdict_ = SRs_cut_strings
     elif cutdict == 'CR1' : cutdict_ = CRs1_cut_strings
     elif cutdict == 'CR2' : cutdict_ = CRs2_cut_strings
     elif cutdict == 'CR3' : cutdict_ = CRs3_cut_strings
     elif cutdict == 'CR4' : cutdict_ = CRs4_cut_strings
+    
+    if int(args.year) == 2018 :
+        for dic in cutdict_ : 
+            cutdict_[dic]+="&& (!isData || (Run < 319077) || ( nHEMJetVeto == 0 && nHEMEleVeto == 0))"
 
     mass = args.mass
 
@@ -263,10 +270,11 @@ if __name__ == '__main__':
         outroot.cd('')
         outroot.Close()
     elif batch :
+        import htcondor
+        schedd = htcondor.Schedd()
         cmd_array = []
         print('batch mode activated ...')
         regions = ['SR','CR1','CR2','CR3','CR4']
-        schedd = htcondor.Schedd()  
         #sub = htcondor.Submit("")
         ##Condor configuration
         
@@ -326,5 +334,6 @@ if __name__ == '__main__':
             with schedd.transaction() as txn:
                 job.queue(txn)
                 print ("Submit job for configurations of {}".format(comd))
+
     
 

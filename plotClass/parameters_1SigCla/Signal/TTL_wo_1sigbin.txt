@@ -1,0 +1,2 @@
+&& (TTS >sig) && (TTS >WJ) && (TTS >TTDi)
+&& (sig > 0.1)

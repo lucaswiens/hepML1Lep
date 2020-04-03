@@ -1,4 +1,3 @@
-# for Dilep CR 
 (!isData || (HLT_EleOR || HLT_MuOR || HLT_MetOR))
 && (!isData || ( (PD_SingleEle && HLT_EleOR) || (PD_SingleMu && (HLT_MuOR) && !(HLT_EleOR) ) || (PD_MET && (HLT_MetOR) && !(HLT_EleOR) && !(HLT_MuOR) )  ))
 && (!isData || METfilters == 1)

@@ -1,0 +1,2 @@
+&& (sig_0b[5] >TTJ_0b[5]) && (sig_0b[5] >WJ_0b[5])
+&& (nJets30Clean > 5)

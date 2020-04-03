@@ -1,2 +1,2 @@
 && (sig[9] >TTDi[9] ) && (sig[9] >TTS[9]) && (sig[9] >WJ[9])
-&& (sig[9] >= 0.40) && (sig[9] <= 0.8) && (nJets30Clean > 6)
+&& (sig[9] >= 0.40) && (sig[9] <= 0.90) && (nJets30Clean > 6)

@@ -1,0 +1,2 @@
+&& (sig[4] >TTDi[4] ) && (sig[4] >TTS[4]) && (sig[4] >WJ[4]) && (sig[4] < 0.99)
+&& (nJets30Clean > 6)

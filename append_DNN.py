@@ -41,7 +41,7 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
 
     if ('T5qqqq' in infile) : 
         return
-    elif (not "T1tttt" in infile) : 
+    if (not "T1tttt" in infile) : 
         p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
         p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
@@ -198,6 +198,7 @@ if __name__ == '__main__':
             try: 
                 with schedd.transaction() as txn:
                     for fc in Filenamelist : 
+                        #if not "T1tttt" in fc : continue  
                         print(fc)
                         sub["arguments"] = " ".join([fc,wdir,args.model,outdir,args.indir])
                         sub.queue(txn)

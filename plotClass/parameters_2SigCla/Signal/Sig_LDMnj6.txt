@@ -1,2 +1,0 @@
-&& (signal_LDM >TTDiLep ) && (signal_LDM >TTSemiLep) && (signal_LDM >WJets)&& (signal_LDM >signal_HDM)
-&& (nJets30Clean >= 6)
