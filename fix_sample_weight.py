@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 import ROOT
 import array
+import sys 
+import os
+indir = sys.argv[-1]
+jects = ["2016_FR_","2016_FR_JEC_up_","2016_FR_JEC_down_"]
 
-filelist = ["UL_FRs_Dec19_DNN_smallNN_0b/2016_FR_/evVarFriend_TTJets_LO_HT600to800_ext.root",
-            "UL_FRs_Dec19_DNN_smallNN_0b/2016_FR_/evVarFriend_TTJets_LO_HT800to1200_ext.root",
-            "UL_FRs_Dec19_DNN_smallNN_0b/2016_FR_/evVarFriend_TTJets_LO_HT1200to2500_ext.root",
-            "UL_FRs_Dec19_DNN_smallNN_0b/2016_FR_/evVarFriend_TTJets_LO_HT2500toInf_ext.root",
-            "UL_FRs_Dec19_DNN_smallNN_0b/2016_FR_/evVarFriend_TTJets_SingleLeptonFromT_ext.root"]
+filelist = [] 
+flist = ["evVarFriend_TTJets_LO_HT600to800_ext.root",
+            "evVarFriend_TTJets_LO_HT800to1200_ext.root",
+            "evVarFriend_TTJets_LO_HT1200to2500_ext.root",
+            "evVarFriend_TTJets_LO_HT2500toInf_ext.root",
+            "evVarFriend_TTJets_SingleLeptonFromT_ext.root"]
+
+for dir_ in jects : 
+    if os.path.exists(os.path.join(indir,dir_)): 
+        for f in flist : 
+            filelist.append(os.path.join(indir,os.path.join(dir_,f)))
 
 for f in filelist : 
     print(f)

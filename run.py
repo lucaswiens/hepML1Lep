@@ -66,6 +66,9 @@ if __name__ == '__main__':
                 "lheHTIncoming","genTau_grandmotherId","genTau_motherId","genLep_grandmotherId",
                 "genLep_motherId","DiLep_Flag","semiLep_Flag","genWeight","sumOfWeights","btagSF",
                 "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
+    ## remove the mgo and mlsp if not going to train parametrically
+    if not args.do_parametric : 
+        var_list = var_list[:-2]
 
     ##########################
     # start preparing the data if it's not in place
@@ -78,8 +81,9 @@ if __name__ == '__main__':
     ##########################
     print(splitted.test_DF.groupby(['isSignal']).size())
     print(splitted.train_DF.groupby(['isSignal']).size())
+    print(splitted.train_DF.isnull().any() )
     # init the modele 
-    scoreing = score('DNN',args.outdir,splitted.test_DF,splitted.train_DF,splitted.class_weights,var_list=var_list,do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,class_names=class_names)
+    scoreing = score('DNN',args.outdir,splitted.train_DF,splitted.test_DF,splitted.class_weights,var_list=var_list,do_multiClass = MultiClass,nSignal_Cla = int(args.nSignal_Cla),do_parametric = args.do_parametric,class_names=class_names)
     # if continue pretrained model
     if loadmodel : 
         append='_2nd'

@@ -227,11 +227,28 @@ if __name__ == '__main__':
                     bestBin = i-1
                     break 
             # this is to inforce the best bin to be 96 which corresponding to DNN >= 0.95, this will ignor the significance calculations above
-        SRbins = [[900,950],[951,960],[961,980],[981,990],[991,bestBin-1],[bestBin,1001]]
+        lastbinW = NBins+1 - bestBin
+        beforelastbin = bestBin -1 
+        otherWs = []
+        otherbins = []
+        for i in range(0,5) : 
+            if beforelastbin < 900 : continue 
+            otherbinW = (2+i)*lastbinW
+            bin = beforelastbin - otherbinW
+            otherWs.append(otherbinW)
+            otherbins.append([bin,beforelastbin])
+            beforelastbin = bin -1 
+        #otherbins.append([800,beforelastbin-1])
+        otherbins = otherbins[::-1]
+        #print(otherbins)
+        SRbins = otherbins
+        SRbins.append([bestBin,1001])
+        #print(SRbins)
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
-                bestBin = bin[0]
-                NBins = bin[1]-1
+                #print(bestBin)
+                bestBin = int(bin[0])
+                NBins = int(bin[1]-1)
                 sigerr = ROOT.Double(0.)
                 bkgerr = ROOT.Double(0.)
                 shist.Scale(1.0/factor)
@@ -304,7 +321,7 @@ if __name__ == '__main__':
                         sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
                         datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),'-')+'\n')
         if oneBin :
-            bestBin = SRbins[-1][0]
+            bestBin = int(SRbins[-1][0])
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
             shist.Scale(1.0/factor)

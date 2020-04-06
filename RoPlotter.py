@@ -162,7 +162,7 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
             #print(entries[i]) 
             leg.AddEntry(*entries[i])
     if showSF:
-        leg.AddEntry('SF', 'SF: {0}'.format(round(sf, 2)), '')
+        leg.AddEntry('SF', 'norm.: {0}'.format(round(sf, 2)), '')
     #if options.showSF: leg.AddEntry('SF', 'SF: {0}'.format(round(1.19,2)), '')
     if uncertHist : 
         leg.AddEntry(uncertHist,"Total unc.")
@@ -183,6 +183,17 @@ def doalphabetagamma(histlist,alpha,beta,gamma):
             h.Scale(alpha)
         else : 
             h.Scale(gamma)
+        scaled_List.append(h)
+    return scaled_List
+
+def doalphabetagamma_0b(histlist,alpha,beta):
+    scaled_List = []
+    for h in histlist : 
+        hname = h.GetName()
+        if 'WJ' in hname : 
+            h.Scale(beta)
+        else : 
+            h.Scale(alpha)
         scaled_List.append(h)
     return scaled_List
 
@@ -216,7 +227,7 @@ def makeStack(histList):
     s.SetTitle('THStack')
     return s 
 
-def hadd1ds(histList,alphabetagamma=False):
+def hadd1ds(histList,alphabetagamma=False,multib = True):
     '''  A functon to hadd background and set it's style '''
     sumbkg = ROOT.TH1F(histList[0].Clone())
     sumbkg.Reset()
@@ -224,9 +235,13 @@ def hadd1ds(histList,alphabetagamma=False):
         h = ROOT.TH1F(bkghist.Clone())
         if alphabetagamma : 
             hname = h.GetName()
-            if 'DiLepTT' in hname : h.Scale(beta)
-            elif 'SemiLepTT' in hname : h.Scale(alpha)
-            else : h.Scale(gamma)
+            if multib : 
+                if 'DiLepTT' in hname : h.Scale(beta)
+                elif 'SemiLepTT' in hname : h.Scale(alpha)
+                else : h.Scale(gamma)
+            else : 
+                if 'WJ' in hname : h.Scale(beta)
+                else : h.Scale(alpha)
         sumbkg.Add(h)
     #sumbkg.Draw('goff')
     sumbkg.SetTitle('Total BKG')
@@ -260,13 +275,17 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', help='scale factor alpha',default='0.0', metavar='gamma')
     parser.add_argument('--mGo1', help='Signal 1 mGo',default=None, metavar='mGo1')
     parser.add_argument('--mGo2', help='Signal 2 mGo',default=None, metavar='mGo2')
+    parser.add_argument('--mGo3', help='Signal 3 mGo',default=None, metavar='mGo3')
+    parser.add_argument('--mGo4', help='Signal 4 mGo',default=None, metavar='mGo4')
     parser.add_argument('--mLSP1', help='Signal 1 mLSP',default=None, metavar='mLSP1')
     parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
+    parser.add_argument('--mLSP3', help='Signal 3 mLSP',default=None, metavar='mLSP3')
+    parser.add_argument('--mLSP4', help='Signal 4 mLSP',default=None, metavar='mLSP4')
     parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
     parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
     parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')    
     parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
-    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')    
+    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
 
     args = parser.parse_args()
 
@@ -295,6 +314,9 @@ if __name__ == '__main__':
     rmax = float(args.rmax) ; rmin = float(args.rmin)
     mGo1 = args.mGo1 ; mGo2 = args.mGo2 
     mLSP1 = args.mLSP1 ; mLSP2 = args.mLSP2 
+    mGo3 = args.mGo3 ; mGo4 = args.mGo4 
+    mLSP3 = args.mLSP3 ; mLSP4 = args.mLSP4 
+
 
     if 'Signal_1' in All_files.keys() or 'Signal_2' in All_files.keys() : 
         if mGo1 == None : 
@@ -307,6 +329,16 @@ if __name__ == '__main__':
         else : 
             All_files['Signal_2']['select'] = All_files['Signal_2']['select'].replace('@mGo',str(mGo2)).replace('@mLSP',str(mLSP2))
             All_files['Signal_2']['Label'] = All_files['Signal_2']['Label'].replace('@mGo',str(float(mGo2)/1000.0)).replace('@mLSP',str(float(mLSP2)/1000))
+        if mGo3 == None : 
+            del All_files['Signal_3']
+        else : 
+            All_files['Signal_3']['select'] = All_files['Signal_3']['select'].replace('@mGo',str(mGo3)).replace('@mLSP',str(mLSP3))
+            All_files['Signal_3']['Label'] = All_files['Signal_3']['Label'].replace('@mGo',str(float(mGo3)/1000.0)).replace('@mLSP',str(float(mLSP3)/1000))
+        if mGo4 == None : 
+            del All_files['Signal_4']
+        else : 
+            All_files['Signal_4']['select'] = All_files['Signal_4']['select'].replace('@mGo',str(mGo4)).replace('@mLSP',str(mLSP4))
+            All_files['Signal_4']['Label'] = All_files['Signal_4']['Label'].replace('@mGo',str(float(mGo4)/1000.0)).replace('@mLSP',str(float(mLSP4)/1000))
 
     cut_strings = ''
     cf = open(args.cuts, 'r')
@@ -314,6 +346,14 @@ if __name__ == '__main__':
         if cutline.startswith("#") : continue
         cutline = str(cutline).strip()
         cut_strings+= cutline 
+    if int(args.year) == 2018 and args.mcuts == None :
+        cut_strings+="&& (!isData || (Run < 319077) || ( nHEMJetVeto == 0 && nHEMEleVeto == 0))"
+        for key in All_files: 
+            if "Data" in key or "Signal_" in key : continue 
+            All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
+    elif int(args.year) == 2018 and "postHEM" in args.mcuts : cut_strings+="&& ( nHEMJetVeto == 0 && nHEMEleVeto == 0)" ; lumi = "39.6" 
+    elif int(args.year) == 2018 and "preHEM" in args.mcuts : cut_strings = cut_strings ; lumi = "20.1"
+    #print(cut_strings)
     adcuts = ''
     if args.mcuts != None : 
         mcf = open(args.mcuts, 'r')
@@ -347,13 +387,20 @@ if __name__ == '__main__':
     CMS_lumi.lumiTextSize     = 0.6 if doRatio else 0.52
     CMS_lumi.cmsTextSize      = 0.9 if doRatio else 0.8
     CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
-
+    # ISR weights should be removed from 2017/18 TTJets sampels
     if int(args.year) != 2016 : 
         All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
         All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
-    if int(args.year) == 2016 :
-        All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
-        All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
+    #if int(args.year) == 2016 :
+    #    All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
+    #    All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
+    # HEM veto weight is applied for events after the HEM issue
+    # HEM_MC_SF is calculated by 
+    #if int(args.year) == 2018 :
+    #    for key in All_files: 
+    #        if "Data" in key or "Signal_" in key : continue 
+    #        All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
+                
     # get the plotter class instant 
     instPlot = rootplot(indir,outdire,All_files=All_files)
     if int(args.jobs) == 0 : 
@@ -436,19 +483,21 @@ if __name__ == '__main__':
                 normBinW = var[index0][2]
                 bins = var[index0][1]
                 if normBinW == True:
-                    nbins = hist.GetNbinsX()
-                    #for bin in range(0,nbins+1):
-                    #    hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
-                    hist.Scale(0.1,"width");
+                #    nbins = hist.GetNbinsX()
+                #    for bin in range(1,nbins+1):
+                #        hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
+                #        hist.SetBinError(bin,hist.GetBinError(bin)/hist.GetXaxis().GetBinWidth(bin))
+                    hist.Scale(hist.GetXaxis().GetBinWidth(1),"width")
             # write the hist
             All_files[key]['hist'].append(hist) 
             if All_files[key]['Stackable'] : stackableHists.append(hist)
-            if 'Sig' in key : SignalHists.append(hist)
+            if 'Sig' in key : 
+                SignalHists.append(hist)
+                outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+                hist.Write()
 
-            outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
-            hist.Write()
         # make the total BKG hist to be used for ratio calculation
-        total = hadd1ds(stackableHists,do_alphabetagamma)
+        total = hadd1ds(stackableHists,do_alphabetagamma,args.mb)
         outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
         total.SetName("totalBKG")
         total.Write()
@@ -456,7 +505,10 @@ if __name__ == '__main__':
         # scale the individual background to data
         apply = False
         if do_alphabetagamma : 
-            stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
+            if args.mb : 
+                stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
+            else : 
+                stackableHists_ = doalphabetagamma_0b(stackableHists,alpha,beta)
             if ('Data' in All_files.keys() and scale_bkgd_toData ) : 
                 apply = False
                 sf = doScaleBkgNormData(All_files['Data']['hist'][i],stackableHists_,total,Apply = apply)
@@ -475,6 +527,9 @@ if __name__ == '__main__':
         stack.Write()
         total.Write()
         outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        for hist in stackableHists :
+            outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+            hist.Write()
         # make canvas to draw 
         plotformat = (600,600)
         sf_ = 20./plotformat[0]
@@ -568,6 +623,7 @@ if __name__ == '__main__':
             All_files['Data']['hist'][i].SetMarkerColor(ROOT.kBlack)
             #All_files['Data']['hist'][i].SetLineWidth(2)
             All_files['Data']['hist'][i].Sumw2()
+            outtext.write("{:<20}{:<20}{:<20}".format('Data',round(All_files['Data']['hist'][i].IntegralAndError(0,All_files['Data']['hist'][i].GetNbinsX()+1,error),2),round(error,2))+"\n")
         
         # draw the blind 
         if xblind[0] < xblind[1]:

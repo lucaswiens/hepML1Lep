@@ -327,7 +327,7 @@ if __name__ == '__main__':
                 "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
                 "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
                 "when_to_transfer_output"   : "ON_EXIT",
-                #'Requirements'              : 'OpSysAndVer == "CentOS7"',
+                'Requirements'              :'( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")',
             }
             job = htcondor.Submit(submit_parameters)
             #print('going to submit the jobs to HTC')

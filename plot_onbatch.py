@@ -33,7 +33,59 @@ def getSFs(sffile,mass='1900_100',which='alpha') :
     idx = masstoken.index(mass)
     return resulttoken[idx]
     
+def getSFs_(sffile,which='alpha') : 
+    token = open(sffile,'r')
+    linestoken=token.readlines()
+    if which == 'alpha' :  tokens_column_number = 0
+    if which == 'alphaE' :  tokens_column_number = 1
+    if which == 'beta' :  tokens_column_number = 2
+    if which == 'betaE' :  tokens_column_number = 3
+    if which == 'gamma' :  tokens_column_number = 4
+    if which == 'gammaE' :  tokens_column_number = 5
+    resulttoken=[]
+    #masstoken=[]
+    for x in linestoken:
+        resulttoken.append(x.split()[tokens_column_number])
+        #masstoken.append(x.split()[0])
+    token.close()
+    #idx = masstoken.index(mass)
+    return resulttoken[1]
+
+def getSFs_0b(sffile,mass='1900_100',which='alpha') : 
+    token = open(sffile,'r')
+    linestoken=token.readlines()
+    if which == 'alpha' :  tokens_column_number = 1
+    if which == 'alphaE' :  tokens_column_number = 2
+    if which == 'beta' :  tokens_column_number = 3
+    if which == 'betaE' :  tokens_column_number = 4
+    resulttoken=[]
+    masstoken=[]
+    for x in linestoken:
+        resulttoken.append(x.split()[tokens_column_number])
+        masstoken.append(x.split()[0])
+    token.close()
+    idx = masstoken.index(mass)
+    return resulttoken[idx]
     
+def getSFs_0b_(sffile,which='alpha') : 
+    token = open(sffile,'r')
+    linestoken=token.readlines()
+    if which == 'alpha' :  tokens_column_number = 0
+    if which == 'alphaE' :  tokens_column_number = 1
+    if which == 'beta' :  tokens_column_number = 2
+    if which == 'betaE' :  tokens_column_number = 3
+    resulttoken=[]
+    #masstoken=[]
+    for x in linestoken:
+        resulttoken.append(x.split()[tokens_column_number])
+        #masstoken.append(x.split()[0])
+    token.close()
+    #idx = masstoken.index(mass)
+    return resulttoken[1]
+
+
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for 1l plotter', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -58,6 +110,8 @@ if __name__ == '__main__':
         year = "2017"
     elif args.lumi == "59.74" : 
         year = "2018"
+    elif args.lumi == "137.54" : 
+        year = "20161718"
     else : print("lumi must be in [35.9,41.9,59.74]") ; sys.exit() 
     
     
@@ -97,12 +151,29 @@ if __name__ == '__main__':
             mgo = str(mdir.split("/")[-1]).split("_")[0]
             mlsp = str(mdir.split("/")[-1]).split("_")[1]
             cmd+=" --mGo1 "+mgo+" --mLSP1 "+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
-        else : cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
-        if not args.scale : 
-            alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
-            beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
-            gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
-            cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
+            if not args.scale : 
+                if not "_0b" in args.param : 
+                    alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
+                    beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
+                    gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
+                    cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
+                else : 
+                    alpha = (getSFs_0b(args.abg,mass=mdir.split("/")[-1],which="alpha"))
+                    beta = (getSFs_0b(args.abg,mass=mdir.split("/")[-1],which="beta"))
+                    cmd+= " --alpha "+alpha+" --beta "+beta
+        else :
+            cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1]) + " --mGo1 1500 --mGo2 1900 --mGo3 1600 --mGo4 2200 --mLSP1 1000 --mLSP2 100 --mLSP3 1100 --mLSP4 100 "
+            if not args.scale : 
+                if not "_0b" in args.param :     
+                    alpha = (getSFs_(args.abg,which="alpha"))
+                    beta = (getSFs_(args.abg,which="beta"))
+                    gamma = (getSFs_(args.abg,which="gamma"))
+                    cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
+                else : 
+                    alpha = (getSFs_0b_(args.abg,which="alpha"))
+                    beta = (getSFs_0b_(args.abg,which="beta"))
+                    cmd+= " --alpha "+alpha+" --beta "+beta
+
         if args.blind and os.path.exists(mdir+"/mplots_blind.py"): 
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
         elif not args.blind and os.path.exists(mdir+"/mplots.py"): 
@@ -121,12 +192,15 @@ if __name__ == '__main__':
         
         for mcut in myFiles : 
             othercmd = cmd
-            if "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :
+            if ("_postHEM" in str(mcut) or "_preHEM" in str(mcut)) and not year == "2018" : continue
+            if "inclusive_njseq6" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots_blind.py "
             elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") : 
-                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "    
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             othercmd+= " --mcuts "+mcut
-            if ('Sig.txt' in mcut or "Sig_lastbin.txt" in mcut or "Sig_ge6.txt" in mcut) and not "Anti" in mcut : othercmd +=' --blind '
+            if ('Sig.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut ) and not "Anti" in mcut : othercmd +=' --blind '
             cmd_array.append(othercmd)
             
     cmd_array = [x.replace("//","/") for x in cmd_array]
@@ -141,7 +215,7 @@ if __name__ == '__main__':
         outtext.write(cmd+'\n')
     
     
-    schedd = htcondor.Schedd() 
+    schedd = htcondor.Schedd()
     
     sub = htcondor.Submit("")
     ##Condor configuration
@@ -152,7 +226,7 @@ if __name__ == '__main__':
     sub["output"]                   = "{}/job_$(Cluster)_$(Process).out".format(logdir)
     sub["error"]                    = "{}/job_$(Cluster)_$(Process).err".format(logdir)
     sub["when_to_transfer_output"]  = "ON_EXIT"
-    sub['Requirements']             = 'OpSysAndVer == "CentOS7"'
+    sub['Requirements']             = '( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")'
     
     while(True):
         try: 

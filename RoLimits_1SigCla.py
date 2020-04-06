@@ -190,26 +190,43 @@ if __name__ == '__main__':
         NBins = hist.GetNbinsX()
         prevSigni = 0.0
         factor = 1.0 
-        #if mgo < 1400 : factor = 1.0
-        #bestBin = 0.0
+        if mgo < 1400 : factor = 1.0
+        bestBin = 0.0
            
-        #for i in range(NBins,900,-1):
-        #    s = shist.Integral(i,NBins+1)/factor
-        #    b = hist.Integral(i,NBins+1)
+        for i in range(NBins,900,-1):
+            s = shist.Integral(i,NBins+1)/factor
+            b = hist.Integral(i,NBins+1)
 
             #signi = simpleAsimov(s ,b)
 
             #if signi > prevSigni or b < 1.0: 
-        #    if b < 0.35 : 
+            if b < 0.35 : 
                 #print('better significance when merged ', i ,' to ', NBins+1, ' oldsign =  ',prevSigni , ' newsign = ',  signi)
-        #        bestBin = i
+                bestBin = i
                 #   prevSigni = signi
-        #    else : 
+            else : 
                 #print('better significance when merged ', i-1 ,' to ', NBins+1, ' oldsign =  ',prevSigni , ' newsign = ',  signi)
-        #        bestBin = i-1
-        #        break 
+                bestBin = i-1
+                break 
         # this is to inforce the best bin to be 96 which corresponding to DNN >= 0.95, this will ignor the significance calculations above
-        SRbins = [[900,950],[951,960],[961,980],[981,990],[991,998],[999,1001]]
+
+        lastbinW = NBins+1 - bestBin
+        beforelastbin = bestBin -1 
+        otherWs = []
+        otherbins = []
+        for i in range(0,5) : 
+            if beforelastbin < 900 : continue 
+            otherbinW = (2+i)*lastbinW
+            bin = beforelastbin - otherbinW
+            otherWs.append(otherbinW)
+            otherbins.append([bin,beforelastbin])
+            beforelastbin = bin -1 
+        #otherbins.append([800,beforelastbin-1])
+        otherbins = otherbins[::-1]
+        #print(otherbins)
+        SRbins = otherbins
+        SRbins.append([bestBin,1001])
+        #print(SRbins)
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
                 bestBin = bin[0]

@@ -81,11 +81,11 @@ if __name__ == '__main__':
         mass_dir = os.path.join(outdir,bkg_list[0].split('/')[1])
         if not os.path.exists(mass_dir):os.makedirs(mass_dir)
         
-        otherSR = ROOT.TH1F('otherSR','otherSR',100,0.0,1.0)
-        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',100,0.0,1.0)
-        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',100,0.0,1.0)
-        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',100,0.0,1.0)
-        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',100,0.0,1.0)
+        otherSR = ROOT.TH1F('otherSR','otherSR',1000,0.0,1.0)
+        otherCR1 = ROOT.TH1F('otherCR1','otherCR1',1000,0.0,1.0)
+        otherCR2 = ROOT.TH1F('otherCR2','otherCR2',1000,0.0,1.0)
+        otherCR3 = ROOT.TH1F('otherCR3','otherCR3',1000,0.0,1.0)
+        otherCR4 = ROOT.TH1F('otherCR4','otherCR4',1000,0.0,1.0)
 
         txtSR  = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_SR.txt', "w+")
         txtCR1 = open(mass_dir+'/'+bkg_list[0].split('/')[1]+'_CR1.txt', "w+")
@@ -191,21 +191,21 @@ if __name__ == '__main__':
         txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' ',alpha, '+/-'+str(alphaerr),beta ,'+/-'+str(betaerr), gamma,'+/-'+str(gammaerr) )+"\n")
 
         
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(bkg_list[0].split('/')[1].replace('_','\\_')+' & '             ,'SemiLepTT' ,' &'                       ,'DiLepTT' ,' &'                       ,'others' ,' &'                       ,'Data' ,' ')+" \\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format(bkg_list[0].split('/')[1].replace('_','\\_')+' & ','Single-lepton \ttJets' ,' &' ,'Dilepton \ttJets' ,' &'                       ,'\WJets' ,' &'                       ,'Data' ,' ')+" \\\\ \n")
         latexalphabetagamma.write('\\hline\\hline \n')
 
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SemiLepTTCat & '  ,TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2)))+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('DiLepTTCat & '    ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3,'$\pm$'+str(round(err_6,2)))+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('othersCat &'     ,TTl_4       ,' $\pm$ '+str(round(err_7,2))+'& ' ,TTll_4    ,'  $\pm$ '+str(round(err_8,2)) +'& ',WJ_4     ,' $\pm$ '+str(round(err_14,2)) +'& ',Data_4,'$\pm$'+str(round(err_9,2)))+"\\\\ \n")
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SigCat &'        ,TTl_1       ,' $\pm$ '+str(round(err_0,2))+'& ' ,TTll_1    ,'  $\pm$ '+str(round(err_00,2)) +'& ',WJ_1     ,' $\pm$ '+str(round(err_000,2)) +'& ','---','$\pm$ ---')+"\\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('Single-lepton \ttJets cat. & '  ,TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('Dilepton \ttJets cat. & '       ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3,'$\pm$'+str(round(err_6,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('\WJets cat. &'                  ,TTl_4       ,' $\pm$ '+str(round(err_7,2))+'& ' ,TTll_4    ,'  $\pm$ '+str(round(err_8,2)) +'& ',WJ_4     ,' $\pm$ '+str(round(err_14,2)) +'& ',Data_4,'$\pm$'+str(round(err_9,2)))+"\\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('T1tttt cat. &'                  ,TTl_1       ,' $\pm$ '+str(round(err_0,2))+'& ' ,TTll_1    ,'  $\pm$ '+str(round(err_00,2)) +'& ',WJ_1     ,' $\pm$ '+str(round(err_000,2)) +'& ','---','$\pm$ ---')+"\\\\ \n")
 
         latexalphabetagamma.write('\\hline\\hline \n')
 
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('   & ','$\\alpha$',' & ','$\\beta$' ,' & ', '$\\gamma$','   & ')+"\\\\ \n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('   & ','$\\alpha$',' & ','$\\beta$' ,' & ', '$\\gamma$','   & ')+"\\\\ \n")
         latexalphabetagamma.write('\\hline\\hline \n')
-        latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('   & ',alpha, ' $\pm$ '+str(alphaerr)+' & ',beta ,' $\pm$ '+str(betaerr)+' & ', gamma,' $\pm$ '+str(gammaerr)+' &   \\\\' )+"\n")
+        latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('   & ',alpha, ' $\pm$ '+str(alphaerr)+' & ',beta ,' $\pm$ '+str(betaerr)+' & ', gamma,' $\pm$ '+str(gammaerr)+' &   \\\\' )+"\n")
         latexalphabetagamma.write('\\hline\\hline\\hline \n')
-        textalphabetagamma.write("{:<20}{:<12}{:<15}{:<12}{:<15}{:<12}{:<15}".format(bkg_list[0].split('/')[1] ,alpha, str(alphaerr) ,beta ,str(betaerr), gamma,str(gammaerr) )+"\n")
+        textalphabetagamma.write("{:<40}{:<20}{:<15}{:<20}{:<15}{:<20}{:<15}".format(bkg_list[0].split('/')[1] ,alpha, str(alphaerr) ,beta ,str(betaerr), gamma,str(gammaerr) )+"\n")
     latexalphabetagamma.write("\\caption{ Normalizaton parameters for backgrounds, calculated from control categories.}")
     latexalphabetagamma.write("\\label{normalize}")
     latexalphabetagamma.write("\\end{longtable}\n")

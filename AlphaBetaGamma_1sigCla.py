@@ -193,7 +193,8 @@ if __name__ == '__main__':
     txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' ',alpha, '+/-'+str(alphaerr),beta ,'+/-'+str(betaerr), gamma,'+/-'+str(gammaerr) )+"\n")
 
     
-    latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format(bkg_list[0].split('/')[1].replace('_','\\_')+' & ','Single-lepton \ttJets' ,' &' ,'Dilepton \ttJets' ,' &'                       ,'\WJets' ,' &'                       ,'Data' ,' ')+" \\\\ \n")    latexalphabetagamma.write('\\hline\\hline \n')
+    latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format(' & ','Single-lepton \ttJets' ,' &' ,'Dilepton \ttJets' ,' &'                       ,'\WJets' ,' &'                       ,'Data' ,' ')+" \\\\ \n")
+    latexalphabetagamma.write('\\hline\\hline \n')
 
     latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('Single-lepton \ttJets cat. & ',TTl_2       ,' $\pm$ '+str(round(err_1,2))+'& ' ,TTll_2    ,' $\pm$ '+str(round(err_2,2))+'& ' ,WJ_2     ,' $\pm$ '+str(round(err_12,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2)))+"\\\\ \n")
     latexalphabetagamma.write("{:<40}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}{:<20}{:<10}".format('Dilepton \ttJets cat. & '     ,TTl_3       ,' $\pm$ '+str(round(err_4,2))+'& ' ,TTll_3    ,' $\pm$ '+str(round(err_5,2))+'& ',WJ_3     ,' $\pm$ '+str(round(err_13,2)) +'& ',Data_3,'$\pm$'+str(round(err_6,2)))+"\\\\ \n")

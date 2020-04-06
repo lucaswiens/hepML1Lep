@@ -1,11 +1,4 @@
 import sys
-sys.argv.append( '-b-' )
-import ROOT
-from ROOT import std
-ROOT.gROOT.SetBatch(True)
-sys.argv.remove( '-b-' )
-ROOT.gStyle.SetOptStat(0)
-ROOT.gStyle.SetOptTitle(0)
 
 import os ,glob
 import datetime
@@ -17,9 +10,12 @@ currentDT = datetime.datetime.now()
 import argparse
 
 import htcondor
-datacardsdir = "datacards_161718_syst/datacards/combinedCards/"
+
+path = sys.argv[-1]
+
+datacardsdir = os.path.join(path,"datacards/combinedCards/")
 cmsswdir = "/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/"
-outdir = "./datacards_161718_syst"
+outdir = path
 execu = "./batch/Limit_exec.sh"
 logdir = outdir+'/Logs'
 if not os.path.exists(logdir) :  os.makedirs(logdir)
@@ -34,10 +30,10 @@ for card in file_list :
     cardname = card.split('/')[-1]
     cmd = '../combinedCards/'+cardname
     submit_parameters = {
-            "executable"                : execu,
-            "arguments"                 : " ".join([' '+ cmsswdir, ' '+ os.path.join(os.getcwd(),limitOutputdir),' '+ cmd, cardname.replace('.txt','')]),
+        "executable"                : execu,
+        "arguments"                 : " ".join([' '+ cmsswdir, ' '+ os.path.join(os.getcwd(),limitOutputdir),' '+ cmd, cardname.replace('.txt','')]),
         "universe"                  : "vanilla",
-            "should_transfer_files"     : "YES",
+        "should_transfer_files"     : "YES",
         "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
         "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
         "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),

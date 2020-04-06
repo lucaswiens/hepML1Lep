@@ -34,7 +34,7 @@ from itertools import cycle
 
 
 class score(object):
-    def __init__(self,score,outdir,testDF,trainDF,class_weights,var_list,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,class_names=None):
+    def __init__(self,score,outdir,trainDF,testDF,class_weights,var_list,do_multiClass = True,nSignal_Cla = 1,do_parametric = True,class_names=None):
         self.score               = score                  
         self.outdir              = outdir                 
         self.testDF              = testDF                 
