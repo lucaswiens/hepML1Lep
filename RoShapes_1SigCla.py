@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import shutil
 import sys
 sys.argv.append( '-b-' )
 import ROOT
@@ -266,6 +266,9 @@ if __name__ == '__main__':
         ##Condor configuration
         
         if not sig : 
+            JDir = os.path.join(outdir,"grid_jobs")
+            if os.path.exists(JDir):
+                shutil.rmtree(JDir)
             print('going to run on backgrounds')
             m = "1500_1000"
             for reg in regions : 
@@ -281,6 +284,9 @@ if __name__ == '__main__':
                         print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
 
         else : 
+            JDir = os.path.join(outdir,"scan_jobs")
+            if os.path.exists(JDir):
+                shutil.rmtree(JDir)
             regions = ['SR']
             mList = masslist('mass_list_all.txt')
             print('going to run on signals')
@@ -301,25 +307,55 @@ if __name__ == '__main__':
                         for reg in regions : 
                             cmd_array.append(" ".join([wdir,indir,outdir,lumi,g,reg,m,args.year,'--scan']))
                             #print ("Submit job for configurations of {}{}{}{}{}".format(m,' ',g,' ',reg))
-        
-        
-        for comd in cmd_array : 
-            submit_parameters = { 
-                "executable"                : execu,
-                "arguments"                 : comd,
-                "universe"                  : "vanilla",
-                "should_transfer_files"     : "YES",
-                "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
-                "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
-                "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
-                "when_to_transfer_output"   : "ON_EXIT",
-                'Requirements'              :'( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")',
-            }
-            job = htcondor.Submit(submit_parameters)
-            #print('going to submit the jobs to HTC')
-            with schedd.transaction() as txn:
-                job.queue(txn)
-                print ("Submit job for configurations of {}".format(comd))
 
-    
+        import socket
+        host = socket.gethostname()
 
+        if "lxplus" in host : 
+            path = "/afs/cern.ch/work/a/amohamed/anaconda3/bin"
+            anaconda = "/afs/cern.ch/work/a/amohamed/anaconda3/bin/activate"
+            pyth = "/afs/cern.ch/work/a/amohamed/anaconda3/envs/hepML/bin/python"
+        elif "desy.de" in host : 
+            path = "/nfs/dust/cms/user/amohamed/anaconda3/bin"
+            anaconda = "/nfs/dust/cms/user/amohamed/anaconda3/bin/activate"
+            pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
+
+        for i,comd in enumerate(cmd_array) : 
+            confDir = os.path.join(JDir,"job_"+str(i))
+            if not os.path.exists(confDir) : 
+                os.makedirs(confDir)
+            comd = comd.split()
+            print(comd)
+            exec = open(confDir+"/exec.sh","w+")
+            exec.write("#"+"!"+"/bin/bash"+"\n")
+            exec.write("export PATH='"+path+":$PATH'"+"\n")
+            exec.write("source "+anaconda+" hepML"+"\n")
+            exec.write("cd "+comd[0]+"\n")
+            exec.write("echo "+comd[0]+"\n")
+            exec.write(pyth+" RoShapes.py --indir "+comd[1]+" --outdir "+comd[2]+" --lumi "+comd[3]+" --group "+comd[4]+" --cutdict "+comd[5]+" --mass "+comd[6]+" --year "+comd[7])
+            if args.doSyst : 
+                exec.write(" --doSyst")
+            if sig :
+                exec.write(" --scan")
+            exec.close()
+        if sig : 
+            subFile = open(os.path.join(JDir,"submitAllscan.conf"),"w+")
+        else: 
+            subFile = open(os.path.join(JDir,"submitAllgrid.conf"),"w+")
+        subFile.write("executable = $(DIR)/exec.sh"+"\n")
+        subFile.write("universe =  vanilla")
+        subFile.write("\n")
+        subFile.write("should_transfer_files = YES")
+        subFile.write("\n")
+        subFile.write("log = "+"{}/job_$(Cluster)_$(Process).log".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("output = "+"{}/job_$(Cluster)_$(Process).out".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("error = "+"{}/job_$(Cluster)_$(Process).err".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("when_to_transfer_output   = ON_EXIT")
+        subFile.write("\n")
+        subFile.write('Requirements  = ( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")')
+        subFile.write("\n")
+        subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
+        subFile.close()
