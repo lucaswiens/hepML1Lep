@@ -32,18 +32,11 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     WJet_val = array.array('f', 10*[0.])
     Sign_val = array.array('f', 10*[0.])
 
-    #tree_in.SetBranchStatus("*_0b",0);    
-    tree_in.SetBranchStatus("*TTS",0)
-    tree_in.SetBranchStatus("*WJ",0)
-    tree_in.SetBranchStatus("*TTDi",0)
-    tree_in.SetBranchStatus("*sig",0)
-
-
     if ('T5qqqq' in infile) : 
         return
     if (not "T1tttt" in infile) : 
         p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame()
         for i,mass in enumerate(masslist) : 
@@ -56,11 +49,11 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
         var_list.append('mGo')
         var_list.append('mLSP')
         p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
 
-    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
+    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
     TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS[10]/F')
     TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi[10]/F')

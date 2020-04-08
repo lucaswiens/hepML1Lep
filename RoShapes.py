@@ -354,9 +354,11 @@ if __name__ == '__main__':
                 exec.write(" --scan")
             exec.close()
         if sig : 
-            subFile = open(os.path.join(JDir,"submitAllscan.conf"),"w+")
+            subFilename = os.path.join(JDir,"submitAllscan.conf")
+            subFile = open(subFilename,"w+")
         else: 
-            subFile = open(os.path.join(JDir,"submitAllgrid.conf"),"w+")
+            subFilename = os.path.join(JDir,"submitAllgrid.conf")
+            subFile = open(subFilename,"w+")
         subFile.write("executable = $(DIR)/exec.sh"+"\n")
         subFile.write("universe =  vanilla")
         subFile.write("\n")
@@ -373,4 +375,8 @@ if __name__ == '__main__':
         subFile.write('Requirements  = ( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")')
         subFile.write("\n")
         subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
+        if "lxplus" in host : 
+            subFile.write("\n")
+            subFile.write('+JobFlavour = "longlunch"')
         subFile.close()
+        os.system("condor_submit "+subFilename)

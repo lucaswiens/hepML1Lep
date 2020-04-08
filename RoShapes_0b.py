@@ -343,16 +343,18 @@ if __name__ == '__main__':
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+comd[0]+"\n")
             exec.write("echo "+comd[0]+"\n")
-            exec.write(pyth+" RoShapes.py --indir "+comd[1]+" --outdir "+comd[2]+" --lumi "+comd[3]+" --group "+comd[4]+" --cutdict "+comd[5]+" --mass "+comd[6]+" --year "+comd[7])
+            exec.write(pyth+" RoShapes_0b.py --indir "+comd[1]+" --outdir "+comd[2]+" --lumi "+comd[3]+" --group "+comd[4]+" --cutdict "+comd[5]+" --mass "+comd[6]+" --year "+comd[7])
             if args.doSyst : 
                 exec.write(" --doSyst")
             if sig :
                 exec.write(" --scan")
             exec.close()
         if sig : 
-            subFile = open(os.path.join(JDir,"submitAllscan.conf"),"w+")
+            subFilename = os.path.join(JDir,"submitAllscan.conf")
+            subFile = open(subFilename,"w+")
         else: 
-            subFile = open(os.path.join(JDir,"submitAllgrid.conf"),"w+")
+            subFilename = os.path.join(JDir,"submitAllgrid.conf")
+            subFile = open(subFilename,"w+")
         subFile.write("executable = $(DIR)/exec.sh"+"\n")
         subFile.write("universe =  vanilla")
         subFile.write("\n")
@@ -370,4 +372,4 @@ if __name__ == '__main__':
         subFile.write("\n")
         subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
         subFile.close()
-
+        os.system("condor_submit "+subFilename)

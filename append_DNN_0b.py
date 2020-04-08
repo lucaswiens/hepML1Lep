@@ -31,13 +31,12 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     WJet_val = array.array('f', 10*[0.])
     Sign_val = array.array('f', 10*[0.])
 
-    tree_in.SetBranchStatus("*_0b",0);    
 
     if ("T1tttt" in infile) : 
         return
     elif (not 'T5qqqq' in infile) : 
         p_df = it.pandas.df(var_list+['Selected','nLep','nVeto','Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame()
         for i,mass in enumerate(masslist) : 
@@ -50,11 +49,11 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
         var_list.append('mGo')
         var_list.append('mLSP')
         p_df = it.pandas.df(var_list+['Selected','nLep','nVeto','Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTJ','WJ','Sig'])
 
-    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
+    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
     TTJ  = tree_out.Branch('TTJ_0b', TTJ_val, 'TTJ_0b[10]/F')
     WJet  = tree_out.Branch('WJ_0b', WJet_val, 'WJ_0b[10]/F')
