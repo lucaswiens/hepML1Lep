@@ -32,18 +32,11 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     WJet_val = array.array('f', [0.])
     Sign_val = array.array('f', [0.])
 
-    #tree_in.SetBranchStatus("*_0b",0);    
-    tree_in.SetBranchStatus("*TTS",0)
-    tree_in.SetBranchStatus("*WJ",0)
-    tree_in.SetBranchStatus("*TTDi",0)
-    tree_in.SetBranchStatus("*sig",0)
-
-
     if ('T5qqqq' in infile) : 
         return
     elif (not "T1tttt" in infile) : 
         p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame()
         masss_df = pd.DataFrame()
@@ -60,11 +53,11 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
         var_list.append('mGo')
         var_list.append('mLSP')
         p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
 
-    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
+    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
     TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS/F')
     TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi/F')
@@ -176,28 +169,55 @@ if __name__ == '__main__':
 
         Filenamelist = find_all_matching(".root",args.indir) 
         #print (Filenamelist)
+        import socket
+        host = socket.gethostname()
 
-        sub["executable"]               = args.exec
-        sub["universe"]                 = "vanilla"
-        sub["should_transfer_files"]    = "YES"
-        sub["log"]                      = "{}/job_$(Cluster)_$(Process).log".format(logdir)
-        sub["output"]                   = "{}/job_$(Cluster)_$(Process).out".format(logdir)
-        sub["error"]                    = "{}/job_$(Cluster)_$(Process).err".format(logdir)
-        sub["when_to_transfer_output"]  = "ON_EXIT"
-        sub['Requirements']             = 'OpSysAndVer == "CentOS7"'
-
-        while(True):
-            try: 
-                with schedd.transaction() as txn:
-                    for fc in Filenamelist : 
-                        print(fc)
-                        sub["arguments"] = " ".join([fc,wdir,args.model,outdir,args.indir])
-                        sub.queue(txn)
-                    print ("Submit jobs for the batch system")
-                break
-            except: 
-                pass
-
+        if "lxplus" in host : 
+            path = "/afs/cern.ch/work/a/amohamed/anaconda3/bin"
+            anaconda = "/afs/cern.ch/work/a/amohamed/anaconda3/bin/activate"
+            pyth = "/afs/cern.ch/work/a/amohamed/anaconda3/envs/hepML/bin/python"
+        elif "desy.de" in host : 
+            path = "/nfs/dust/cms/user/amohamed/anaconda3/bin"
+            anaconda = "/nfs/dust/cms/user/amohamed/anaconda3/bin/activate"
+            pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
+        
+        for i,fc in enumerate(Filenamelist) : 
+            confDir = os.path.join(outdir,"job_"+str(i))
+            if not os.path.exists(confDir) : 
+                os.makedirs(confDir)
+            exec = open(confDir+"/exec.sh","w+")
+            exec.write("#"+"!"+"/bin/bash"+"\n")
+            exec.write("export PATH='"+path+":$PATH'"+"\n")
+            exec.write("source "+anaconda+" hepML"+"\n")
+            exec.write("cd "+wdir+"\n")
+            exec.write("echo "+wdir+"\n")
+            exec.write(pyth+" append_DNN_avg.py --infile "+fc+"  --model "+args.model+" --outdir "+outdir+" --indir "+args.indir)
+            exec.close()
+        
+        subFilename = os.path.join(outdir,"submitAllgrid.conf")
+        subFile = open(subFilename,"w+")
+        subFile.write("executable = $(DIR)/exec.sh"+"\n")
+        subFile.write("universe =  vanilla")
+        subFile.write("\n")
+        subFile.write("should_transfer_files = YES")
+        subFile.write("\n")
+        subFile.write("log = "+"{}/job_$(Cluster)_$(Process).log".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("output = "+"{}/job_$(Cluster)_$(Process).out".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("error = "+"{}/job_$(Cluster)_$(Process).err".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("when_to_transfer_output   = ON_EXIT")
+        subFile.write("\n")
+        subFile.write('Requirements  = ( OpSysAndVer == "CentOS7")')
+        subFile.write("\n")
+        subFile.write("queue DIR matching dirs "+outdir+"/job_*/")
+        if "lxplus" in host : 
+            subFile.write("\n")
+            subFile.write('+JobFlavour = "longlunch"')
+        subFile.close()
+        os.system("condor_submit "+subFilename)
+        
 
 
         
