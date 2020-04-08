@@ -178,7 +178,7 @@ if __name__ == '__main__':
         Filenamelist = find_all_matching(".root",args.indir) 
         #print (Filenamelist)
 
-                import socket
+        import socket
         host = socket.gethostname()
 
         if "lxplus" in host : 
