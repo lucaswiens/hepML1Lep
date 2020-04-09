@@ -124,8 +124,10 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     if columns > 1:
     	height = 0.9*height/columns#1.3*
     (x1, y1, x2, y2) = (0.9 - 1.3*legWidth , .88 - 2.5*height, .9, .92)
-    
-    leg = ROOT.TLegend(x1, y1, x2, y2)
+    if "ROC" in signalHists[0].GetName() : 
+        leg = ROOT.TLegend(0.6, 0.3, 0.9, 0.7)
+    else : 
+        leg = ROOT.TLegend(x1, y1, x2, y2)
     leg.SetHeader("")
     leg.SetFillColor(0)
     leg.SetShadowColor(0)
@@ -249,6 +251,19 @@ def hadd1ds(histList,alphabetagamma=False,multib = True):
     return sumbkg
 
 #lumi = #'59.74'#'41.9'#
+def rocCurve(hS, hB):
+    ''' Create a ROC TGraph from two input histograms.
+    '''
+    import numpy
+    maxBin = hS.GetNbinsX()
+    #rocPoints = [(hS.Integral(nBin, maxBin)/hS.Integral(), hB.Integral(nBin, maxBin)/hB.Integral()) for nBin in range(1, maxBin + 1) ]
+    effsS = [hS.Integral(nBin, maxBin+1)/hS.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
+    effB = [hB.Integral(nBin, maxBin+1)/hB.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
+    rocCurve = ROOT.TGraph(maxBin, numpy.asarray(effB),numpy.asarray(effsS))
+    rocCurve.SetNameTitle("ROC"+hS.GetName(),"ROC "+hS.GetTitle()+" AUC = "+str(round(sum(effsS)/(maxBin+1),3)))
+    return rocCurve
+
+
 
 import argparse
 
@@ -488,7 +503,7 @@ if __name__ == '__main__':
                 #        hist.SetBinContent(bin,hist.GetBinContent(bin)/hist.GetXaxis().GetBinWidth(bin))
                 #        hist.SetBinError(bin,hist.GetBinError(bin)/hist.GetXaxis().GetBinWidth(bin))
                     hist.Scale(hist.GetXaxis().GetBinWidth(1),"width")
-            # write the hist
+            # write the his t
             All_files[key]['hist'].append(hist) 
             if All_files[key]['Stackable'] : stackableHists.append(hist)
             if 'Sig' in key : 
@@ -539,7 +554,10 @@ if __name__ == '__main__':
 
         if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
         else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
-        
+        rocs = []
+        if "ROC" in var[0] : 
+            for hS in SignalHists : 
+                rocs.append(rocCurve(hS, total))
         # create canvas
         canv = ROOT.TCanvas(var[0],var[0],plotformat[0]+150, height)
         ROOT.SetOwnership(canv, False)
@@ -547,7 +565,7 @@ if __name__ == '__main__':
         topsize = 0.12*600./height if doRatio else 0.06*600./height
         canv.SetTopMargin(topsize)
         canv.cd()
-        if (doRatio  and 'Data' in All_files.keys()) : 
+        if (doRatio  and 'Data' in All_files.keys() and not "ROC" in var[0]) : 
             stackPad = ROOT.TPad("mainpad"+var[0], "mainpad"+var[0], 0, 0.30, 1, 1)
             ROOT.SetOwnership(stackPad, False)
             stackPad.SetBottomMargin(0.025)
@@ -561,136 +579,152 @@ if __name__ == '__main__':
             ratioPad.Draw()
             stackPad.cd()
         # Draw the stack first
-        stack.Draw('hist')
-        if any('MoreY' in e for e in var) : 
-            index1,_ = findItem(var , 'MoreY')
-            stack.SetMaximum(var[index1][1]*stack.GetMaximum())
-        if any('YmiN' in e for e in var) : 
-            index1,_ = findItem(var , 'YmiN')
-            YmiN = var[index1][1]
-        if any('YmiN' in e for e in var) : 
-            index1,_ = findItem(var , 'YmiN')
-            YmiN = var[index1][1]
+        if not "ROC" in var[0] : 
+            stack.Draw('hist')
+            if any('MoreY' in e for e in var) : 
+                index1,_ = findItem(var , 'MoreY')
+                stack.SetMaximum(var[index1][1]*stack.GetMaximum())
+            if any('YmiN' in e for e in var) : 
+                index1,_ = findItem(var , 'YmiN')
+                YmiN = var[index1][1]
+            if any('YmiN' in e for e in var) : 
+                index1,_ = findItem(var , 'YmiN')
+                YmiN = var[index1][1]
 
-        stack.SetMinimum(YmiN)
-        stack.GetXaxis().SetTitleOffset(1.1)
-        stack.GetXaxis().SetLabelOffset(0.007)
-        if  (doRatio and 'Data' in All_files.keys()): 
-            stack.GetXaxis().SetLabelOffset(999) ## send them away
-            stack.GetXaxis().SetTitleOffset(999) ## in outer space
-        stack.GetXaxis().SetTitleFont(42)
-        stack.GetXaxis().SetTitleSize(0.05)
-        stack.GetXaxis().SetLabelFont(42)
-        stack.GetXaxis().SetLabelSize(0.04)
-        stack.GetYaxis().SetTitleFont(42)
-        stack.GetYaxis().SetTitleSize(0.06)
-        stack.GetYaxis().SetTitleOffset(1.2)
-        stack.GetYaxis().SetLabelFont(42)
-        stack.GetYaxis().SetLabelSize(0.05)
-        stack.GetYaxis().SetLabelOffset(0.007)
-        stack.GetYaxis().SetTitle('Events')
-        stack.GetXaxis().SetTitle(var[2])
-        stack.GetXaxis().SetNdivisions(510)
+            stack.SetMinimum(YmiN)
+            stack.GetXaxis().SetTitleOffset(1.1)
+            stack.GetXaxis().SetLabelOffset(0.007)
+            if  (doRatio and 'Data' in All_files.keys()): 
+                stack.GetXaxis().SetLabelOffset(999) ## send them away
+                stack.GetXaxis().SetTitleOffset(999) ## in outer space
+            stack.GetXaxis().SetTitleFont(42)
+            stack.GetXaxis().SetTitleSize(0.05)
+            stack.GetXaxis().SetLabelFont(42)
+            stack.GetXaxis().SetLabelSize(0.04)
+            stack.GetYaxis().SetTitleFont(42)
+            stack.GetYaxis().SetTitleSize(0.06)
+            stack.GetYaxis().SetTitleOffset(1.2)
+            stack.GetYaxis().SetLabelFont(42)
+            stack.GetYaxis().SetLabelSize(0.05)
+            stack.GetYaxis().SetLabelOffset(0.007)
+            stack.GetYaxis().SetTitle('Events')
+            stack.GetXaxis().SetTitle(var[2])
+            stack.GetXaxis().SetNdivisions(510)
 
-        if ShowMCerror : 
-            totaluncert = doShadedUncertainty(total.Clone())
-            totaluncert.Draw("PE2 SAME")
-        # for blinding a specific histogram
-        xblind = [9e99, -9e99]
-        if any('blinded' in e for e in var) and  'Data' in All_files.keys() : 
-            index2,_ = findItem(var , 'blinded')
-            blind = var[index2][1]
-            import re
-            if re.match(r'(bin|x)\s*([<>]?)\s*(\+|-)?\d+(\.\d+)?|(\+|-)?\d+(\.\d+)?\s*<\s*(bin|x)\s*<\s*(\+|-)?\d+(\.\d+)?', blind):
-                xfunc = (lambda h, b: b) if 'bin' in blind else (lambda h, b: h.GetXaxis().GetBinCenter(b))
-                test = eval("lambda bin : "+blind) if 'bin' in blind else eval("lambda x : "+blind)
-                All_files['Data']['hist'][i]
-                for b in range(1, All_files['Data']['hist'][i].GetNbinsX()+1):
-                    if test(xfunc(All_files['Data']['hist'][i], b)):
-                    #print "blinding bin %d, x = [%s, %s]" % (b, hdata.GetXaxis().GetBinLowEdge(b), hdata.GetXaxis().GetBinUpEdge(b))
-                        All_files['Data']['hist'][i].SetBinContent(b, 0)
-                        All_files['Data']['hist'][i].SetBinError(b, 0)
-                        xblind[0] = min(xblind[0], All_files['Data']['hist'][i].GetXaxis().GetBinLowEdge(b))
-                        xblind[1] = max(xblind[1], All_files['Data']['hist'][i].GetXaxis().GetBinUpEdge(b))
+            if ShowMCerror : 
+                totaluncert = doShadedUncertainty(total.Clone())
+                totaluncert.Draw("PE2 SAME")
+            # for blinding a specific histogram
+            xblind = [9e99, -9e99]
+            if any('blinded' in e for e in var) and  'Data' in All_files.keys() : 
+                index2,_ = findItem(var , 'blinded')
+                blind = var[index2][1]
+                import re
+                if re.match(r'(bin|x)\s*([<>]?)\s*(\+|-)?\d+(\.\d+)?|(\+|-)?\d+(\.\d+)?\s*<\s*(bin|x)\s*<\s*(\+|-)?\d+(\.\d+)?', blind):
+                    xfunc = (lambda h, b: b) if 'bin' in blind else (lambda h, b: h.GetXaxis().GetBinCenter(b))
+                    test = eval("lambda bin : "+blind) if 'bin' in blind else eval("lambda x : "+blind)
+                    All_files['Data']['hist'][i]
+                    for b in range(1, All_files['Data']['hist'][i].GetNbinsX()+1):
+                        if test(xfunc(All_files['Data']['hist'][i], b)):
+                        #print "blinding bin %d, x = [%s, %s]" % (b, hdata.GetXaxis().GetBinLowEdge(b), hdata.GetXaxis().GetBinUpEdge(b))
+                            All_files['Data']['hist'][i].SetBinContent(b, 0)
+                            All_files['Data']['hist'][i].SetBinError(b, 0)
+                            xblind[0] = min(xblind[0], All_files['Data']['hist'][i].GetXaxis().GetBinLowEdge(b))
+                            xblind[1] = max(xblind[1], All_files['Data']['hist'][i].GetXaxis().GetBinUpEdge(b))
 
-        # draw and write the data histo if there any 
-        if 'Data' in All_files.keys() : 
-            All_files['Data']['hist'][i].Write()
-            All_files['Data']['hist'][i].Draw('EP same')
-            All_files['Data']['hist'][i].SetMarkerStyle(20)
-            All_files['Data']['hist'][i].SetMarkerSize(1.6)
-            All_files['Data']['hist'][i].SetLineColor(1)
-            All_files['Data']['hist'][i].SetMarkerColor(ROOT.kBlack)
-            #All_files['Data']['hist'][i].SetLineWidth(2)
-            All_files['Data']['hist'][i].Sumw2()
-            outtext.write("{:<20}{:<20}{:<20}".format('Data',round(All_files['Data']['hist'][i].IntegralAndError(0,All_files['Data']['hist'][i].GetNbinsX()+1,error),2),round(error,2))+"\n")
+            # draw and write the data histo if there any 
+            if 'Data' in All_files.keys() : 
+                All_files['Data']['hist'][i].Write()
+                All_files['Data']['hist'][i].Draw('EP same')
+                All_files['Data']['hist'][i].SetMarkerStyle(20)
+                All_files['Data']['hist'][i].SetMarkerSize(1.6)
+                All_files['Data']['hist'][i].SetLineColor(1)
+                All_files['Data']['hist'][i].SetMarkerColor(ROOT.kBlack)
+                #All_files['Data']['hist'][i].SetLineWidth(2)
+                All_files['Data']['hist'][i].Sumw2()
+                outtext.write("{:<20}{:<20}{:<20}".format('Data',round(All_files['Data']['hist'][i].IntegralAndError(0,All_files['Data']['hist'][i].GetNbinsX()+1,error),2),round(error,2))+"\n")
+            
+            # draw the blind 
+            if xblind[0] < xblind[1]:
+                    blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
+                    blindbox.SetFillColor(ROOT.kBlue+3)
+                    blindbox.SetFillStyle(3944)
+                    blindbox.Draw()
+                    xblind.append(blindbox) # so it doesn't get deleted
+            
+            # same for signals 
+            if SignalHists : 
+                for sHist in SignalHists : 
+                    sHist.Write()
+                    sHist.Draw('histsame')
+
+            if (doRatio and 'Data' in All_files.keys()): 
+                ratioPad.cd()
+                sumbkgscaled = ROOT.TH1F(total.Clone())
+                pull = ROOT.TH1F(All_files['Data']['hist'][i].Clone())
+                
+                pull.Divide(sumbkgscaled)
+                pull.SetMarkerStyle(20)
+                pull.GetYaxis().SetTitle('Data/Pred.')
+                #pull.GetXaxis().SetTitle(key)
+                pull.GetYaxis().SetRangeUser(rmin,rmax)
+                pull.GetYaxis().SetDecimals(True)
+                pull.SetLabelSize(0.14, "XY")
+                pull.GetXaxis().SetTitleSize(.14)
+                pull.GetYaxis().SetTitleSize(.14)
+                pull.GetYaxis().SetLabelSize(0.11)
+                pull.GetXaxis().SetLabelSize(0.11)
+                pull.GetYaxis().SetTitleOffset(0.5)
+                pull.GetYaxis().SetNdivisions(505)
+                
+                pull.Draw("EP")
+                # Draw Line at ration == 1 
+                line = ROOT.TLine(pull.GetXaxis().GetXmin(),1,pull.GetXaxis().GetXmax(),1)
+                line.SetLineWidth(2);
+                line.SetLineColor(58);
+                line.Draw()
+                
+                if showRatioErorr : 
+                    sumMCErrors = total.Clone()
+                    sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.0)
+                    sumMCErrors.SetMarkerSize(0)
+                    for j in range(All_files['Data']['hist'][i].GetNbinsX()+2):
+                        sumMCErrors.SetBinError(j, sumMCErrors.GetBinError(j)/max(sumMCErrors.GetBinContent(j), 1))
+                        sumMCErrors.SetBinContent(j, 1.)
+                    sumMCErrors.Draw("PE2 same")
+                    sumMCErrors.SetFillStyle(3001);
+                    sumMCErrors.SetFillColor(ROOT.kGray);
+                    sumMCErrors.SetMarkerStyle(1);
+                    sumMCErrors.SetMarkerColor(ROOT.kGray);
+            
+                stackPad.cd()
         
-        # draw the blind 
-        if xblind[0] < xblind[1]:
-                blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
-                blindbox.SetFillColor(ROOT.kBlue+3)
-                blindbox.SetFillStyle(3944)
-                blindbox.Draw()
-                xblind.append(blindbox) # so it doesn't get deleted
-        
-        # same for signals 
-        if SignalHists : 
-            for sHist in SignalHists : 
-                sHist.Write()
-                sHist.Draw('histsame')
+            CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
 
-        if (doRatio and 'Data' in All_files.keys()): 
-            ratioPad.cd()
-            sumbkgscaled = ROOT.TH1F(total.Clone())
-            pull = ROOT.TH1F(All_files['Data']['hist'][i].Clone())
-            
-            pull.Divide(sumbkgscaled)
-            pull.SetMarkerStyle(20)
-            pull.GetYaxis().SetTitle('Data/Pred.')
-            #pull.GetXaxis().SetTitle(key)
-            pull.GetYaxis().SetRangeUser(rmin,rmax)
-            pull.GetYaxis().SetDecimals(True)
-            pull.SetLabelSize(0.14, "XY")
-            pull.GetXaxis().SetTitleSize(.14)
-            pull.GetYaxis().SetTitleSize(.14)
-            pull.GetYaxis().SetLabelSize(0.11)
-            pull.GetXaxis().SetLabelSize(0.11)
-            pull.GetYaxis().SetTitleOffset(0.5)
-            pull.GetYaxis().SetNdivisions(505)
-            
-            pull.Draw("EP")
-            # Draw Line at ration == 1 
-            line = ROOT.TLine(pull.GetXaxis().GetXmin(),1,pull.GetXaxis().GetXmax(),1)
-            line.SetLineWidth(2);
-            line.SetLineColor(58);
-            line.Draw()
-            
-            if showRatioErorr : 
-                sumMCErrors = total.Clone()
-                sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.0)
-                sumMCErrors.SetMarkerSize(0)
-                for j in range(All_files['Data']['hist'][i].GetNbinsX()+2):
-                    sumMCErrors.SetBinError(j, sumMCErrors.GetBinError(j)/max(sumMCErrors.GetBinContent(j), 1))
-                    sumMCErrors.SetBinContent(j, 1.)
-                sumMCErrors.Draw("PE2 same")
-                sumMCErrors.SetFillStyle(3001);
-                sumMCErrors.SetFillColor(ROOT.kGray);
-                sumMCErrors.SetMarkerStyle(1);
-                sumMCErrors.SetMarkerColor(ROOT.kGray);
-            
-            stackPad.cd()
+            doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
+                    All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
+            if any('LogY' in e for e in var) :
+                ROOT.gPad.SetLogy()
 
-        CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
-
-        doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
-                 All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
-        if any('LogY' in e for e in var) :
-            ROOT.gPad.SetLogy()
-                    
+        else : 
+            lineColours = [1, 2, 4, 7, 8]
+            lineStyles = [3, 2, 1, 4, 5]
+            for i,roc in enumerate(rocs) : 
+                roc.SetLineWidth(2)
+                roc.SetLineColor(lineColours[i])
+                #roc.SetLineStyle(lineStyles[i])
+                roc.GetYaxis().SetTitle('#varepsilon(signal)')
+                roc.GetXaxis().SetTitle('#varepsilon(bkg)')
+                #roc.GetXaxis().SetRangeUser(0.65, 1.)
+                # roc.GetXaxis().SetRangeUser(0.8, 1.)
+                roc.Draw('AL' if i == 0 else 'L')
+                roc.Write()
+            CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
+            doLegend(rocs, None, None, textSize=0.020, columns=1,showSF=False,uncertHist= None,showCount=False)
         canv.SaveAs(pngdire+'/'+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+var[0]+'.pdf')
         canv.SaveAs(epsdire+'/'+var[0]+'.eps')
-        
+
         tDirectory.WriteObject(canv,"TheCanvas")
         #del canv
         outroot.cd('')

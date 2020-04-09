@@ -343,7 +343,8 @@ if __name__ == '__main__':
             print(comd)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("export PATH='"+path+":$PATH'"+"\n")
+            exec.write("touch "+confDir+"/processing"+"\n")
+            exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+comd[0]+"\n")
             exec.write("echo "+comd[0]+"\n")
@@ -352,6 +353,9 @@ if __name__ == '__main__':
                 exec.write(" --doSyst")
             if sig :
                 exec.write(" --scan")
+            exec.write("\n")
+            # let the script deletes itself after finishing the job
+            exec.write("rm -rf "+confDir)
             exec.close()
         if sig : 
             subFilename = os.path.join(JDir,"submitAllscan.conf")

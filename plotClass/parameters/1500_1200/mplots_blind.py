@@ -25,6 +25,10 @@ varList.append(["sig_3bins","sig[1]","DNN classifier T1t^{4}",[3,0,1],"LogY",["M
 #varList.append(["sig_VR4","sig[1]","DNN classifier T1t^{4}",[3,0,1],"LogY",["MoreY",1000],'IncludeOverflows',['varbin',[0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.8,0.995,1.0],False],['blinded',"0.99 < x < 1.0"]])
 #varList.append(["sig_LastBin","sig[1]","DNN classifier T1t^{4}",[1,0.999,1],"LogY",["MoreY",1000],'IncludeOverflows',['blinded',"0.95 < x < 1.0"]])
 #varList.append(["sig_VR","sig[1]","DNN classifier T1t^{4}",[3,0,1],"LogY",["MoreY",1000],'IncludeOverflows',['varbin',[0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.5,0.6,0.7,0.8,0.98,0.99,0.995,1.0],False],['blinded',"0.98 < x < 1.0"]])
+varList.append(["ROC_sig","sig[1]","DNN classifier T1t^{4}",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["ROC_TTS","TTS[1]","DNN classifier t#bar{t} l",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["ROC_TTDi","TTDi[1]","DNN classifier t#bar{t} ll",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["ROC_WJ","WJ[1]","DNN classifier W+jets",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 
 varList.append(["CatTT1Lep","(TTS[1] >TTDi[1] ) && (TTS[1] >sig[1]) && (TTS[1] >WJ[1])","t#bar{t} l + jets Event Category",[2,0.0,2.0],"LogY",["MoreY",1000],'IncludeOverflows'])
 varList.append(["CatTT2Lep","(TTDi[1] > TTS[1]) && (TTDi[1] >sig[1] ) && (TTDi[1] >WJ[1] )","t#bar{t} ll + jets Event Category",[2,0.0,2.0],"LogY",["MoreY",1000],'IncludeOverflows'])
