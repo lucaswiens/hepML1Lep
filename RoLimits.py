@@ -19,8 +19,6 @@ currentDT = datetime.datetime.now()
 
 import argparse
 
-import htcondor
-
 channels = [['T1tttt_Scan','background']]#,['T1tttt_Scan_','background']]
 def hadd1ds(histList):
     '''  A functon to hadd background and set it's style '''
@@ -171,9 +169,9 @@ if __name__ == '__main__':
             if bkg != bkgToUse_ : continue 
             bkg_files_SR = glob.glob(os.path.join(indirB,bkg+'/*SR.root'))
             #print (bkg_files_SR)
-            hist = ROOT.TH1F('background','background',1000,0.0,1.0)
+            hist = ROOT.TH1F('background','background',10000,0.0,1.0)
             for key in systList : 
-                systList[key].append(ROOT.TH1F('background_'+key,'background_'+key,1000,0.0,1.0))
+                systList[key].append(ROOT.TH1F('background_'+key,'background_'+key,10000,0.0,1.0))
             #print(systList)
             
             for bkgf in bkg_files_SR : 
@@ -211,7 +209,7 @@ if __name__ == '__main__':
             if mgo < 1400 : factor = 1.0
             bestBin = 0.0
                 
-            for i in range(NBins,900,-1):
+            for i in range(NBins,9000,-1):
                 s = shist.Integral(i,NBins+1)/factor
                 b = hist.Integral(i,NBins+1)
 
@@ -232,7 +230,7 @@ if __name__ == '__main__':
         otherWs = []
         otherbins = []
         for i in range(0,5) : 
-            if beforelastbin < 900 : continue 
+            #if beforelastbin < 9000 : continue 
             otherbinW = (2+i)*lastbinW
             bin = beforelastbin - otherbinW
             otherWs.append(otherbinW)
@@ -242,7 +240,7 @@ if __name__ == '__main__':
         otherbins = otherbins[::-1]
         #print(otherbins)
         SRbins = otherbins
-        SRbins.append([bestBin,1001])
+        SRbins.append([bestBin,10001])
         #print(SRbins)
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
@@ -268,9 +266,9 @@ if __name__ == '__main__':
                     invimpact = round((1/(impact+0.001)),2)
                     SigsystList[key].append(impact if impact >= 1.0 else invimpact )
 
-                if sigRate == 0.0 : 
-                    print ('Signal',mgo,mlsp, 'has zero rate will not write the datacard for it ')
-                    continue 
+                #if sigRate == 0.0 : 
+                #    print ('Signal',mgo,mlsp, 'has zero rate will not write the datacard for it ')
+                #    continue 
                 #sigerr  = 1.0 + sqrt(sigRate)/(sigRate+0.01)
                 #bkgerr  = 1.0 + sqrt(bkgRate)/(bkgRate + 0.01)
                 alphaE  = float(getSFs(sfs,mass=bkg,which='alphaE')) + 1.0
@@ -308,7 +306,8 @@ if __name__ == '__main__':
                 for syst in systList : 
                     if "Down" in syst : continue
                     if syst in intersection_syst : 
-                        sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
+                        if sigRate <= 0 :  sigVar = 1.0
+                        else : sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
                         datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                     else :
@@ -400,40 +399,57 @@ if __name__ == '__main__':
         print ('limit will be calculated on HTC from ', datacardsdir)
         print ('in this step you will need a valid cmssw dir with higgscombne tools compiled, please check https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/ ')
         print ('you have scpecified CMSSW in this place, ', cmsswdir )
-        
+
+        import socket
+        host = socket.gethostname()
+        JDir = outdir
+
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir) :  os.makedirs(logdir)
-        schedd = htcondor.Schedd()
         limitOutputdir = os.path.join(outdir,'datacards/limitOutput')
         if not os.path.exists(limitOutputdir) : os.makedirs(limitOutputdir)            
         file_list = glob.glob(datacardsdir+"/*.txt")
-        for card in file_list : 
+        for i,card in enumerate(file_list) : 
             cardname = card.split('/')[-1]
             cmd = '../combinedCards/'+cardname
-            submit_parameters = { 
-                "executable"                : execu,
-                "arguments"                 : " ".join([' '+ cmsswdir, ' '+ os.path.join(os.getcwd(),limitOutputdir),' '+ cmd, cardname.replace('.txt','')]),
-                "universe"                  : "vanilla",
-                "should_transfer_files"     : "YES",
-                "log"                       : "{}/job_$(Cluster)_$(Process).log".format(logdir),
-                "output"                    : "{}/job_$(Cluster)_$(Process).out".format(logdir),
-                "error"                     : "{}/job_$(Cluster)_$(Process).err".format(logdir),
-                "when_to_transfer_output"   : "ON_EXIT",
-                #'Requirements'              : 'OpSysAndVer == "CentOS7"',
+            confDir = os.path.join(JDir,"job_"+str(i))
+            if not os.path.exists(confDir) : 
+                os.makedirs(confDir)
+            print(cmd)
+            exec = open(confDir+"/exec.sh","w+")
+            exec.write("#"+"!"+"/bin/bash"+"\n")
+            exec.write("source /etc/profile"+"\n")
+            exec.write("source /cvmfs/cms.cern.ch/cmsset_default.sh"+"\n")
+            exec.write("echo 'running job' >> "+os.path.abspath(confDir)+"/processing"+"\n")
+            exec.write("workdir="+cmsswdir+"\n")
+            exec.write("melalibdir=${CMSSW_BASE}/lib/slc6_amd64_gcc630/"+"\n")
+            exec.write("exedir=`echo "+os.path.join(os.getcwd(),limitOutputdir)+"`"+"\n")
+            exec.write("export LD_LIBRARY_PATH=${melalibdir}:$LD_LIBRARY_PATH"+"\n")
+            exec.write("cd ${workdir}"+"\n")
+            exec.write("eval `scramv1 runtime -sh`"+"\n")
+            exec.write("cd ${exedir}"+"\n")
+            exec.write("combine -M Asymptotic "+cmd+" -n "+cardname.replace('.txt','')+" "+"\n")
+            exec.write("rm -rf "+os.path.abspath(confDir))
+            exec.close()
+        
+        subFilename = os.path.join(JDir,"submitAlllimits.conf")
+        subFile = open(subFilename,"w+")
+        subFile.write("executable = $(DIR)/exec.sh"+"\n")
+        subFile.write("universe =  vanilla")
+        subFile.write("\n")
+        subFile.write("should_transfer_files = YES")
+        subFile.write("\n")
+        subFile.write("log = "+"{}/job_$(Cluster)_$(Process).log".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("output = "+"{}/job_$(Cluster)_$(Process).out".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("error = "+"{}/job_$(Cluster)_$(Process).err".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("when_to_transfer_output   = ON_EXIT")
+        #subFile.write("\n")
+        #subFile.write('Requirements  = (OpSysAndVer == "SL6")')
+        subFile.write("\n")
+        subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
+        subFile.close()
+        os.system("condor_submit "+subFilename)
 
-            }
-            job = htcondor.Submit(submit_parameters)
-            #with schedd.transaction() as txn:
-            #        job.queue(txn)
-            #        print ("Submit job for file {}".format(fc))
-            print('going to submit the jobs to HTC')
-            #while(True):
-            #    try: 
-            with schedd.transaction() as txn:
-                job.queue(txn)
-                print ("Submit job for configurations of {}".format(card))
-            #        break    
-            #    except: 
-            #        pass
-                
-                

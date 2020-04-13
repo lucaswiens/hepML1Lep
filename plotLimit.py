@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 import os, glob, sys, math
 from array import array
+
+sys.argv.append( '-b-' )
+import ROOT
+from ROOT import std
+ROOT.gROOT.SetBatch(True)
+sys.argv.remove( '-b-' )
+
 from ROOT import TH2D,TGraph2D,TH2F,TFile,TCanvas,TGraph,Double,TColor,gStyle
 
 def GetContours(g, color, style):

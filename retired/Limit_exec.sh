@@ -1,8 +1,6 @@
 #!/bin/bash
 source /etc/profile
-# TODO: these could be filled in from a template
 #CMSSW_RELEASE_BASE="/cvmfs/cms.cern.ch/slc6_amd64_gcc630/cms/cmssw/CMSSW_9_4_4"
-
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 workdir=$1
 melalibdir=${CMSSW_BASE}/lib/slc6_amd64_gcc630/

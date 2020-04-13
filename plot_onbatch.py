@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys,os
 #sys.path.append("/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/lib/python3.6/site-packages/")
-import htcondor
 import argparse
 import glob
 
@@ -83,10 +82,6 @@ def getSFs_0b_(sffile,which='alpha') :
     #idx = masstoken.index(mass)
     return resulttoken[1]
 
-
-
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs a NAF batch system for 1l plotter', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--indir', help='input root files', metavar='indir')
@@ -150,7 +145,7 @@ if __name__ == '__main__':
         if "_" in str(mdir.split("/")[-1]):
             mgo = str(mdir.split("/")[-1]).split("_")[0]
             mlsp = str(mdir.split("/")[-1]).split("_")[1]
-            cmd+=" --mGo1 "+mgo+" --mLSP1 "+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
+            cmd+=" --Smass "+mgo+"_"+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
             if not args.scale : 
                 if not "_0b" in args.param : 
                     alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
@@ -162,7 +157,7 @@ if __name__ == '__main__':
                     beta = (getSFs_0b(args.abg,mass=mdir.split("/")[-1],which="beta"))
                     cmd+= " --alpha "+alpha+" --beta "+beta
         else :
-            cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1]) + " --mGo1 1500 --mGo2 1900 --mGo3 1600 --mGo4 2200 --mLSP1 1000 --mLSP2 100 --mLSP3 1100 --mLSP4 100 "
+            cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1]) + " --Smass 1500_1000  1900_100  1600_1100  2200_100 "
             if not args.scale : 
                 if not "_0b" in args.param :     
                     alpha = (getSFs_(args.abg,which="alpha"))
@@ -214,29 +209,55 @@ if __name__ == '__main__':
     for cmd in cmd_array : 
         outtext.write(cmd+'\n')
     
+    JDir = args.outdir
     
-    schedd = htcondor.Schedd()
-    
-    sub = htcondor.Submit("")
-    ##Condor configuration
-    sub["executable"]               = excu
-    sub["universe"]                 = "vanilla"
-    sub["should_transfer_files"]    = "YES"
-    sub["log"]                      = "{}/job_$(Cluster)_$(Process).log".format(logdir)
-    sub["output"]                   = "{}/job_$(Cluster)_$(Process).out".format(logdir)
-    sub["error"]                    = "{}/job_$(Cluster)_$(Process).err".format(logdir)
-    sub["when_to_transfer_output"]  = "ON_EXIT"
-    sub['Requirements']             = '( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")'
-    
-    while(True):
-        try: 
-            with schedd.transaction() as txn:
-                for comd in cmd_array : 
-                    print(comd)
-                    sub["arguments"] = comd
-                    sub.queue(txn)
-                print ("Submit jobs for plotter")
-            break
-        except: 
-            pass
-    
+    import socket
+    host = socket.gethostname()
+
+    if "lxplus" in host : 
+        path = "/afs/cern.ch/work/a/amohamed/anaconda3/bin"
+        anaconda = "/afs/cern.ch/work/a/amohamed/anaconda3/bin/activate"
+        pyth = "/afs/cern.ch/work/a/amohamed/anaconda3/envs/hepML/bin/python"
+    elif "desy.de" in host : 
+        path = "/nfs/dust/cms/user/amohamed/anaconda3/bin"
+        anaconda = "/nfs/dust/cms/user/amohamed/anaconda3/bin/activate"
+        pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
+
+    for i,comd in enumerate(cmd_array) : 
+        confDir = os.path.join(JDir,"job_"+str(i))
+        if not os.path.exists(confDir) : 
+            os.makedirs(confDir)
+        print(comd)
+        exec = open(confDir+"/exec.sh","w+")
+        exec.write("#"+"!"+"/bin/bash"+"\n")
+        exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
+        exec.write("source "+anaconda+" hepML"+"\n")
+        exec.write("cd "+wdir+"\n")
+        exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
+        exec.write("echo "+wdir+"\n")
+        exec.write(pyth+" RoPlotter.py "+comd)
+        exec.write("\n")
+        # let the script deletes itself after finishing the job
+        exec.write("rm -rf "+confDir)
+        exec.close()
+
+    subFilename = os.path.join(JDir,"submitAllplots.conf")
+    subFile = open(subFilename,"w+")
+    subFile.write("executable = $(DIR)/exec.sh"+"\n")
+    subFile.write("universe =  vanilla")
+    subFile.write("\n")
+    subFile.write("should_transfer_files = YES")
+    subFile.write("\n")
+    subFile.write("log = "+"{}/job_$(Cluster)_$(Process).log".format(os.path.abspath(logdir)))
+    subFile.write("\n")
+    subFile.write("output = "+"{}/job_$(Cluster)_$(Process).out".format(os.path.abspath(logdir)))
+    subFile.write("\n")
+    subFile.write("error = "+"{}/job_$(Cluster)_$(Process).err".format(os.path.abspath(logdir)))
+    subFile.write("\n")
+    subFile.write("when_to_transfer_output   = ON_EXIT")
+    subFile.write("\n")
+    subFile.write('Requirements  = ( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")')
+    subFile.write("\n")
+    subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
+    subFile.close()
+    os.system("condor_submit "+subFilename)

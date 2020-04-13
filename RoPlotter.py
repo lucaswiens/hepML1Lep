@@ -116,7 +116,7 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     sigEntries = signalHists
     bgEntries = BKGHists
     dataEntry = DataHists
-    legWidth= 0.36 if columns > 1 else 0.18
+    legWidth= 0.18 * columns
     if showCount : 
         legWidth*= 1.4
     nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0 
@@ -125,7 +125,10 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     	height = 0.9*height/columns#1.3*
     (x1, y1, x2, y2) = (0.9 - 1.3*legWidth , .88 - 2.5*height, .9, .92)
     if "ROC" in signalHists[0].GetName() : 
-        leg = ROOT.TLegend(0.6, 0.3, 0.9, 0.7)
+        if "sig" in signalHists[0].GetName() : 
+            leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
+        else : 
+            leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
     else : 
         leg = ROOT.TLegend(x1, y1, x2, y2)
     leg.SetHeader("")
@@ -288,19 +291,12 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', help='scale factor alpha',default='0.0', metavar='alpha')
     parser.add_argument('--beta', help='scale factor alpha',default='0.0', metavar='beta')
     parser.add_argument('--gamma', help='scale factor alpha',default='0.0', metavar='gamma')
-    parser.add_argument('--mGo1', help='Signal 1 mGo',default=None, metavar='mGo1')
-    parser.add_argument('--mGo2', help='Signal 2 mGo',default=None, metavar='mGo2')
-    parser.add_argument('--mGo3', help='Signal 3 mGo',default=None, metavar='mGo3')
-    parser.add_argument('--mGo4', help='Signal 4 mGo',default=None, metavar='mGo4')
-    parser.add_argument('--mLSP1', help='Signal 1 mLSP',default=None, metavar='mLSP1')
-    parser.add_argument('--mLSP2', help='Signal 2 mLSP',default=None, metavar='mLSP2')
-    parser.add_argument('--mLSP3', help='Signal 3 mLSP',default=None, metavar='mLSP3')
-    parser.add_argument('--mLSP4', help='Signal 4 mLSP',default=None, metavar='mLSP4')
     parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
     parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
     parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')    
     parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
     parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
+    parser.add_argument('--Smass', nargs='+',help="the mas of the signal hypothesis")
 
     args = parser.parse_args()
 
@@ -327,34 +323,43 @@ if __name__ == '__main__':
     doRatio = args.doRatio
     YmaX = float(args.YmaX) ; YmiN = float(args.YmiN)
     rmax = float(args.rmax) ; rmin = float(args.rmin)
-    mGo1 = args.mGo1 ; mGo2 = args.mGo2 
-    mLSP1 = args.mLSP1 ; mLSP2 = args.mLSP2 
-    mGo3 = args.mGo3 ; mGo4 = args.mGo4 
-    mLSP3 = args.mLSP3 ; mLSP4 = args.mLSP4 
 
-
-    if 'Signal_1' in All_files.keys() or 'Signal_2' in All_files.keys() : 
-        if mGo1 == None : 
-            del All_files['Signal_1']
-        else : 
-            All_files['Signal_1']['select'] = All_files['Signal_1']['select'].replace('@mGo',str(mGo1)).replace('@mLSP',str(mLSP1))
-            All_files['Signal_1']['Label'] = All_files['Signal_1']['Label'].replace('@mGo',str(float(mGo1)/1000.0)).replace('@mLSP',str(float(mLSP1)/1000))
-        if mGo2 == None : 
-            del All_files['Signal_2']
-        else : 
-            All_files['Signal_2']['select'] = All_files['Signal_2']['select'].replace('@mGo',str(mGo2)).replace('@mLSP',str(mLSP2))
-            All_files['Signal_2']['Label'] = All_files['Signal_2']['Label'].replace('@mGo',str(float(mGo2)/1000.0)).replace('@mLSP',str(float(mLSP2)/1000))
-        if mGo3 == None : 
-            del All_files['Signal_3']
-        else : 
-            All_files['Signal_3']['select'] = All_files['Signal_3']['select'].replace('@mGo',str(mGo3)).replace('@mLSP',str(mLSP3))
-            All_files['Signal_3']['Label'] = All_files['Signal_3']['Label'].replace('@mGo',str(float(mGo3)/1000.0)).replace('@mLSP',str(float(mLSP3)/1000))
-        if mGo4 == None : 
-            del All_files['Signal_4']
-        else : 
-            All_files['Signal_4']['select'] = All_files['Signal_4']['select'].replace('@mGo',str(mGo4)).replace('@mLSP',str(mLSP4))
-            All_files['Signal_4']['Label'] = All_files['Signal_4']['Label'].replace('@mGo',str(float(mGo4)/1000.0)).replace('@mLSP',str(float(mLSP4)/1000))
-
+    colors_for_sig = [ROOT.kBlack,ROOT.kRed,ROOT.kGreen,ROOT.kBlue,ROOT.kYellow,ROOT.kMagenta,ROOT.kCyan,ROOT.kOrange,ROOT.kViolet,ROOT.kPink]
+    lnstyle_for_sig = [ROOT.kSolid,ROOT.kDashed]
+    style = []
+    for color in colors_for_sig : 
+        for sty in lnstyle_for_sig: 
+            smallsty = []
+            smallsty.append(color)
+            smallsty.append(sty)
+            style.append(smallsty)
+    
+    if len(args.Smass) !=0 :
+        for i,item in enumerate(args.Smass) : 
+            mGo = item.split("_")[0]; mLSP = item.split("_")[1]
+            if not 'Signal_'+str(i) in All_files.keys() : 
+                if args.mb : 
+                    All_files['Signal_'+str(i)] = {
+                                                    'files': ['SMS_T1tttt'] , 
+                                                    'select' : '&& mGo == '+mGo+' && mLSP == '+mLSP,
+                                                    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
+                                                    "fill": None,
+                                                    "line": ROOT.TAttLine(style[i][0], style[i][1], 2),
+                                                    "marker":  None,
+                                                    "Label" : "T1t^{4} "+str(float(mGo)/1000.0)+"/"+str(float(mLSP)/1000.0),
+                                                    "Stackable" : False
+                                                        }
+                else : 
+                    All_files['Signal_'+str(i)] = {
+                                                    'files': ['SMS_T5qqqq'] , 
+                                                    'select' : '&& mGo == '+mGo+' && mLSP == '+mLSP,
+                                                    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF',
+                                                    "fill": None,
+                                                    "line": ROOT.TAttLine(style[i][0], style[i][1], 2),
+                                                    "marker":  None,
+                                                    "Label" : "T5q^{4} "+str(float(mGo)/1000.0)+"/"+str(float(mLSP)/1000.0),
+                                                    "Stackable" : False
+                                                        }
     cut_strings = ''
     cf = open(args.cuts, 'r')
     for cutline in cf : 
@@ -702,25 +707,27 @@ if __name__ == '__main__':
             CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
 
             doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
-                    All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
+                    All_files['Data']['hist'][i] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2 if len(SignalHists) <= 4 else 3,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
             if any('LogY' in e for e in var) :
                 ROOT.gPad.SetLogy()
 
         else : 
-            lineColours = [1, 2, 4, 7, 8]
-            lineStyles = [3, 2, 1, 4, 5]
+            #lineColours = [1, 2, 4, 7, 8]
+            #lineStyles = [3, 2, 1, 4, 5]
+            
             for i,roc in enumerate(rocs) : 
                 roc.SetLineWidth(2)
-                roc.SetLineColor(lineColours[i])
-                #roc.SetLineStyle(lineStyles[i])
+                roc.SetLineColor(style[i][0])
+                roc.SetLineStyle(style[i][1])
                 roc.GetYaxis().SetTitle('#varepsilon(signal)')
                 roc.GetXaxis().SetTitle('#varepsilon(bkg)')
-                #roc.GetXaxis().SetRangeUser(0.65, 1.)
+                roc.GetYaxis().SetRangeUser(0.0, 1.)
                 # roc.GetXaxis().SetRangeUser(0.8, 1.)
                 roc.Draw('AL' if i == 0 else 'L')
                 roc.Write()
-            CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
-            doLegend(rocs, None, None, textSize=0.020, columns=1,showSF=False,uncertHist= None,showCount=False)
+            CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.01)
+            doLegend(rocs, None, None, textSize=0.020, columns=2,showSF=False,uncertHist= None,showCount=False)
+        
         canv.SaveAs(pngdire+'/'+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+var[0]+'.pdf')
         canv.SaveAs(epsdire+'/'+var[0]+'.eps')

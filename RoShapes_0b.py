@@ -36,6 +36,25 @@ mass_map = {}
 for i, m in enumerate(massList): 
     mass_map[m] = i    
 
+
+def SigToUse(mgo,mlsp) : 
+    #print('mgo ',mgo,' mlsp ',mlsp)
+    if (mgo <= 1500 and mlsp <= 800): mass = '1500_1000'
+    elif (mgo <= 1500 and mlsp > 800): mass = '1500_1000'
+    elif (mgo > 1500 and mgo <= 1900 and mlsp < 800) : mass = '1900_100'
+    elif (mgo > 1500 and mgo <= 1900 and mlsp >= 800 and mlsp < 1000 ) : mass = '1900_800'
+    elif (mgo > 1900 and mlsp < 800): mass = '2200_100'
+    elif (mgo > 1900 and mlsp >= 800 ) :  mass = '2200_800'
+    elif (mgo > 1800 and mgo <=1900 and mlsp > 800 and mlsp <= 1000) :mass = '1900_1000'
+    elif (mgo > 1800 and mgo <=1900 and mlsp > 1000): mass = '1800_1300'
+    elif (mgo >= 1700 and mgo <= 1800 and mlsp >= 1000 ) : mass = '1700_1200'
+    elif (mgo >= 1600 and mgo < 1700 and mlsp >= 1000 ) : mass = '1600_1100'
+    elif (mgo > 1500 and mgo <1600 and mlsp >= 800 ) : mass = '1500_1000' 
+    else : 
+        print(mgo,' ',mlsp, 'could not fit into any of you modes please check')
+        mass = ''
+    return mass
+
 def make1D(var,style,name,ranges):
     '''  A functon to make a 1D histogram and set it's style '''
     hist = ROOT.TH1F(name,name,ranges[0],ranges[1],ranges[2])
@@ -157,9 +176,9 @@ if __name__ == '__main__':
     
 
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
-    ranges = [1000,0.0,1.0]
+    ranges = [10000,0.0,1.0]
     if cutdict == 'SR' : 
-        ranges = [1000, 0.0, 1.0] 
+        ranges = [10000, 0.0, 1.0] 
         cutdict_ = SRs_cut_strings
     elif cutdict == 'CR1' : cutdict_ = CRs1_cut_strings
     elif cutdict == 'CR2' : cutdict_ = CRs2_cut_strings
@@ -193,7 +212,8 @@ if __name__ == '__main__':
         instPlot_Jec_dn = rootplot(indirJecdown,outdir,All_files=All_files_Jec_dn)
     cuttext = open(massdir+"/"+cutdict+".txt", "w+")
     if not batch : 
-        cuts = cutdict_['1900_100'] if sig else cutdict_[mass]
+        if sig : ithmass = SigToUse(int(mass.split('_')[0]),int(mass.split('_')[1]))
+        cuts = cutdict_[ithmass] if sig else cutdict_[mass]
         g  = group
         if sig : g  = 'Signal_1'
         print ('producing the shapes for :',g, ' for signal mass of : ', mass )
@@ -213,10 +233,15 @@ if __name__ == '__main__':
             scale = All_files['Signal_1']['scale']
         print (cuts + extraCuts)
         cuttext.write('cuts applied are :'+cuts + extraCuts+'\n')
+        temp_file = massdir+"/shapes_{0}_{1}_{2}".format(g,mass,cutdict)+"_temp.root"
+        temp = ROOT.TFile(temp_file,"recreate")
         chain = instPlot.chain_and_cut(filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+        chain.GetAutoFlush()
         if args.doSyst : 
             chain_Jec_up = instPlot_Jec_up.chain_and_cut(filesList = All_files_Jec_up[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+            chain_Jec_up.GetAutoFlush()
             chain_Jec_dn = instPlot_Jec_dn.chain_and_cut(filesList = All_files_Jec_dn[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
+            chain_Jec_dn.GetAutoFlush()
             print(chain_Jec_up.GetEntries())
             print(chain_Jec_dn.GetEntries())
         print(chain.GetEntries())
@@ -226,13 +251,11 @@ if __name__ == '__main__':
         outroot.cd(g)
         ROOT.gDirectory.mkdir(mass)
         ROOT.gDirectory.cd(mass)
-
         error = ROOT.Double(0.)
         for var in selected_vars :
-            if not sig : 
-                if 'sig_0b['+str(mass_map[mass])+"]" != var[0]: continue
             if sig :
-                if not var[0]=='sig_0b[0]'  : continue
+                mass = ithmass
+            if 'sig_0b['+str(mass_map[mass])+"]" != var[0]: continue
             print (var)
             for v in var : 
                 print (v)
@@ -266,9 +289,9 @@ if __name__ == '__main__':
                 hist.Write()
         outroot.cd('')
         outroot.Close()
+        temp.Close()
+        os.remove(temp_file)
     elif batch :
-        import htcondor
-        schedd = htcondor.Schedd()
         cmd_array = []
         print('batch mode activated ...')
         regions = ['SR','CR1','CR2','CR3']
@@ -339,10 +362,10 @@ if __name__ == '__main__':
             print(comd)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("touch "+confDir+"/processing"+"\n")
             exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+comd[0]+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
             exec.write("echo "+comd[0]+"\n")
             exec.write(pyth+" RoShapes_0b.py --indir "+comd[1]+" --outdir "+comd[2]+" --lumi "+comd[3]+" --group "+comd[4]+" --cutdict "+comd[5]+" --mass "+comd[6]+" --year "+comd[7])
             if args.doSyst : 

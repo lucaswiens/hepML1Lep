@@ -91,9 +91,6 @@ if __name__ == '__main__':
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir):
             os.makedirs(logdir) 
-        import htcondor    
-        schedd = htcondor.Schedd()  
-        sub = htcondor.Submit("")
 
         Filenamelist = find_all_matching(".root",args.indir) 
         #print (Filenamelist)
@@ -116,10 +113,10 @@ if __name__ == '__main__':
                 os.makedirs(confDir)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("touch "+confDir+"/processing"+"\n")
             exec.write("export PATH='"+path+":$PATH'"+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+wdir+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
             exec.write("echo "+wdir+"\n")
             exec.write(pyth+" append_ISREWK.py --infile "+fc+" --outdir "+outdir)
             exec.write("\n")

@@ -27,16 +27,16 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
     file_out.mkdir('sf')
     file_out.cd('sf')
     #tree_out = file_out.Get("sf/t")
-    TT1l_val = array.array('f', 10*[0.])
-    TT2l_val = array.array('f', 10*[0.])
-    WJet_val = array.array('f', 10*[0.])
-    Sign_val = array.array('f', 10*[0.])
+    TT1l_val = array.array('f', 20*[0.])
+    TT2l_val = array.array('f', 20*[0.])
+    WJet_val = array.array('f', 20*[0.])
+    Sign_val = array.array('f', 20*[0.])
 
     if ('T5qqqq' in infile) : 
         return
-    if (not "T1tttt" in infile) : 
-        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+    else : # (not "T1tttt" in infile) : 
+        p_df = it.pandas.df(var_list+['Event','Run','Lumi','nBJet'])
+        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['Selected'] == 1)& (p_df['nBJet'] >= 1 )& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
         p_df = p_df.reset_index(drop=True)
         prediction = pd.DataFrame()
         for i,mass in enumerate(masslist) : 
@@ -45,20 +45,20 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
             p_df.loc[:,'mLSP'] = mlsp
             prediction_ = pd.DataFrame(model.predict_proba(p_df[var_list+['mGo','mLSP']].values),columns=['TTS_'+str(i), 'TTDi_'+str(i), 'WJ_'+str(i),'Sig_'+str(i)])
             prediction = pd.concat([prediction,prediction_],axis=1)
-    else :
-        var_list.append('mGo')
-        var_list.append('mLSP')
-        p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
-        p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
-        p_df = p_df.reset_index(drop=True)
-        prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
+    #else :
+    #    var_list.append('mGo')
+    #    var_list.append('mLSP')
+    #    p_df = it.pandas.df(var_list+['Event','Run','Lumi'])
+    #    p_df = p_df.loc[(p_df['nLep'] == 1) & (p_df['nJets30Clean'] >= 3)& (p_df['nVeto'] == 0)& (p_df['HT'] > 500)& (p_df['LT'] > 250)]
+    #    p_df = p_df.reset_index(drop=True)
+    #    prediction = pd.DataFrame(model.predict_proba(p_df[var_list].values),columns=['TTS', 'TTDi', 'WJ','Sig'])
 
-    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
+    tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (Selected == 1)&&(nBJet >= 1)&&(nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
-    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS[10]/F')
-    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi[10]/F')
-    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ[10]/F')
-    Sign  = tree_out.Branch('sig', Sign_val, 'sig[10]/F')
+    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS[20]/F',20000000)
+    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi[20]/F',20000000)
+    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ[20]/F',20000000)
+    Sign  = tree_out.Branch('sig', Sign_val, 'sig[20]/F',20000000)
 
     
     prediction['Event'] = p_df['Event']
@@ -85,28 +85,28 @@ def Predict_Keras(infile,outdir,var_list,class_list, masslist,model = None) :
         you can check that by un commenting the next couple of lines and you will see"""
         #df_idx = prediction.loc[(prediction['Event'] == tree_out.Event )&(prediction['Run'] == tree_out.Run)&(prediction['Lumi'] == tree_out.Lumi)].index
         #print(df_idx, i_ev)
-        if (("T1tttt" in infile)  or ('T5qqqq' in infile)) : 
-            for i in range(len(masslist)) : 
-                TT1l_val[i] = prediction['TTS'][i_ev]
-                TT2l_val[i] = prediction['TTDi'][i_ev]
-                WJet_val[i] = prediction['WJ'][i_ev]
-                Sign_val[i] = prediction['Sig'][i_ev]
+        #if (("T1tttt" in infile)  or ('T5qqqq' in infile)) : 
+        #    for i in range(len(masslist)) : 
+        #        TT1l_val[i] = prediction['TTS'][i_ev]
+        #        TT2l_val[i] = prediction['TTDi'][i_ev]
+        #        WJet_val[i] = prediction['WJ'][i_ev]
+        #        Sign_val[i] = prediction['Sig'][i_ev]
 
-            TT1l.Fill()
-            TT2l.Fill()
-            WJet.Fill()
-            Sign.Fill()
+        #    TT1l.Fill()
+        #    TT2l.Fill()
+        #    WJet.Fill()
+        #    Sign.Fill()
 
-        else : 
-            for i in range(len(masslist)) :
-                TT1l_val[i] = prediction['TTS_'+str(i)][i_ev]
-                TT2l_val[i] = prediction['TTDi_'+str(i)][i_ev]
-                WJet_val[i] = prediction['WJ_'+str(i)][i_ev]
-                Sign_val[i] = prediction['Sig_'+str(i)][i_ev]
-            TT1l.Fill()
-            TT2l.Fill()
-            WJet.Fill()
-            Sign.Fill()
+        #else : 
+        for i in range(len(masslist)) :
+            TT1l_val[i] = prediction['TTS_'+str(i)][i_ev]
+            TT2l_val[i] = prediction['TTDi_'+str(i)][i_ev]
+            WJet_val[i] = prediction['WJ_'+str(i)][i_ev]
+            Sign_val[i] = prediction['Sig_'+str(i)][i_ev]
+        TT1l.Fill()
+        TT2l.Fill()
+        WJet.Fill()
+        Sign.Fill()
     #file_out.Delete("t;1")
     #file_out.Delete("sf/t;1")
     tree_out.Write("t", ROOT.TObject.kOverwrite)
@@ -135,7 +135,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    masslist = [[1500,1000],[1500,1200],[1600,1100],[1700,1200],[1800,1300],[1900,100],[1900,800],[1900,1000],[2200,100],[2200,800]]
+    #masslist = [[1500,1000],[1500,1200],[1600,1100],[1700,1200],[1800,1300],[1900,100],[1900,800],[1900,1000],[2200,100],[2200,800]]
+    masslist = [[1500,1000],[1500,1200],[1600,1100],[1700,1200],[1800,1300],[1900,100],[1900,800],[1900,1000],[2200,100],[2200,800],
+                [1500,1100],[1600,1200],[1700,1300],[1750,1200],[1800,1200],[2000,100],[2000,500],[2000,700],[2000,800],[2000,1000]]
 
     var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'nLep', 'Lep_pt', 'Selected', 'nVeto', 'LT', 'HT', 'nBCleaned_TOTAL','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]#,"mGo", "mLSP"]
     
@@ -171,10 +173,7 @@ if __name__ == '__main__':
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir):
             os.makedirs(logdir) 
-        import htcondor    
-        schedd = htcondor.Schedd()  
-        sub = htcondor.Submit("")
-
+            
         Filenamelist = find_all_matching(".root",args.indir) 
         #print (Filenamelist)
 
@@ -196,10 +195,10 @@ if __name__ == '__main__':
                 os.makedirs(confDir)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("touch "+confDir+"/processing"+"\n")
             exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+wdir+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
             exec.write("echo "+wdir+"\n")
             exec.write(pyth+" append_DNN.py --infile "+fc+"  --model "+args.model+" --outdir "+outdir+" --indir "+args.indir)
             exec.write("\n")

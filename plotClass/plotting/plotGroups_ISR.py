@@ -71,55 +71,7 @@ All_files = {
         "marker":  ROOT.TAttMarker(ROOT.kBlack, ROOT.kFullCircle, 0.7),
         "Label" : "Data",
         "Stackable" : False
-        },
-
-    'Signal_1' : 
-        {
-        'files': ['SMS_T1tttt'] , 
-        'select' : '&& mGo == @mGo && mLSP == @mLSP',
-        'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
-        "fill": None,
-        "line": ROOT.TAttLine(ROOT.kRed+1, ROOT.kSolid, 2),
-        "marker":  None,
-        "Label" : "T1t^{4} @mGo/@mLSP",
-        "Stackable" : False
-        },
-        
-    'Signal_2' : 
-        {
-        'files': ['SMS_T1tttt'] , #['SMS_T1tttt'] , 
-        'select' : '&& mGo == @mGo && mLSP == @mLSP',
-        'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
-        "fill": None,
-        "line": ROOT.TAttLine(ROOT.kMagenta+1, ROOT.kSolid, 2),
-        "marker": None,
-        "Label" : "T1t^{4} @mGo/@mLSP",
-        "Stackable" : False
-        },
-
-    #'Signal_3' : 
-    #    {
-    #    'files': ['SMS_T1tttt'] , 
-    #    'select' : '&& mGo == 1900 && mLSP == 800',
-    #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
-    #    "fill": None,
-    #    "line": ROOT.TAttLine(ROOT.kBlack, ROOT.kSolid, 2),
-    #    "marker":  None,
-    #    "Label" : "T1t^{4} 1.9/0.8",
-    #    "Stackable" : False
-    #    },
-
-    #'Signal_4' : 
-    #    {
-    #    'files': ['SMS_T1tttt'] , 
-    #    'select' : '&& mGo == 1500 && mLSP == 1000',
-    #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
-    #    "fill": None,
-    #    "line": ROOT.TAttLine(ROOT.kMagenta+1, ROOT.kDashed, 2),
-    #    "marker":  None,
-    #    "Label" : "T1t^{4} 1.50/1.0",
-    #    "Stackable" : False
-    #    },
+        }
 }
 
 dPhiCut = '&& ((LT < 350 && fabs(dPhi) > 1.0) || (350 < LT && LT < 600 && fabs(dPhi) > 0.75) || (600 < LT && fabs(dPhi) > 0.5))'

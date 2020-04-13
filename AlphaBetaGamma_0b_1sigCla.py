@@ -78,10 +78,10 @@ if __name__ == '__main__':
     mass_dir = outdir
     if not os.path.exists(mass_dir):os.makedirs(mass_dir)
     
-    otherSR = ROOT.TH1F('otherSR','otherSR',1000,0.0,1.0)
-    otherCR1 = ROOT.TH1F('otherCR1','otherCR1',1000,0.0,1.0)
-    otherCR2 = ROOT.TH1F('otherCR2','otherCR2',1000,0.0,1.0)
-    otherCR3 = ROOT.TH1F('otherCR3','otherCR3',1000,0.0,1.0)
+    otherSR = ROOT.TH1F('otherSR','otherSR',10000,0.0,1.0)
+    otherCR1 = ROOT.TH1F('otherCR1','otherCR1',10000,0.0,1.0)
+    otherCR2 = ROOT.TH1F('otherCR2','otherCR2',10000,0.0,1.0)
+    otherCR3 = ROOT.TH1F('otherCR3','otherCR3',10000,0.0,1.0)
 
     txtSR  = open(mass_dir+'/SR.txt', "w+")
     txtCR1 = open(mass_dir+'/CR1.txt', "w+")

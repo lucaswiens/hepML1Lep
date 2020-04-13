@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
 
     print('configs are : ', indir , outdir , lumi , batch ,cutdict ,sig)
-    ranges = [1000,0.0,1.0]
+    ranges = [10000,0.0,1.0]
     if cutdict == 'SR' : cutdict_ = SRs_cut_strings
     elif cutdict == 'CR1' : cutdict_ = CRs1_cut_strings
     elif cutdict == 'CR2' : cutdict_ = CRs2_cut_strings
@@ -167,8 +167,6 @@ if __name__ == '__main__':
         os.makedirs(outdir)
     if not os.path.exists(logdir):
         os.makedirs(logdir) 
-    
-    
 
     if sig : massdir = os.path.join(outdir,'scan/'+mass)
     else :  massdir = os.path.join(outdir,'grid/')
@@ -204,6 +202,8 @@ if __name__ == '__main__':
             scale = All_files['Signal_1']['scale']
         print (cuts + extraCuts)
         cuttext.write('cuts applied are :'+cuts + extraCuts+'\n')
+        temp_file = massdir+"/shapes_{0}_{1}_{2}".format(g,mass,cutdict)+"_temp.root"
+        temp = ROOT.TFile(temp_file,"recreate")
         chain = instPlot.chain_and_cut(filesList = All_files[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
         if args.doSyst : 
             chain_Jec_up = instPlot_Jec_up.chain_and_cut(filesList = All_files_Jec_up[g]['files'],Tname = "sf/t",cutstring = cuts,extraCuts =extraCuts)
@@ -255,9 +255,9 @@ if __name__ == '__main__':
             hist.Write()
         outroot.cd('')
         outroot.Close()
+        temp.Close()
+        os.remove(temp_file)
     elif batch :
-        import htcondor
-        schedd = htcondor.Schedd()
         cmd_array = []
         print('batch mode activated ...')
         regions = ['SR','CR1','CR2','CR3']
@@ -328,10 +328,10 @@ if __name__ == '__main__':
             print(comd)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("touch "+confDir+"/processing"+"\n")
             exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+comd[0]+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
             exec.write("echo "+comd[0]+"\n")
             exec.write(pyth+" RoShapes_0b_1SigCla.py --indir "+comd[1]+" --outdir "+comd[2]+" --lumi "+comd[3]+" --group "+comd[4]+" --cutdict "+comd[5]+" --year "+comd[7])
             if args.doSyst : 

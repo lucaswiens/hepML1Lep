@@ -42,10 +42,10 @@ def Predict_Keras(infile,outdir,var_list,class_list,model = None) :
 
     tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
-    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS/F')
-    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi/F')
-    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ/F')
-    Sig  = tree_out.Branch('sig', Sig_val, 'sig/F')
+    TT1l  = tree_out.Branch('TTS', TT1l_val, 'TTS/F',20000000)
+    TT2l  = tree_out.Branch('TTDi', TT2l_val, 'TTDi/F',20000000)
+    WJet  = tree_out.Branch('WJ', WJet_val, 'WJ/F',20000000)
+    Sig  = tree_out.Branch('sig', Sig_val, 'sig/F',20000000)
     
     prediction['Event'] = p_df['Event']
     prediction['Run'] =  p_df['Run']
@@ -141,13 +141,9 @@ if __name__ == '__main__':
         logdir = outdir+'/Logs' 
         if not os.path.exists(logdir):
             os.makedirs(logdir) 
-        import htcondor    
-        schedd = htcondor.Schedd()  
-        sub = htcondor.Submit("")
 
         Filenamelist = find_all_matching(".root",args.indir) 
         #print (Filenamelist)
-
         import socket
         host = socket.gethostname()
 
@@ -166,10 +162,10 @@ if __name__ == '__main__':
                 os.makedirs(confDir)
             exec = open(confDir+"/exec.sh","w+")
             exec.write("#"+"!"+"/bin/bash"+"\n")
-            exec.write("touch "+confDir+"/processing"+"\n")
             exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
             exec.write("source "+anaconda+" hepML"+"\n")
             exec.write("cd "+wdir+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
             exec.write("echo "+wdir+"\n")
             exec.write(pyth+" append_DNN_1SigClass.py --infile "+fc+"  --model "+args.model+" --outdir "+outdir+" --indir "+args.indir)
             exec.write("\n")
