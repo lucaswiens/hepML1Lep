@@ -263,9 +263,15 @@ def rocCurve(hS, hB):
     effsS = [hS.Integral(nBin, maxBin+1)/hS.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
     effB = [hB.Integral(nBin, maxBin+1)/hB.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
     rocCurve = ROOT.TGraph(maxBin, numpy.asarray(effB),numpy.asarray(effsS))
-    rocCurve.SetNameTitle("ROC"+hS.GetName(),"ROC "+hS.GetTitle()+" AUC = "+str(round(sum(effsS)/(maxBin+1),3)))
-    return rocCurve
 
+    hname = 'hist_' + hS.GetName()
+    hist = ROOT.TH1F(hname, hname, maxBin,0,1)
+    for ibin in range(1, hist.GetXaxis().GetNbins()+1):
+        hist.SetBinContent(ibin, rocCurve.Eval(hist.GetXaxis().GetBinCenter(ibin)))
+    fraction = hist.Integral()/maxBin
+    rocCurve.SetNameTitle("ROC"+hS.GetName(),"ROC "+hS.GetTitle()+" AUC = "+str(round(fraction,3)))
+    del hist
+    return rocCurve
 
 
 import argparse

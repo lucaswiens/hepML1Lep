@@ -183,6 +183,10 @@ if __name__ == '__main__':
                 diLepCS_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 diLepCS_cmd = diLepCS_cmd.replace("inclusive.txt","2LCS.txt")
                 cmd_array.append(diLepCS_cmd)
+            if os.path.exists(args.param+"/QCD.txt") : 
+                QCD_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
+                QCD_cmd = QCD_cmd.replace("inclusive.txt","QCD.txt")
+                cmd_array.append(QCD_cmd)
             cmd_array.append(incl_cmd)
         
         for mcut in myFiles : 
