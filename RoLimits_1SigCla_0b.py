@@ -188,7 +188,7 @@ if __name__ == '__main__':
         if mgo < 1400 : factor = 1.0
         bestBin = 0.0
            
-        for i in range(NBins,9000,-1):
+        '''for i in range(NBins,9000,-1):
             s = shist.Integral(i,NBins+1)/factor
             b = hist.Integral(i,NBins+1)
 
@@ -220,7 +220,9 @@ if __name__ == '__main__':
         #print(otherbins)
         SRbins = otherbins
         SRbins.append([bestBin,10001])
-        #print(SRbins)
+        #print(SRbins)'''
+        bestBin = 9750
+        SRbins = [[9000,9150],[9151,9300],[9301,9450],[9451,9600],[9601,9749],[bestBin,10001]]
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
                 bestBin = bin[0]

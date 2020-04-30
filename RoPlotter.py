@@ -260,8 +260,8 @@ def rocCurve(hS, hB):
     import numpy
     maxBin = hS.GetNbinsX()
     #rocPoints = [(hS.Integral(nBin, maxBin)/hS.Integral(), hB.Integral(nBin, maxBin)/hB.Integral()) for nBin in range(1, maxBin + 1) ]
-    effsS = [hS.Integral(nBin, maxBin+1)/hS.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
-    effB = [hB.Integral(nBin, maxBin+1)/hB.Integral(0, maxBin+1) for nBin in range(0, maxBin + 1) ]
+    effsS = [hS.Integral(nBin, maxBin+1)/(hS.Integral(0, maxBin+1)+0.0001) for nBin in range(0, maxBin + 1) ]
+    effB = [hB.Integral(nBin, maxBin+1)/(hB.Integral(0, maxBin+1)+0.0001) for nBin in range(0, maxBin + 1) ]
     rocCurve = ROOT.TGraph(maxBin, numpy.asarray(effB),numpy.asarray(effsS))
 
     hname = 'hist_' + hS.GetName()
@@ -306,10 +306,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.mb : 
-        from plotClass.plotting.plotGroups import All_files
-    else : 
-        from plotClass.plotting.plotGroups_0b import All_files
+    from plotClass.plotting.plotGroups import All_files
 
     subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
     lumi = args.lumi ; indir = args.indir ; outdire = os.path.join(args.outdir,subdir)
@@ -372,14 +369,15 @@ if __name__ == '__main__':
         if cutline.startswith("#") : continue
         cutline = str(cutline).strip()
         cut_strings+= cutline 
-    if int(args.year) == 2018 and args.mcuts == None :
-        cut_strings+="&& (!isData || (Run < 319077) || ( nHEMJetVeto == 0 && nHEMEleVeto == 0))"
+    
+    if int(args.year) == 2018 and "postHEM" in str(args.mcuts): cut_strings+="&& ( nHEMJetVeto == 0 && nHEMEleVeto == 0)" ; lumi = "39.6" 
+    elif int(args.year) == 2018 and "preHEM" in str(args.mcuts) : cut_strings = cut_strings ; lumi = "20.1"
+    elif int(args.year) == 2018 :#and args.mcuts == None :
+        cut_strings+="&& (!isData || (Run < 319077) || (nHEMJetVeto == 0 && nHEMEleVeto == 0))"
         for key in All_files: 
             if "Data" in key or "Signal_" in key : continue 
             All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
-    elif int(args.year) == 2018 and "postHEM" in args.mcuts : cut_strings+="&& ( nHEMJetVeto == 0 && nHEMEleVeto == 0)" ; lumi = "39.6" 
-    elif int(args.year) == 2018 and "preHEM" in args.mcuts : cut_strings = cut_strings ; lumi = "20.1"
-    #print(cut_strings)
+    
     adcuts = ''
     if args.mcuts != None : 
         mcf = open(args.mcuts, 'r')
@@ -417,16 +415,7 @@ if __name__ == '__main__':
     if int(args.year) != 2016 : 
         All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
         All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
-    #if int(args.year) == 2016 :
-    #    All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
-    #    All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('/sumOfWeights*',"/sumOfWeights2*")
-    # HEM veto weight is applied for events after the HEM issue
-    # HEM_MC_SF is calculated by 
-    #if int(args.year) == 2018 :
-    #    for key in All_files: 
-    #        if "Data" in key or "Signal_" in key : continue 
-    #        All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
-                
+                    
     # get the plotter class instant 
     instPlot = rootplot(indir,outdire,All_files=All_files)
     if int(args.jobs) == 0 : 
@@ -458,7 +447,12 @@ if __name__ == '__main__':
         for i , g in enumerate(instPlot.group):
             All_files[g]['chain']  = retlist[i].get() 
     # create the output root file
-    outroot = ROOT.TFile(outdire+"/plots_{0}_{1}_{2}".format(currentDT.year,currentDT.month,currentDT.day)+".root","recreate")
+    #outroot = ROOT.TFile(outdire+"/plots_{0}_{1}_{2}".format(currentDT.year,currentDT.month,currentDT.day)+".root","recreate")
+    outroot = ROOT.TFile(outdire+"/plots.root","recreate")
+    fcmd = open(outdire+"/command.txt","w")
+    fcmd.write("%s\n\n" % " ".join(sys.argv))
+    fcmd.write("%s\n" % (args))
+    fcmd.close()
     
     for i,var in enumerate(varList) :
 

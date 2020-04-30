@@ -183,23 +183,55 @@ if __name__ == '__main__':
                 diLepCS_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 diLepCS_cmd = diLepCS_cmd.replace("inclusive.txt","2LCS.txt")
                 cmd_array.append(diLepCS_cmd)
-            if os.path.exists(args.param+"/QCD.txt") : 
-                QCD_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
-                QCD_cmd = QCD_cmd.replace("inclusive.txt","QCD.txt")
-                cmd_array.append(QCD_cmd)
+            if os.path.exists(args.param+"/QCD_ech_sel.txt") : 
+                QCD_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                QCD_e_cmd = QCD_e_cmd.replace("inclusive.txt","QCD_ech_sel.txt")
+                cmd_array.append(QCD_e_cmd)
+            if os.path.exists(args.param+"/QCD_mch_sel.txt") : 
+                QCD_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                QCD_m_cmd = QCD_m_cmd.replace("inclusive.txt","QCD_mch_sel.txt")
+                cmd_array.append(QCD_m_cmd)
+            if os.path.exists(args.param+"/QCD_ech_antisel.txt") : 
+                QCDA_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                QCDA_e_cmd = QCDA_e_cmd.replace("inclusive.txt","QCD_ech_antisel.txt")
+                cmd_array.append(QCDA_e_cmd)
+            if os.path.exists(args.param+"/QCD_mch_antisel.txt") : 
+                QCDA_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                QCDA_m_cmd = QCDA_m_cmd.replace("inclusive.txt","QCD_mch_antisel.txt")
+                cmd_array.append(QCDA_m_cmd)
+            if os.path.exists(args.param+"/inclusive_ech_antisel.txt") : 
+                incA_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                incA_e_cmd = incA_e_cmd.replace("inclusive.txt","inclusive_ech_antisel.txt")
+                cmd_array.append(incA_e_cmd)
+            if os.path.exists(args.param+"/inclusive_mch_antisel.txt") : 
+                incA_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
+                incA_m_cmd = incA_m_cmd.replace("inclusive.txt","inclusive_mch_antisel.txt")
+                cmd_array.append(incA_m_cmd)
             cmd_array.append(incl_cmd)
         
         for mcut in myFiles : 
             othercmd = cmd
             if ("_postHEM" in str(mcut) or "_preHEM" in str(mcut)) and not year == "2018" : continue
-            if "inclusive_njseq6" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
+            if ("QCD_mchsel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","QCD_mch_sel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif ("QCD_echsel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","QCD_ech_sel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif ("QCD_mchantisel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","QCD_mch_antisel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif ("QCD_echantisel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","QCD_ech_antisel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif "inclusive_njseq6" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots_blind.py "
             elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") : 
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             othercmd+= " --mcuts "+mcut
-            if ('Sig.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut ) and not "Anti" in mcut : othercmd +=' --blind '
+            if ('Sig.txt' in mcut or 'Sig_ech.txt' in mcut or 'Sig_mch.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut ) and (not "Anti" in mcut or "QCD" in mcut) : othercmd +=' --blind '
             cmd_array.append(othercmd)
             
     cmd_array = [x.replace("//","/") for x in cmd_array]

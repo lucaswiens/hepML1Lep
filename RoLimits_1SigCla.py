@@ -191,7 +191,7 @@ if __name__ == '__main__':
         if mgo < 1400 : factor = 1.0
         bestBin = 0.0
            
-        for i in range(NBins,9000,-1):
+        '''for i in range(NBins,9000,-1):
             s = shist.Integral(i,NBins+1)/factor
             b = hist.Integral(i,NBins+1)
 
@@ -223,7 +223,10 @@ if __name__ == '__main__':
         otherbins = otherbins[::-1]
         #print(otherbins)
         SRbins = otherbins
-        SRbins.append([bestBin,10001])
+        SRbins.append([bestBin,10001])'''
+        bestBin = 9980
+        nbins_full = 10000
+        SRbins = [[9000,9196],[9197,9392],[9393,9588],[9589,9784],[9785,9979],[9980,10001]]
         #print(SRbins)
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
@@ -231,24 +234,27 @@ if __name__ == '__main__':
                 NBins = bin[1]-1
                 sigerr = ROOT.Double(0.)
                 bkgerr = ROOT.Double(0.)
+                Fullbkgerr = ROOT.Double(0.)
+                Fullsigerr = ROOT.Double(0.)
                 shist.Scale(1.0/factor)
                 sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
                 bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
-                
+                FullbkgRate = hist.IntegralAndError(9000,nbins_full+1,Fullbkgerr)
+                FullsigRate = shist.IntegralAndError(9000,nbins_full+1,Fullsigerr)
                 for key in systList : 
-                    syst_int = systList[key][0].Integral(bestBin,NBins+1)
-                    systList[key].append(syst_int)
-                    impact = round((syst_int/(bkgRate+0.01)),2)
+                    syst_int = systList[key][0].Integral(9000,nbins_full+1) #bestBin
+                    systList[key].append(syst_int) 
+                    impact = round((syst_int/(FullbkgRate+0.01)),2) #bkgRate
                     invimpact = round((1/(impact+0.001)),2)
                     systList[key].append(impact if impact >= 1.0 else invimpact )
 
                 for key in SigsystList : 
-                    syst_int = SigsystList[key][0].Integral(bestBin,NBins+1)
+                    syst_int = SigsystList[key][0].Integral(9000,nbins_full+1) #bestBin
                     SigsystList[key].append(syst_int)
-                    impact = round((syst_int/((sigRate)+0.01))/factor,2)
+                    impact = round((syst_int/((FullsigRate)+0.01))/factor,2) #sigRate
                     invimpact = round((1/(impact+0.001)),2)
                     SigsystList[key].append(impact if impact >= 1.0 else invimpact )
-
+                #print(systList)
                 #if sigRate == 0.0 : 
                 #    print ('Signal',mgo,mlsp, 'has zero rate will not write the datacard for it ')
                 #    continue 
@@ -291,6 +297,7 @@ if __name__ == '__main__':
                         if sigRate <= 0 :  sigVar = 1.0
                         else : sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
+                        #print(syst,sigVar,bkgVar)
                         datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                     else :
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
@@ -307,21 +314,25 @@ if __name__ == '__main__':
             bestBin = SRbins[-1][0]
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
+            Fullbkgerr = ROOT.Double(0.)
+            Fullsigerr = ROOT.Double(0.)    
             shist.Scale(1.0/factor)
             sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
             bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
+            FullbkgRate = hist.IntegralAndError(9000,nbins_full+1,Fullbkgerr)
+            FullsigRate = shist.IntegralAndError(9000,nbins_full+1,Fullsigerr)
             
             for key in systList : 
-                syst_int = systList[key][0].Integral(bestBin,NBins+1)
+                syst_int = systList[key][0].Integral(9000,nbins_full+1)
                 systList[key].append(syst_int)
-                impact = round((syst_int/(bkgRate+0.01)),2)
+                impact = round((syst_int/(FullbkgRate+0.01)),2)
                 invimpact = round((1/(impact+0.001)),2)
                 systList[key].append(impact if impact >= 1.0 else invimpact )
 
             for key in SigsystList : 
-                syst_int = SigsystList[key][0].Integral(bestBin,NBins+1)
+                syst_int = SigsystList[key][0].Integral(9000,nbins_full+1)
                 SigsystList[key].append(syst_int)
-                impact = round((syst_int/((sigRate)+0.01))/factor,2)
+                impact = round((syst_int/((FullsigRate)+0.01))/factor,2)
                 invimpact = round((1/(impact+0.001)),2)
                 SigsystList[key].append(impact if impact >= 1.0 else invimpact )
 
