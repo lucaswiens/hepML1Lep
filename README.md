@@ -88,7 +88,7 @@ For the full analysis work-flow, this package is made fully independent of CMSSW
  #[CR2,CR3,CR4] <--> [TTsemilep DNN categroy, TTDilep DNN categroy, WJ DNN categroy]
  # you can do the same with RoShapes_0b_1SigCla.py the only difference is #[CR2,CR3] <--> [TTJets DNN categroy, WJ DNN categroy]
  ```
-  - After making the shapes one needs to calculate the MC normalization factors, $\alpha, \beta, \gamma$, but first you need to `hadd` all the shapes then use the `AlphaBetaGamma_1sigCla.py` and `AlphaBetaGamma_0b_1sigCla.py` as:
+  - After making the shapes one needs to calculate the MC normalization factors,<img src="https://render.githubusercontent.com/render/math?math=\alpha,%20\beta,%20\gamma">, but first you need to `hadd` all the shapes then use the `AlphaBetaGamma_1sigCla.py` and `AlphaBetaGamma_0b_1sigCla.py` as:
   ```bash
   # To calculate the alpha, beta, gamma for nominal shapes
   ./AlphaBetaGamma_1sigCla.py --infile /output/file/from/hadd --outdir out/dir
