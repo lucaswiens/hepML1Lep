@@ -93,16 +93,29 @@ For the full analysis work-flow, this package is made fully independent of CMSSW
   # To calculate the alpha, beta, gamma for nominal shapes
   ./AlphaBetaGamma_1sigCla.py --infile /output/file/from/hadd --outdir out/dir
   # To calculate the alpha, beta, gamma for systematic shapes
-  ./AlphaBetaGamma_1sigCla.py --infile /output/file/from/hadd --outdir ut/dir --syst <syst_name>
+  ./AlphaBetaGamma_1sigCla.py --infile /output/file/from/hadd --outdir out/dir --syst <syst_name>
   # the syst_name can be any of Jec_Up,btagSF_b_Up,btagSF_l_Up,ISR_Up,lepSF_Up,PU_Up,TTxsec_Up,TTVxsec_Up,Wpol_Up,Wxsec_Up and also _Down variation
   ```
-  - `RoLimits.py` is made to take over the shapes and produce the datacards in addition to calculating the limits.
-  - `/nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/` will be used by default as I've already prepared the combine tool but feel free to change it to whatever you have
+  - `RoLimits.py` is made to take over the shapes and produce the datacards in addition to calculating the limits. As the other running scripts we have  many versions dedicated for different analysis strategies, the supported once are `RoLimits_1SigCla.py` and `RoLimits_1SigCla_0b.py` and the run as: 
+  ```bash 
+  # to do the multiple-bin analysis you can use
+  ./RoLimits_1SigCla.py --indir shapes/dir --outdir out/dir --sfs alphabetagamma/dir/nom/alphabetagammaTable.txt --Y <YEAR>
+  # then you can merge the bins into one data card, this needs to run from CMSSW_BASE for example /nfs/dust/cms/user/amohamed/susy-desy/deepAK8/CMSSW_9_4_11/src/ and not anaconda env, make sure you login from SL6 machine and use CMSSW
+  python combinedatacards_base_0.py datacard/path/datacards/
+  # if you want to merge cards from the 3-years i.e for full run-II you can also use
+  python combinedatacards_base_1.py datacards/pathfor2016/datacards/ datacards/pathfor2017/datacards/ datacards/pathfor2018/datacards/ out/put/datacards/
+  ```
   ```bash
-  # -L is to calculate the limit on HTC otherwise only the datacards will be produced
-  ./RoLimits.py --indir shapes_16_DNN_31_July19v2 --outdir testLimits -L
+  #or if you are planning to run 1-bin analysis
+  ./RoLimits_1SigCla.py --indir shapes/dir --outdir out/dir --sfs alphabetagamma/dir/nom/alphabetagammaTable.txt --Y <YEAR> --oneBin
+  # if you want to merge cards from the 3-years i.e for full run-II you can also use 
+  python combinedatacards_base_1.py datacards/pathfor2016/datacards/ datacards/pathfor2017/datacards/ datacards/pathfor2018/datacards/ out/put/datacards/
+  ```
+  - once the datacards are ready you can run the limit calculations on the batch system by:
+  ```bash
+  python limits_only.py PATH/TO/DATACARDS
   ```
   - `plotLimit.py` is made to plot the limit contour it will use the `glu_xsecs_13TeV.txt` for calculating the Xsec limits
-  - `overly_DNN_Multi.C` is for comparing to limit contours 
+  - `overly_DNN_Multi.C` is for comparing to limit contours from different analysis 
 
 
