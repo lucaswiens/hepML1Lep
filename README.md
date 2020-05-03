@@ -49,6 +49,14 @@ or you can use mine env by doing `export PATH="/nfs/dust/cms/user/amohamed/anaco
     - `--rm` , help='if randomize the signal mass to the background or do oversampling',default=False
 - Once the training is done, you can check the output directory, check the plots and the model files
 - `testhyperOpt.py` is also prepared to do hyper parameter optimizations taken mainly from `https://machinelearningmastery.com/grid-search-hyperparameters-deep-learning-models-python-keras/`
+- After you are done with the training, you can append the score to the trees for farther analysis by using one of the two scripts `append_DNN_1SigClass.py` and `append_DNN_0b_1SigClass.py`. Both are running interactively or via HTC by executing commands like: 
+```bash 
+# to interactively append the score you can
+./append_DNN_1SigClass.py --infile /path/to/file --model path/to/model --outdir /path/to/out
+# to run on HTC 
+./append_DNN_1SigClass.py --indir path/to/indir -b --model path/to/model --outdir /path/to/out
+# make sure not to add .h5 extension in the model path, it will be autocompleted by the script
+```
 
 For the full analysis work-flow, this package is made fully independent of CMSSW but you need it only for limit setting when we use HiggsCombineTools `https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/`
 
