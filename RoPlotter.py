@@ -728,9 +728,9 @@ if __name__ == '__main__':
             CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.01)
             doLegend(rocs, None, None, textSize=0.020, columns=2,showSF=False,uncertHist= None,showCount=False)
         
-        canv.SaveAs(pngdire+'/'+var[0]+'.png')
-        canv.SaveAs(pdfdire+'/'+var[0]+'.pdf')
-        canv.SaveAs(epsdire+'/'+var[0]+'.eps')
+        canv.SaveAs(pngdire+'/'+str(args.year)[2:]+"-"+var[0]+'.png')
+        canv.SaveAs(pdfdire+'/'+str(args.year)[2:]+"-"+var[0]+'.pdf')
+        canv.SaveAs(epsdire+'/'+str(args.year)[2:]+"-"+var[0]+'.eps')
 
         tDirectory.WriteObject(canv,"TheCanvas")
         #del canv

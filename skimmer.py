@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys,os
 import ROOT
-import htcondor
 #sys.path.append("/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/lib/python3.6/site-packages/")
 import argparse
 import glob
@@ -52,28 +51,65 @@ if __name__ == '__main__':
         file_out.Close()
 
     else :    
+
         if not os.path.exists(logdir):
             os.makedirs(logdir) 
+        
         Filenamelist = find_all_matching(".root",args.indir)
-        schedd = htcondor.Schedd()  
-        sub = htcondor.Submit("")
-        sub["executable"]               = args.exec
-        sub["universe"]                 = "vanilla"
-        sub["should_transfer_files"]    = "YES"
-        sub["log"]                      = "{}/job_$(Cluster)_$(Process).log".format(logdir)
-        sub["output"]                   = "{}/job_$(Cluster)_$(Process).out".format(logdir)
-        sub["error"]                    = "{}/job_$(Cluster)_$(Process).err".format(logdir)
-        sub["when_to_transfer_output"]  = "ON_EXIT"
-        sub['Requirements']             = 'OpSysAndVer == "CentOS7"'
 
-        while(True):
-            try: 
-                with schedd.transaction() as txn:
-                    for fc in Filenamelist : 
-                        print(fc)
-                        sub["arguments"] = " ".join([fc,wdir,outdir,args.tree,args.tdir,"'"+args.cuts.replace("(","").replace(")","")+"'"])
-                        sub.queue(txn)
-                    print ("Submit jobs for the batch system")
-                break
-            except: 
-                pass
+        import socket
+        host = socket.gethostname()
+
+        if "lxplus" in host : 
+            path = "/afs/cern.ch/work/a/amohamed/anaconda3/bin"
+            anaconda = "/afs/cern.ch/work/a/amohamed/anaconda3/bin/activate"
+            pyth = "/afs/cern.ch/work/a/amohamed/anaconda3/envs/hepML/bin/python"
+        elif "desy.de" in host : 
+            path = "/nfs/dust/cms/user/amohamed/anaconda3/bin"
+            anaconda = "/nfs/dust/cms/user/amohamed/anaconda3/bin/activate"
+            pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
+
+        JDir = os.path.join(outdir,"jobs")
+
+        for i,comd in enumerate(Filenamelist): 
+            confDir = os.path.join(JDir,"job_"+str(i))
+            if not os.path.exists(confDir) : 
+                os.makedirs(confDir)
+            #comd = comd.split()
+            print(comd)
+            exec = open(confDir+"/exec.sh","w+")
+            exec.write("#"+"!"+"/bin/bash"+"\n")
+            exec.write("eval "+'"'+"export PATH='"+path+":$PATH'"+'"'+"\n")
+            exec.write("source "+anaconda+" hepML"+"\n")
+            exec.write("cd "+wdir+"\n")
+            exec.write("echo 'running job' >> "+confDir+"/processing"+"\n")
+            exec.write("echo "+wdir+"\n")
+            exec.write(pyth+" skimmer.py --infile "+comd+" --outdir "+outdir+" --tree "+args.tree+" --tdir "+args.tdir+" --cuts "+'"'+args.cuts+'"' )
+            exec.write("\n")
+            # let the script deletes itself after finishing the job
+            exec.write("rm -rf "+confDir)
+            exec.close()
+
+        subFilename = os.path.join(JDir,"submitAllskimmer.conf")
+        subFile = open(subFilename,"w+")
+        subFile.write("executable = $(DIR)/exec.sh"+"\n")
+        subFile.write("universe =  vanilla")
+        subFile.write("\n")
+        subFile.write("should_transfer_files = YES")
+        subFile.write("\n")
+        subFile.write("log = "+"{}/job_$(Cluster)_$(Process).log".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("output = "+"{}/job_$(Cluster)_$(Process).out".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("error = "+"{}/job_$(Cluster)_$(Process).err".format(os.path.abspath(logdir)))
+        subFile.write("\n")
+        subFile.write("when_to_transfer_output   = ON_EXIT")
+        subFile.write("\n")
+        subFile.write('Requirements  = ( OpSysAndVer == "CentOS7" || OpSysAndVer == "SL6")')
+        subFile.write("\n")
+        subFile.write("queue DIR matching dirs "+JDir+"/job_*/")
+        if "lxplus" in host : 
+            subFile.write("\n")
+            subFile.write('+JobFlavour = "longlunch"')
+        subFile.close()
+        os.system("condor_submit "+subFilename)

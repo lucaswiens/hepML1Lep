@@ -222,31 +222,34 @@ if __name__ == '__main__':
         SRbins.append([bestBin,10001])
         #print(SRbins)'''
         bestBin = 9900
-        SRbins = [[9000,9150],[9151,9300],[9301,9450],[9451,9600],[9601,9749],[bestBin,10001]]
+        nbins_full = 10000
+        SRbins = [[9000,9150],[9151,9300],[9301,9450],[9451,9600],[9601,9890],[bestBin,10001]]
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
                 bestBin = bin[0]
                 NBins = bin[1]-1
                 sigerr = ROOT.Double(0.)
                 bkgerr = ROOT.Double(0.)
+                Fullbkgerr = ROOT.Double(0.)
+                Fullsigerr = ROOT.Double(0.)
                 shist.Scale(1.0/factor)
                 sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
                 bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
-                
+                FullbkgRate = hist.IntegralAndError(9000,nbins_full+1,Fullbkgerr)
+                FullsigRate = shist.IntegralAndError(9000,nbins_full+1,Fullsigerr)
                 for key in systList : 
-                    syst_int = systList[key][0].Integral(bestBin,NBins+1)
-                    systList[key].append(syst_int)
-                    impact = round((syst_int/(bkgRate+0.01)),2)
+                    syst_int = systList[key][0].Integral(9000,nbins_full+1) #bestBin
+                    systList[key].append(syst_int) 
+                    impact = round((syst_int/(FullbkgRate+0.01)),2) #bkgRate
                     invimpact = round((1/(impact+0.001)),2)
                     systList[key].append(impact if impact >= 1.0 else invimpact )
 
                 for key in SigsystList : 
-                    syst_int = SigsystList[key][0].Integral(bestBin,NBins+1)
+                    syst_int = SigsystList[key][0].Integral(9000,nbins_full+1) #bestBin
                     SigsystList[key].append(syst_int)
-                    impact = round((syst_int/((sigRate)+0.01))/factor,2)
+                    impact = round((syst_int/((FullsigRate)+0.01))/factor,2) #sigRate
                     invimpact = round((1/(impact+0.001)),2)
                     SigsystList[key].append(impact if impact >= 1.0 else invimpact )
-
                 #if sigRate == 0.0 : 
                 #    print ('Signal',mgo,mlsp, 'has zero rate will not write the datacard for it ')
                 #   continue 
@@ -288,36 +291,40 @@ if __name__ == '__main__':
                         if sigRate <= 0 :  sigVar = 1.0
                         else : sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                     else :
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",'-',str(round(bkgVar,2)))+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",'-',str(round(bkgVar,2)))+'\n')
                 for syst in SigsystList : 
                     if "Down" in syst : continue
                     if syst in intersection_syst : continue # already taken into account in the previous loop
                     else :
                         sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),'-')+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),'-')+'\n')
 
         if oneBin :
             bestBin = SRbins[-1][0]
             sigerr = ROOT.Double(0.)
             bkgerr = ROOT.Double(0.)
+            Fullbkgerr = ROOT.Double(0.)
+            Fullsigerr = ROOT.Double(0.)    
             shist.Scale(1.0/factor)
             sigRate = shist.IntegralAndError(bestBin,NBins+1,sigerr)
             bkgRate = hist.IntegralAndError(bestBin,NBins+1,bkgerr)
+            FullbkgRate = hist.IntegralAndError(9000,nbins_full+1,Fullbkgerr)
+            FullsigRate = shist.IntegralAndError(9000,nbins_full+1,Fullsigerr)
             
             for key in systList : 
-                syst_int = systList[key][0].Integral(bestBin,NBins+1)
+                syst_int = systList[key][0].Integral(9000,nbins_full+1)
                 systList[key].append(syst_int)
-                impact = round((syst_int/(bkgRate+0.01)),2)
+                impact = round((syst_int/(FullbkgRate+0.01)),2)
                 invimpact = round((1/(impact+0.001)),2)
                 systList[key].append(impact if impact >= 1.0 else invimpact )
 
             for key in SigsystList : 
-                syst_int = SigsystList[key][0].Integral(bestBin,NBins+1)
+                syst_int = SigsystList[key][0].Integral(9000,nbins_full+1)
                 SigsystList[key].append(syst_int)
-                impact = round((syst_int/((sigRate)+0.01))/factor,2)
+                impact = round((syst_int/((FullsigRate)+0.01))/factor,2)
                 invimpact = round((1/(impact+0.001)),2)
                 SigsystList[key].append(impact if impact >= 1.0 else invimpact )
 
@@ -358,16 +365,16 @@ if __name__ == '__main__':
                 if syst in intersection_syst : 
                     sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
                     bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                 else :
                     bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",'-',str(round(bkgVar,2)))+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",'-',str(round(bkgVar,2)))+'\n')
             for syst in SigsystList : 
                 if "Down" in syst : continue
                 if syst in intersection_syst : continue # already taken into account in the previous loop
                 else :
                     sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),'-')+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),'-')+'\n')
             
             #datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
             #datacard.write("{:<62}{:<30}{:<30}".format("alphauncert lnN",'-',alphaE)+'\n')

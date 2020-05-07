@@ -224,6 +224,12 @@ if __name__ == '__main__':
             elif ("QCD_echantisel" in str(mcut)) : 
                 othercmd = othercmd.replace("inclusive.txt","QCD_ech_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif ("Sig_ech_antisel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","inclusive_ech_antisel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
+            elif ("Sig_mch_antisel" in str(mcut)) : 
+                othercmd = othercmd.replace("inclusive.txt","inclusive_mch_antisel.txt")
+                othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif "inclusive_njseq6" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :

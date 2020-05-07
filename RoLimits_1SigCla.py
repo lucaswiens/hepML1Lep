@@ -298,16 +298,16 @@ if __name__ == '__main__':
                         else : sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
                         #print(syst,sigVar,bkgVar)
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                     else :
                         bkgVar = 1/2*(systList[syst][2*(num+1)]+systList[syst.replace("Up","Down")][2*(num+1)])
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",'-',str(round(bkgVar,2)))+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",'-',str(round(bkgVar,2)))+'\n')
                 for syst in SigsystList : 
                     if "Down" in syst : continue
                     if syst in intersection_syst : continue # already taken into account in the previous loop
                     else :
                         sigVar = 1/2*(SigsystList[syst][2*(num+1)]+SigsystList[syst.replace("Up","Down")][2*(num+1)])
-                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),'-')+'\n')
+                        datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),'-')+'\n')
 
         if oneBin :
                     
@@ -374,16 +374,16 @@ if __name__ == '__main__':
                 if syst in intersection_syst : 
                     sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
                     bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),str(round(bkgVar,2)))+'\n')
                 else :
                     bkgVar = 1/2*(systList[syst][2]+systList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",'-',str(round(bkgVar,2)))+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",'-',str(round(bkgVar,2)))+'\n')
             for syst in SigsystList : 
                 if "Down" in syst : continue
                 if syst in intersection_syst : continue # already taken into account in the previous loop
                 else :
                     sigVar = 1/2*(SigsystList[syst][2]+SigsystList[syst.replace("Up","Down")][2])
-                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year[-2:]+" lnN",str(round(sigVar,2)),'-')+'\n')
+                    datacard.write("{:<62}{:<30}{:<30}".format(syst.replace("_Up","")+args.year+" lnN",str(round(sigVar,2)),'-')+'\n')
             
             #datacard.write("{:<62}{:<30}{:<30}".format("bkguncert lnN",'-',1.1)+'\n')
             #datacard.write("{:<62}{:<30}{:<30}".format("alphauncert lnN",'-',alphaE)+'\n')
