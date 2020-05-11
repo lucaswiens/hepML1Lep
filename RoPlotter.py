@@ -303,6 +303,8 @@ if __name__ == '__main__':
     parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')
     parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
     parser.add_argument('--Smass', nargs='+',help="the mas of the signal hypothesis")
+    parser.add_argument("--y-log", default=False, help="make the y axis logarithmic",action='store_true')
+    parser.add_argument("--cutflow", default=False, help="produce a cutflow diagram",action='store_true')
 
     args = parser.parse_args()
 
@@ -365,12 +367,14 @@ if __name__ == '__main__':
                                                         }
     cut_strings = ''
     cf = open(args.cuts, 'r')
-    for cutline in cf : 
+    cutflowArray = []
+    for cutline in cf :
         if cutline.startswith("#") : continue
         cutline = str(cutline).strip()
-        cut_strings+= cutline 
-    
-    if int(args.year) == 2018 and "postHEM" in str(args.mcuts): cut_strings+="&& ( nHEMJetVeto == 0 && nHEMEleVeto == 0)" ; lumi = "39.6" 
+        cut_strings+= cutline
+        if args.cutflow and cutline!="":
+            cutflowArray.append(cutline)
+    if int(args.year) == 2018 and "postHEM" in str(args.mcuts): cut_strings+="&& ( nHEMJetVeto == 0 && nHEMEleVeto == 0)" ; lumi = "39.6"
     elif int(args.year) == 2018 and "preHEM" in str(args.mcuts) : cut_strings = cut_strings ; lumi = "20.1"
     elif int(args.year) == 2018 :#and args.mcuts == None :
         cut_strings+="&& (!isData || (Run < 319077) || (nHEMJetVeto == 0 && nHEMEleVeto == 0))"
@@ -423,14 +427,18 @@ if __name__ == '__main__':
         for g in instPlot.group:
             # fill the dictionary with all the files founded under the indir under each category
             All_files[g]['files'] = instPlot.group[g]
-            # make chain with each background seperatly 
-            chain = instPlot.chain_and_cut(All_files[g]['files'],"sf/t",cut_strings,All_files[g]['select'])
+            # make chain with each background seperatly
+            chain = instPlot.makeChain(All_files[g]['files'], "sf/t")
+            cutChain = instPlot.makecut(chain, cut_strings, All_files[g]['select'])
             # add the chain to each category
-            All_files[g]['chain']  = chain
+            All_files[g]['chain']  = cutChain
             # init empty list of histogram tio be filled in the next loop
             All_files[g]['hist'] = []
             All_files[g]['hist_bins'] = []
-    else : 
+            if args.cutflow:
+                All_files[g]['cutflowChain']  = chain
+                All_files[g]['cutflowNumbers'] = instPlot.makecutflow(All_files[g]['cutflowChain'], cutflowArray, All_files[g]['select'])
+    else :
         from multiprocessing import Pool
         pool = Pool(int(args.jobs))
         myargs = []
@@ -732,6 +740,224 @@ if __name__ == '__main__':
         canv.SaveAs(pngdire+'/'+str(args.year)[2:]+"-"+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+str(args.year)[2:]+"-"+var[0]+'.pdf')
         canv.SaveAs(epsdire+'/'+str(args.year)[2:]+"-"+var[0]+'.eps')
+
+        tDirectory.WriteObject(canv,"TheCanvas")
+        #del canv
+        outroot.cd('')
+
+    if args.cutflow:
+        outtext = open(textdire+"/cutflow.txt", "w+")
+        print("Now making the cutflow!")
+        # make Tdir for the cutflow diagram to plot
+        tDirectory= outroot.mkdir("cutflow")
+        # move the the TDir
+        tDirectory.cd()
+        # list to be filled with bkg to be stacked
+        stackableHists = []
+        SignalHists = []
+        error = ROOT.Double(0.)
+        for key in All_files :
+            # make the hist
+            hist = make1D_bins(cutflowArray, All_files[key], key+"cutflow")
+            # draw the variable to the hist created
+            if 'Data' in key : lum = '1.0'
+            else  : lum = lumi
+
+            #All_files[key]['cutflowChain'].Draw('cutflow >> '+key+'cutflow', All_files[key]['scale']+'*'+lum+'*(Sum$('+adcuts+'))',"goff")
+            #print (hist)
+            for i in range(len(cutflowArray)):
+                hist.AddBinContent(i, All_files[g]['cutflowNumbers'][i])
+            ROOT.gROOT.ForceStyle()
+            All_files[key]['cutflowHist'] = hist
+            if All_files[key]['Stackable'] : stackableHists.append(hist)
+            if 'Sig' in key :
+                SignalHists.append(hist)
+                outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+                hist.Write()
+
+        # make the total BKG hist to be used for ratio calculation
+        total = hadd1ds(stackableHists,do_alphabetagamma,args.mb)
+        outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        total.SetName("totalBKG")
+        total.Write()
+        stackableHists = sorttinglist(stackableHists)
+        # scale the individual background to data
+        apply = False
+        if do_alphabetagamma :
+            if args.mb :
+                stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
+            else :
+                stackableHists_ = doalphabetagamma_0b(stackableHists,alpha,beta)
+            if ('Data' in All_files.keys() and scale_bkgd_toData ) :
+                apply = False
+                sf = doScaleBkgNormData(All_files['Data']['cutflowHist'],stackableHists_,total,Apply = apply)
+            else : sf = 1.0
+        elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) :
+            apply = True
+            sf = doScaleBkgNormData(All_files['Data']['cutflowHist'],stackableHists,total,Apply=apply)
+        else : sf = 1.0
+        #if sf == 0.0 : continue
+        # scale the total backgrounds to data
+        total.Scale(sf if apply == True else 1.0 )
+        total.SetName("totalBKG_scaled")
+        # make stack of the background (sorted)
+        stack = makeStack(stackableHists)
+        # write them
+        stack.Write()
+        total.Write()
+        outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        for hist in stackableHists :
+            outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+            hist.Write()
+        # make canvas to draw
+        plotformat = (600,600)
+        sf_ = 20./plotformat[0]
+
+        height = plotformat[1]+150 if (doRatio  and 'Data' in All_files.keys()) else plotformat[1]
+        ROOT.gStyle.SetPadLeftMargin(600.*0.18/plotformat[0])
+
+        if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
+        else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
+        # create canvas
+        canv = ROOT.TCanvas("cutflow","cutflow",plotformat[0]+150, height)
+        ROOT.SetOwnership(canv, False)
+        canv.SetTopMargin(canv.GetTopMargin()*1.2)
+        topsize = 0.12*600./height if doRatio else 0.06*600./height
+        canv.SetTopMargin(topsize)
+        canv.cd()
+        if (doRatio  and 'Data' in All_files.keys()) :
+            stackPad = ROOT.TPad("mainpad"+"cutflow", "mainpad"+"cutflow", 0, 0.30, 1, 1)
+            ROOT.SetOwnership(stackPad, False)
+            stackPad.SetBottomMargin(0.025)
+            stackPad.SetTicks(1, 1)
+            stackPad.Draw()
+            ratioPad = ROOT.TPad("ratiodpad"+"cutflow", "ratiopad"+"cutflow",0,0,1,0.30)
+            ROOT.SetOwnership(ratioPad, False)
+            ratioPad.SetTopMargin(0.001)
+            ratioPad.SetBottomMargin(0.35)
+            ratioPad.SetTicks(1,1)
+            ratioPad.Draw()
+            stackPad.cd()
+        # Draw the stack first
+        stack.Draw('cutflowHist')
+        stack.SetMinimum(YmiN)
+        stack.GetXaxis().SetTitleOffset(1.1)
+        stack.GetXaxis().SetLabelOffset(0.007)
+        if  (doRatio and 'Data' in All_files.keys()):
+            stack.GetXaxis().SetLabelOffset(999) ## send them away
+            stack.GetXaxis().SetTitleOffset(999) ## in outer space
+        stack.GetXaxis().SetTitleFont(42)
+        stack.GetXaxis().SetTitleSize(0.05)
+        stack.GetXaxis().SetLabelFont(42)
+        stack.GetXaxis().SetLabelSize(0.04)
+        stack.GetYaxis().SetTitleFont(42)
+        stack.GetYaxis().SetTitleSize(0.06)
+        stack.GetYaxis().SetTitleOffset(1.2)
+        stack.GetYaxis().SetLabelFont(42)
+        stack.GetYaxis().SetLabelSize(0.05)
+        stack.GetYaxis().SetLabelOffset(0.007)
+        stack.GetYaxis().SetTitle('Events')
+        stack.GetXaxis().SetTitle("cutflow")
+        stack.GetXaxis().SetNdivisions(510)
+
+        if ShowMCerror :
+            totaluncert = doShadedUncertainty(total.Clone())
+            totaluncert.Draw("PE2 SAME")
+        # for blinding a specific histogram
+        xblind = [9e99, -9e99]
+        if args.blind and  'Data' in All_files.keys() :
+            index2,_ = findItem(var , 'blinded')
+            blind = var[index2][1]
+            import re
+            if re.match(r'(bin|x)\s*([<>]?)\s*(\+|-)?\d+(\.\d+)?|(\+|-)?\d+(\.\d+)?\s*<\s*(bin|x)\s*<\s*(\+|-)?\d+(\.\d+)?', blind):
+                xfunc = (lambda h, b: b) if 'bin' in blind else (lambda h, b: h.GetXaxis().GetBinCenter(b))
+                test = eval("lambda bin : "+blind) if 'bin' in blind else eval("lambda x : "+blind)
+                All_files['Data']['cutflowHist']
+                for b in range(1, All_files['Data']['cutflowHist'].GetNbinsX()+1):
+                    if test(xfunc(All_files['Data']['cutflowHist'], b)):
+                    #print "blinding bin %d, x = [%s, %s]" % (b, hdata.GetXaxis().GetBinLowEdge(b), hdata.GetXaxis().GetBinUpEdge(b))
+                        All_files['Data']['cutflowHist'].SetBinContent(b, 0)
+                        All_files['Data']['cutflowHist'].SetBinError(b, 0)
+                        xblind[0] = min(xblind[0], All_files['Data']['cutflowHist'].GetXaxis().GetBinLowEdge(b))
+                        xblind[1] = max(xblind[1], All_files['Data']['cutflowHist'].GetXaxis().GetBinUpEdge(b))
+
+        # draw and write the data histo if there any
+        if 'Data' in All_files.keys() :
+            All_files['Data']['cutflowHist'].Write()
+            All_files['Data']['cutflowHist'].Draw('EP same')
+            All_files['Data']['cutflowHist'].SetMarkerStyle(20)
+            All_files['Data']['cutflowHist'].SetMarkerSize(1.6)
+            All_files['Data']['cutflowHist'].SetLineColor(1)
+            All_files['Data']['cutflowHist'].SetMarkerColor(ROOT.kBlack)
+            #All_files['Data']['cutflowHist'].SetLineWidth(2)
+            All_files['Data']['cutflowHist'].Sumw2()
+            outtext.write("{:<20}{:<20}{:<20}".format('Data',round(All_files['Data']['cutflowHist'].IntegralAndError(0,All_files['Data']['cutflowHist'].GetNbinsX()+1,error),2),round(error,2))+"\n")
+
+        # draw the blind
+        if xblind[0] < xblind[1]:
+                blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
+                blindbox.SetFillColor(ROOT.kBlue+3)
+                blindbox.SetFillStyle(3944)
+                blindbox.Draw()
+                xblind.append(blindbox) # so it doesn't get deleted
+
+        # same for signals
+        if SignalHists :
+            for sHist in SignalHists :
+                sHist.Write()
+                sHist.Draw('histsame')
+
+        if (doRatio and 'Data' in All_files.keys()):
+            ratioPad.cd()
+            sumbkgscaled = ROOT.TH1F(total.Clone())
+            pull = ROOT.TH1F(All_files['Data']['cutflowHist'].Clone())
+
+            pull.Divide(sumbkgscaled)
+            pull.SetMarkerStyle(20)
+            pull.GetYaxis().SetTitle('Data/Pred.')
+            #pull.GetXaxis().SetTitle(key)
+            pull.GetYaxis().SetRangeUser(rmin,rmax)
+            pull.GetYaxis().SetDecimals(True)
+            pull.SetLabelSize(0.14, "XY")
+            pull.GetXaxis().SetTitleSize(.14)
+            pull.GetYaxis().SetTitleSize(.14)
+            pull.GetYaxis().SetLabelSize(0.11)
+            pull.GetXaxis().SetLabelSize(0.11)
+            pull.GetYaxis().SetTitleOffset(0.5)
+            pull.GetYaxis().SetNdivisions(505)
+
+            pull.Draw("EP")
+            # Draw Line at ration == 1
+            line = ROOT.TLine(pull.GetXaxis().GetXmin(),1,pull.GetXaxis().GetXmax(),1)
+            line.SetLineWidth(2);
+            line.SetLineColor(58);
+            line.Draw()
+
+            if showRatioErorr :
+                sumMCErrors = total.Clone()
+                sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.0)
+                sumMCErrors.SetMarkerSize(0)
+                for j in range(All_files['Data']['cutflowHist'].GetNbinsX()+2):
+                    sumMCErrors.SetBinError(j, sumMCErrors.GetBinError(j)/max(sumMCErrors.GetBinContent(j), 1))
+                    sumMCErrors.SetBinContent(j, 1.)
+                sumMCErrors.Draw("PE2 same")
+                sumMCErrors.SetFillStyle(3001);
+                sumMCErrors.SetFillColor(ROOT.kGray);
+                sumMCErrors.SetMarkerStyle(1);
+                sumMCErrors.SetMarkerColor(ROOT.kGray);
+
+            stackPad.cd()
+
+        CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
+
+        doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
+                All_files['Data']['cutflowHist'] if 'Data' in All_files.keys() else None, textSize=0.040, columns=2 if len(SignalHists) <= 4 else 3,showSF=args.showSF,uncertHist=totaluncert if ShowMCerror else None,showCount=args.showCount)
+        if args.y_log:
+            ROOT.gPad.SetLogy()
+
+        canv.SaveAs(pngdire+'/cutflow.png')
+        canv.SaveAs(pdfdire+'/cutflow.pdf')
+        canv.SaveAs(epsdire+'/cutflow.eps')
 
         tDirectory.WriteObject(canv,"TheCanvas")
         #del canv

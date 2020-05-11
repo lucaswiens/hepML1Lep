@@ -37,52 +37,49 @@ class rootplot(object) :
         for f in filesList :
             chain.Add(f)
         return chain
-    """
-    def makecutflow(self,Tree = None,cutstring = [], extraCuts=[]) :
-        ''' This Function is to apply selection on specific tree''' ## Don't use, not yet ready
+
+    def makecutflow(self, Tree = None, cutArray = [], extraCuts="") :
+        ''' Get the number of entries of a tree after successively applying each cut '''
         from ROOT import TCut
 
         CUTtext = open(self.outdir+"/cuts.txt", "w+")
-        CUTtext.write(str(cutstring)+str(extraCuts)+'\n')
-        cutstring = [TCut(x) for x in cutstring or x in extraCuts]
-        cut = [cutstring[x].GetTitle() for x in range(len(cutstring))]
-
-        if Tree ==None :
-            print ('no Tree founded please cheack')
+        CUTtext.write(str(cutArray+[extraCuts]) +'\n')
+        numberOfEntries = [Tree.GetEntries()]
+        cuts = cutArray + [extraCuts]*(extraCuts!="")
+        cuts = ["".join(cutArray[:i]) for i in range(len(cuts)+1)]
+        if Tree == None :
+            print ('No Tree found please check!')
             pass
-        else :
-            tt_out = Tree.CopyTree("")
-            for i in cut:
-                tt_out = tt_out.CopyTree(i)
-                print(i,tt_out.GetEntries())
-                #del tt_out
-            #return tt_out
-        pass
+        else:
+            for cut in cuts:
+                numberOfEntries.append(Tree.GetEntries(TCut(cut).GetTitle()))
+            return numberOfEntries
+
     def makecuts(self,Tree = None,cutstring = "",extraCuts = "" ) :
         ''' This Function is to apply selection on specific tree'''
         from ROOT import TCut
-        
+
         CUTtext = open(self.outdir+"/cuts.txt", "w+")
         CUTtext.write(cutstring+extraCuts+'\n')
 
         cutstring = TCut(cutstring+extraCuts)
         cut = cutstring.GetTitle()
 
-        if Tree ==None : 
+        if Tree ==None :
             print ('no Tree founded please cheack')
-            pass  
-        else : 
+            pass
+        else :
             tt_out = Tree.CopyTree(cut)
             return tt_out
         pass
-    def chain_and_cut (self,filesList,Tname,cutstring ,extraCuts): 
+    def chain_and_cut (self,filesList,Tname,cutstring ,extraCuts):
         '''This function is to make TChain and apply selections at the same time'''
         chain = self.makeChain(filesList ,Tname)
         chain = self.makecuts(chain,cutstring,extraCuts)
         return chain
-        
-    def chain_and_cutflow (self,filesList,Tname,cutstring ,extraCuts): 
-        '''This function is to make TChain and apply selections at the same time'''
+
+    def chain_and_cutflow (self, filesList, Tname,cutstring = [],extraCuts = []):
+        '''Make a chain and produce a cutflow in one function'''
         chain = self.makeChain(filesList ,Tname)
-        chain = self.makecuts(chain,cutstring,extraCuts)
-        return chain
+        cutflowEntries = self.makecutflow(chain,cutstring,extraCuts)
+        return cutflowEntries
