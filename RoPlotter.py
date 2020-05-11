@@ -15,14 +15,14 @@ from plotClass.rootplot  import rootplot
 
 from plotClass.plotting import tdrstyle,CMS_lumi
 
-import os 
+import os
 import datetime
 
 from math import hypot, sqrt, ceil
 
 currentDT = datetime.datetime.now()
-import shutil 
-#from plotClass.plotting.SplitCanv import * 
+import shutil
+#from plotClass.plotting.SplitCanv import *
 
 
 '''def findItem(theList, item):
@@ -35,10 +35,10 @@ def findItem(theList, item):
 
 def make1D(var,style,name,bins = []):
     '''  A functon to make a 1D histogram and set it's style '''
-    # check if var binwidth is requested 
+    # check if var binwidth is requested
     if len(bins) == 0 :
         hist = ROOT.TH1F(name,name,var[3][0],var[3][1],var[3][2])
-    else : 
+    else :
         hist = ROOT.TH1F(name,name,len(bins)-1 ,array('d',bins))
     #hist.Draw('goff')
     if style["fill"]:
@@ -58,13 +58,13 @@ def make1D(var,style,name,bins = []):
     hist.SetTitle(style["Label"])
     return hist
 
-def make1D_bins(binlist,style,name):
+def make1D_bins(binlist, style, name):
     '''  A functon to make a 1D histogram from bins and set it's style '''
-    # check if var binwidth is requested 
-    if len(binlist) == 0 : 
+    # check if var binwidth is requested
+    if len(binlist) == 0 :
         print('you requested to make 1D histogram from bins while the bin list is empy, will not do it, please check')
         pass
-    else : 
+    else :
         hist = ROOT.TH1F(name,name,len(binlist),0,len(binlist))
     #hist.Draw('goff')
     if style["fill"]:
@@ -82,7 +82,7 @@ def make1D_bins(binlist,style,name):
     hist.GetYaxis().SetLabelSize(0.05)
     hist.GetXaxis().SetTitleOffset(1.1)
     hist.SetTitle(style["Label"])
-    for i , binname in enumerate(binlist) : 
+    for i , binname in enumerate(binlist) :
         hist.GetXaxis().SetBinLabel(i+1,binname)
     return hist
 
@@ -93,20 +93,20 @@ def doScaleBkgNormData(datalist,bkglist,bkgsum,Apply = False):
     data = datalist
     bkg  = bkgsum
     int = 0
-    for l in bkglist : 
+    for l in bkglist :
        int+= l.Integral()
     rm = bkg.Integral() - int
-    if rm == 0 : 
+    if rm == 0 :
         print('total background integral equals zero, will not plot the hist')
         return 0.0
     sf = (data.Integral() - rm) / int
     bkgs = bkglist
-    if Apply : 
+    if Apply :
         for h in bkgs:
             h.Scale(sf)
     return sf
 
-def sorttinglist(Hlist) : 
+def sorttinglist(Hlist) :
     #print "Hlist has : " ,Hlist
     sortedHList = sorted(Hlist,key = lambda l : l.Integral())#,reverse=True)
     #print "sotred List : " , sortedHList
@@ -117,19 +117,19 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     bgEntries = BKGHists
     dataEntry = DataHists
     legWidth= 0.18 * columns
-    if showCount : 
+    if showCount :
         legWidth*= 1.4
-    nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0 
+    nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0
     height = (.20 + textSize*max(nentries-3, 0))
     if columns > 1:
-    	height = 0.9*height/columns#1.3*
+        height = 0.9*height/columns#1.3*
     (x1, y1, x2, y2) = (0.9 - 1.3*legWidth , .88 - 2.5*height, .9, .92)
-    if "ROC" in signalHists[0].GetName() : 
-        if "sig" in signalHists[0].GetName() : 
+    if "ROC" in signalHists[0].GetName() :
+        if "sig" in signalHists[0].GetName() :
             leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
-        else : 
+        else :
             leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
-    else : 
+    else :
         leg = ROOT.TLegend(x1, y1, x2, y2)
     leg.SetHeader("")
     leg.SetFillColor(0)
@@ -140,21 +140,21 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     leg.SetNColumns(columns)
     entries = []
     if dataEntry:
-        if showCount : 
+        if showCount :
             entries.append((DataHists,str(DataHists.GetTitle())+' [N='+str(round(DataHists.Integral(),0))+']', 'LPE'))
-        else : 
+        else :
             entries.append((DataHists,'', 'LPE'))
-    if signalHists : 
+    if signalHists :
         for sigplot in signalHists:
-            if showCount : 
+            if showCount :
                 entries.append((sigplot,str(sigplot.GetTitle())+' [N='+str(round(sigplot.Integral(),0))+']', 'LE'))
-            else : 
+            else :
                 entries.append((sigplot,'', 'LE'))
-    if bgEntries : 
+    if bgEntries :
         for bplot in bgEntries:
             if showCount:
                 entries.append((bplot,str(bplot.GetTitle())+' [N='+str(round(bplot.Integral(),0))+']', 'F'))
-            else : 
+            else :
                 entries.append((bplot,'', 'F'))
     #if totalError:
     #    entries.append((totalError, "Total unc.", "F"))
@@ -164,12 +164,12 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
             i = r+c*nrows
             if i >= len(entries):
                 break
-            #print(entries[i]) 
+            #print(entries[i])
             leg.AddEntry(*entries[i])
     if showSF:
         leg.AddEntry('SF', 'norm.: {0}'.format(round(sf, 2)), '')
     #if options.showSF: leg.AddEntry('SF', 'SF: {0}'.format(round(1.19,2)), '')
-    if uncertHist : 
+    if uncertHist :
         leg.AddEntry(uncertHist,"Total unc.")
     leg.Draw()
     ## assign it to a global variable so it's not deleted
@@ -180,24 +180,24 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
 
 def doalphabetagamma(histlist,alpha,beta,gamma):
     scaled_List = []
-    for h in histlist : 
+    for h in histlist :
         hname = h.GetName()
-        if 'DiLepTT' in hname : 
+        if 'DiLepTT' in hname :
             h.Scale(beta)
-        elif 'SemiLepTT' in hname : 
+        elif 'SemiLepTT' in hname :
             h.Scale(alpha)
-        else : 
+        else :
             h.Scale(gamma)
         scaled_List.append(h)
     return scaled_List
 
 def doalphabetagamma_0b(histlist,alpha,beta):
     scaled_List = []
-    for h in histlist : 
+    for h in histlist :
         hname = h.GetName()
-        if 'WJ' in hname : 
+        if 'WJ' in hname :
             h.Scale(beta)
-        else : 
+        else :
             h.Scale(alpha)
         scaled_List.append(h)
     return scaled_List
@@ -230,7 +230,7 @@ def makeStack(histList):
     for bkghist in histList :
         s.Add(bkghist)
     s.SetTitle('THStack')
-    return s 
+    return s
 
 def hadd1ds(histList,alphabetagamma=False,multib = True):
     '''  A functon to hadd background and set it's style '''
@@ -238,13 +238,13 @@ def hadd1ds(histList,alphabetagamma=False,multib = True):
     sumbkg.Reset()
     for bkghist in histList :
         h = ROOT.TH1F(bkghist.Clone())
-        if alphabetagamma : 
+        if alphabetagamma :
             hname = h.GetName()
-            if multib : 
+            if multib :
                 if 'DiLepTT' in hname : h.Scale(beta)
                 elif 'SemiLepTT' in hname : h.Scale(alpha)
                 else : h.Scale(gamma)
-            else : 
+            else :
                 if 'WJ' in hname : h.Scale(beta)
                 else : h.Scale(alpha)
         sumbkg.Add(h)
@@ -299,8 +299,8 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', help='scale factor alpha',default='0.0', metavar='gamma')
     parser.add_argument("-j", "--jobs", default=0, help="Use N threads",metavar='jobs')
     parser.add_argument("-Y", "--year", default=2016, help="which ear to run on 2016/17/18",metavar='year')
-    parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')    
-    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
+    parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')
+    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')
     parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
     parser.add_argument('--Smass', nargs='+',help="the mas of the signal hypothesis")
 
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     subdir = args.cuts.split("/")[-1].replace('.txt',"") if args.mcuts == None else args.mcuts.split("/")[-1].replace('.txt',"")
     lumi = args.lumi ; indir = args.indir ; outdire = os.path.join(args.outdir,subdir)
     if not os.path.exists(outdire) : os.makedirs(outdire) ; shutil.copy('batch/index.php',outdire)
-    
+
     textdire = os.path.join(outdire,'txt')
     if not os.path.exists(textdire) : os.makedirs(textdire)
     pngdire = os.path.join(outdire,'png')
@@ -330,20 +330,20 @@ if __name__ == '__main__':
     colors_for_sig = [ROOT.kBlack,ROOT.kRed,ROOT.kGreen,ROOT.kBlue,ROOT.kYellow,ROOT.kMagenta,ROOT.kCyan,ROOT.kOrange,ROOT.kViolet,ROOT.kPink]
     lnstyle_for_sig = [ROOT.kSolid,ROOT.kDashed]
     style = []
-    for color in colors_for_sig : 
-        for sty in lnstyle_for_sig: 
+    for color in colors_for_sig :
+        for sty in lnstyle_for_sig:
             smallsty = []
             smallsty.append(color)
             smallsty.append(sty)
             style.append(smallsty)
-    
+
     if len(args.Smass) !=0 :
-        for i,item in enumerate(args.Smass) : 
+        for i,item in enumerate(args.Smass) :
             mGo = item.split("_")[0]; mLSP = item.split("_")[1]
-            if not 'Signal_'+str(i) in All_files.keys() : 
-                if args.mb : 
+            if not 'Signal_'+str(i) in All_files.keys() :
+                if args.mb :
                     All_files['Signal_'+str(i)] = {
-                                                    'files': ['SMS_T1tttt'] , 
+                                                    'files': ['SMS_T1tttt'] ,
                                                     'select' : '&& mGo == '+mGo+' && mLSP == '+mLSP,
                                                     'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
                                                     "fill": None,
@@ -352,9 +352,9 @@ if __name__ == '__main__':
                                                     "Label" : "T1t^{4} "+str(float(mGo)/1000.0)+"/"+str(float(mLSP)/1000.0),
                                                     "Stackable" : False
                                                         }
-                else : 
+                else :
                     All_files['Signal_'+str(i)] = {
-                                                    'files': ['SMS_T5qqqq'] , 
+                                                    'files': ['SMS_T5qqqq'] ,
                                                     'select' : '&& mGo == '+mGo+' && mLSP == '+mLSP,
                                                     'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF',
                                                     "fill": None,
@@ -374,28 +374,29 @@ if __name__ == '__main__':
     elif int(args.year) == 2018 and "preHEM" in str(args.mcuts) : cut_strings = cut_strings ; lumi = "20.1"
     elif int(args.year) == 2018 :#and args.mcuts == None :
         cut_strings+="&& (!isData || (Run < 319077) || (nHEMJetVeto == 0 && nHEMEleVeto == 0))"
-        for key in All_files: 
-            if "Data" in key or "Signal_" in key : continue 
+        for key in All_files:
+            if "Data" in key or "Signal_" in key : continue
             All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
-    
+
     adcuts = ''
-    if args.mcuts != None : 
+    if args.mcuts != None :
         mcf = open(args.mcuts, 'r')
-        for cutline in mcf : 
+        for cutline in mcf :
             if cutline.startswith("#") : continue
             cutline = str(cutline).strip()
-            if cutline.startswith("Add") : 
+            if cutline.startswith("Add") :
                 adcuts+= cutline.split(":")[-1]
-            else : cut_strings+= cutline 
+            else : cut_strings+= cutline
 
-    if args.blind : 
+    if args.blind :
         del All_files['Data']
         doRatio = False
-    varList = [] 
-    exec(open(args.varList).read())
-    if args.mvarList != None : 
+    varList = []
+    if args.varList != None :
+        exec(open(args.varList).read())
+    if args.mvarList != None :
         exec(open(args.mvarList).read())
- 
+
     alpha,beta,gamma =  float(args.alpha),float(args.beta),float(args.gamma)#0.83 ,1.01 , 0.74
 
 
@@ -410,17 +411,17 @@ if __name__ == '__main__':
     CMS_lumi.lumi_sqrtS = '13 TeV'
     CMS_lumi.lumiTextSize     = 0.6 if doRatio else 0.52
     CMS_lumi.cmsTextSize      = 0.9 if doRatio else 0.8
-    CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62 
+    CMS_lumi.extraOverCmsTextSize  = 0.76 if doRatio else 0.62
     # ISR weights should be removed from 2017/18 TTJets sampels
-    if int(args.year) != 2016 : 
+    if int(args.year) != 2016 :
         All_files["DiLepTT"]['scale']  = All_files["DiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
         All_files["SemiLepTT"]['scale']  = All_files["SemiLepTT"]['scale'].replace('*nISRweight','').replace("*nISRttweight","")
-                    
-    # get the plotter class instant 
+
+    # get the plotter class instant
     instPlot = rootplot(indir,outdire,All_files=All_files)
-    if int(args.jobs) == 0 : 
+    if int(args.jobs) == 0 :
         for g in instPlot.group:
-            # fill the dictionary with all the files founded under the indir under each category 
+            # fill the dictionary with all the files founded under the indir under each category
             All_files[g]['files'] = instPlot.group[g]
             # make chain with each background seperatly 
             chain = instPlot.chain_and_cut(All_files[g]['files'],"sf/t",cut_strings,All_files[g]['select'])
@@ -435,17 +436,17 @@ if __name__ == '__main__':
         myargs = []
         # make tuple of aruments to be passed to the chain maker
         for g in instPlot.group:
-            # fill the dictionary with all the files founded under the indir under each category 
+            # fill the dictionary with all the files founded under the indir under each category
             All_files[g]['files'] = instPlot.group[g]
             All_files[g]['hist'] = []
             All_files[g]['hist_bins'] = []
             myargs.append((All_files[g]['files'],"sf/t",cut_strings,All_files[g]['select']))
         #print(myargs[0])
-        # make chain with each background seperatly 
+        # make chain with each background seperatly
         retlist = [pool.apply_async(instPlot.chain_and_cut,args = argo) for argo in myargs]
         #print(retlist)
         for i , g in enumerate(instPlot.group):
-            All_files[g]['chain']  = retlist[i].get() 
+            All_files[g]['chain']  = retlist[i].get()
     # create the output root file
     #outroot = ROOT.TFile(outdire+"/plots_{0}_{1}_{2}".format(currentDT.year,currentDT.month,currentDT.day)+".root","recreate")
     outroot = ROOT.TFile(outdire+"/plots.root","recreate")
@@ -453,7 +454,7 @@ if __name__ == '__main__':
     fcmd.write("%s\n\n" % " ".join(sys.argv))
     fcmd.write("%s\n" % (args))
     fcmd.close()
-    
+
     for i,var in enumerate(varList) :
 
         outtext = open(textdire+"/"+var[0]+".txt", "w+")
@@ -467,26 +468,26 @@ if __name__ == '__main__':
         SignalHists = []
         error = ROOT.Double(0.)
         for key in All_files :
-            # make the hist 
-            if any('varbin' in e for e in var) : 
+            # make the hist
+            if any('varbin' in e for e in var) :
                 index0,_ = findItem(var , 'varbin')
                 bins = var[index0][1]
                 hist = make1D(var,All_files[key],key+var[0],bins = bins)
-            else : 
+            else :
                 hist = make1D(var,All_files[key],key+var[0])
-            # draw the variable to the hist created 
-            if 'Data' in key : lum = '1.0' 
+            # draw the variable to the hist created
+            if 'Data' in key : lum = '1.0'
             else  : lum = lumi
             addicut = "1"
-            if any('AddCut' in e for e in var) : 
+            if any('AddCut' in e for e in var) :
                 index0,_ = findItem(var , 'AddCut')
-                addicut = var[index0][1] 
+                addicut = var[index0][1]
 
             All_files[key]['chain'].Draw(var[1] +' >> '+key+var[0], All_files[key]['scale']+'*'+lum+'*(Sum$('+adcuts+addicut+'))',"goff")
             #print (hist)
-            ROOT.gROOT.ForceStyle()
+            #ROOT.gROOT.ForceStyle()
             if (hist.GetSumw2N() == 0) : hist.Sumw2(ROOT.kTRUE)
-            # check the overflow bins 
+            # check the overflow bins
             if any('IncludeOverflows' in e for e in var) :
                 n = hist.GetNbinsX()
                 hist.SetBinContent(1,hist.GetBinContent(0)+hist.GetBinContent(1))
@@ -498,7 +499,7 @@ if __name__ == '__main__':
                 hist.SetBinContent(0,0)
                 hist.SetBinContent(n+1,0)
             # per binwidth normalization
-            if any('varbin' in e for e in var) : 
+            if any('varbin' in e for e in var) :
                 index0,_ = findItem(var , 'varbin')
                 normBinW = var[index0][2]
                 bins = var[index0][1]
@@ -509,9 +510,9 @@ if __name__ == '__main__':
                 #        hist.SetBinError(bin,hist.GetBinError(bin)/hist.GetXaxis().GetBinWidth(bin))
                     hist.Scale(hist.GetXaxis().GetBinWidth(1),"width")
             # write the his t
-            All_files[key]['hist'].append(hist) 
+            All_files[key]['hist'].append(hist)
             if All_files[key]['Stackable'] : stackableHists.append(hist)
-            if 'Sig' in key : 
+            if 'Sig' in key :
                 SignalHists.append(hist)
                 outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
                 hist.Write()
@@ -524,17 +525,17 @@ if __name__ == '__main__':
         stackableHists = sorttinglist(stackableHists)
         # scale the individual background to data
         apply = False
-        if do_alphabetagamma : 
-            if args.mb : 
+        if do_alphabetagamma :
+            if args.mb :
                 stackableHists_ = doalphabetagamma(stackableHists,alpha,beta,gamma)
-            else : 
+            else :
                 stackableHists_ = doalphabetagamma_0b(stackableHists,alpha,beta)
-            if ('Data' in All_files.keys() and scale_bkgd_toData ) : 
+            if ('Data' in All_files.keys() and scale_bkgd_toData ) :
                 apply = False
                 sf = doScaleBkgNormData(All_files['Data']['hist'][i],stackableHists_,total,Apply = apply)
             else : sf = 1.0
         elif ('Data' in All_files.keys() and scale_bkgd_toData and not do_alphabetagamma) :
-            apply = True 
+            apply = True
             sf = doScaleBkgNormData(All_files['Data']['hist'][i],stackableHists,total,Apply=apply)
         else : sf = 1.0
         if sf == 0.0 : continue
@@ -543,14 +544,14 @@ if __name__ == '__main__':
         total.SetName("totalBKG_scaled")
         # make stack of the background (sorted)
         stack = makeStack(stackableHists)
-        # write them 
+        # write them
         stack.Write()
         total.Write()
         outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
         for hist in stackableHists :
             outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
             hist.Write()
-        # make canvas to draw 
+        # make canvas to draw
         plotformat = (600,600)
         sf_ = 20./plotformat[0]
 
@@ -560,8 +561,8 @@ if __name__ == '__main__':
         if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
         else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
         rocs = []
-        if "ROC" in var[0] : 
-            for hS in SignalHists : 
+        if "ROC" in var[0] :
+            for hS in SignalHists :
                 rocs.append(rocCurve(hS, total))
         # create canvas
         canv = ROOT.TCanvas(var[0],var[0],plotformat[0]+150, height)
@@ -570,7 +571,7 @@ if __name__ == '__main__':
         topsize = 0.12*600./height if doRatio else 0.06*600./height
         canv.SetTopMargin(topsize)
         canv.cd()
-        if (doRatio  and 'Data' in All_files.keys() and not "ROC" in var[0]) : 
+        if (doRatio  and 'Data' in All_files.keys() and not "ROC" in var[0]) :
             stackPad = ROOT.TPad("mainpad"+var[0], "mainpad"+var[0], 0, 0.30, 1, 1)
             ROOT.SetOwnership(stackPad, False)
             stackPad.SetBottomMargin(0.025)
@@ -584,22 +585,22 @@ if __name__ == '__main__':
             ratioPad.Draw()
             stackPad.cd()
         # Draw the stack first
-        if not "ROC" in var[0] : 
+        if not "ROC" in var[0] :
             stack.Draw('hist')
-            if any('MoreY' in e for e in var) : 
+            if any('MoreY' in e for e in var) :
                 index1,_ = findItem(var , 'MoreY')
                 stack.SetMaximum(var[index1][1]*stack.GetMaximum())
-            if any('YmiN' in e for e in var) : 
+            if any('YmiN' in e for e in var) :
                 index1,_ = findItem(var , 'YmiN')
                 YmiN = var[index1][1]
-            if any('YmiN' in e for e in var) : 
+            if any('YmiN' in e for e in var) :
                 index1,_ = findItem(var , 'YmiN')
                 YmiN = var[index1][1]
 
             stack.SetMinimum(YmiN)
             stack.GetXaxis().SetTitleOffset(1.1)
             stack.GetXaxis().SetLabelOffset(0.007)
-            if  (doRatio and 'Data' in All_files.keys()): 
+            if  (doRatio and 'Data' in All_files.keys()):
                 stack.GetXaxis().SetLabelOffset(999) ## send them away
                 stack.GetXaxis().SetTitleOffset(999) ## in outer space
             stack.GetXaxis().SetTitleFont(42)
@@ -616,12 +617,12 @@ if __name__ == '__main__':
             stack.GetXaxis().SetTitle(var[2])
             stack.GetXaxis().SetNdivisions(510)
 
-            if ShowMCerror : 
+            if ShowMCerror :
                 totaluncert = doShadedUncertainty(total.Clone())
                 totaluncert.Draw("PE2 SAME")
             # for blinding a specific histogram
             xblind = [9e99, -9e99]
-            if any('blinded' in e for e in var) and  'Data' in All_files.keys() : 
+            if any('blinded' in e for e in var) and  'Data' in All_files.keys() :
                 index2,_ = findItem(var , 'blinded')
                 blind = var[index2][1]
                 import re
@@ -637,8 +638,8 @@ if __name__ == '__main__':
                             xblind[0] = min(xblind[0], All_files['Data']['hist'][i].GetXaxis().GetBinLowEdge(b))
                             xblind[1] = max(xblind[1], All_files['Data']['hist'][i].GetXaxis().GetBinUpEdge(b))
 
-            # draw and write the data histo if there any 
-            if 'Data' in All_files.keys() : 
+            # draw and write the data histo if there any
+            if 'Data' in All_files.keys() :
                 All_files['Data']['hist'][i].Write()
                 All_files['Data']['hist'][i].Draw('EP same')
                 All_files['Data']['hist'][i].SetMarkerStyle(20)
@@ -648,26 +649,26 @@ if __name__ == '__main__':
                 #All_files['Data']['hist'][i].SetLineWidth(2)
                 All_files['Data']['hist'][i].Sumw2()
                 outtext.write("{:<20}{:<20}{:<20}".format('Data',round(All_files['Data']['hist'][i].IntegralAndError(0,All_files['Data']['hist'][i].GetNbinsX()+1,error),2),round(error,2))+"\n")
-            
-            # draw the blind 
+
+            # draw the blind
             if xblind[0] < xblind[1]:
                     blindbox = ROOT.TBox(xblind[0],total.GetYaxis().GetXmin(),xblind[1],total.GetMaximum())
                     blindbox.SetFillColor(ROOT.kBlue+3)
                     blindbox.SetFillStyle(3944)
                     blindbox.Draw()
                     xblind.append(blindbox) # so it doesn't get deleted
-            
-            # same for signals 
-            if SignalHists : 
-                for sHist in SignalHists : 
+
+            # same for signals
+            if SignalHists :
+                for sHist in SignalHists :
                     sHist.Write()
                     sHist.Draw('histsame')
 
-            if (doRatio and 'Data' in All_files.keys()): 
+            if (doRatio and 'Data' in All_files.keys()):
                 ratioPad.cd()
                 sumbkgscaled = ROOT.TH1F(total.Clone())
                 pull = ROOT.TH1F(All_files['Data']['hist'][i].Clone())
-                
+
                 pull.Divide(sumbkgscaled)
                 pull.SetMarkerStyle(20)
                 pull.GetYaxis().SetTitle('Data/Pred.')
@@ -681,15 +682,15 @@ if __name__ == '__main__':
                 pull.GetXaxis().SetLabelSize(0.11)
                 pull.GetYaxis().SetTitleOffset(0.5)
                 pull.GetYaxis().SetNdivisions(505)
-                
+
                 pull.Draw("EP")
-                # Draw Line at ration == 1 
+                # Draw Line at ration == 1
                 line = ROOT.TLine(pull.GetXaxis().GetXmin(),1,pull.GetXaxis().GetXmax(),1)
                 line.SetLineWidth(2);
                 line.SetLineColor(58);
                 line.Draw()
-                
-                if showRatioErorr : 
+
+                if showRatioErorr :
                     sumMCErrors = total.Clone()
                     sumMCErrors.SetFillColorAlpha(ROOT.kGray, 0.0)
                     sumMCErrors.SetMarkerSize(0)
@@ -701,9 +702,9 @@ if __name__ == '__main__':
                     sumMCErrors.SetFillColor(ROOT.kGray);
                     sumMCErrors.SetMarkerStyle(1);
                     sumMCErrors.SetMarkerColor(ROOT.kGray);
-            
+
                 stackPad.cd()
-        
+
             CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.05 if doRatio else 0.09)
 
             doLegend(SignalHists if SignalHists else None, stackableHists if stackableHists else None,
@@ -711,11 +712,11 @@ if __name__ == '__main__':
             if any('LogY' in e for e in var) :
                 ROOT.gPad.SetLogy()
 
-        else : 
+        else :
             #lineColours = [1, 2, 4, 7, 8]
             #lineStyles = [3, 2, 1, 4, 5]
-            
-            for i,roc in enumerate(rocs) : 
+
+            for i,roc in enumerate(rocs) :
                 roc.SetLineWidth(2)
                 roc.SetLineColor(style[i][0])
                 roc.SetLineStyle(style[i][1])
@@ -727,7 +728,7 @@ if __name__ == '__main__':
                 roc.Write()
             CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.01)
             doLegend(rocs, None, None, textSize=0.020, columns=2,showSF=False,uncertHist= None,showCount=False)
-        
+
         canv.SaveAs(pngdire+'/'+str(args.year)[2:]+"-"+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+str(args.year)[2:]+"-"+var[0]+'.pdf')
         canv.SaveAs(epsdire+'/'+str(args.year)[2:]+"-"+var[0]+'.eps')

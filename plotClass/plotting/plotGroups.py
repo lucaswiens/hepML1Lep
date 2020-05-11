@@ -1,9 +1,9 @@
-import ROOT 
+import ROOT
 
 All_files = {
     'DiLepTT' :
         {
-        'files': ['TTJets_DiLepton','TTJets_LO_HT'] , 
+        'files': ['TTJets_DiLepton','TTJets_LO_HT'] ,
         'select' : '&& DiLep_Flag == 1',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF*nISRttweight',
         "fill": ROOT.TAttFill(ROOT.kRed, 1001),
@@ -13,9 +13,9 @@ All_files = {
         "Stackable" : True
         },
 
-    'SemiLepTT' : 
+    'SemiLepTT' :
         {
-        'files': ['TTJets_SingleLeptonFrom','TTJets_LO_HT'] , 
+        'files': ['TTJets_SingleLeptonFrom','TTJets_LO_HT'] ,
         'select' : '&& semiLep_Flag == 1',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF*nISRttweight',
         "fill": ROOT.TAttFill(ROOT.kBlue-7, 1001),
@@ -25,7 +25,7 @@ All_files = {
         "Stackable" : True
         },
 
-    'SingleT' : 
+    'SingleT' :
 
         {
         'files': ["TBar_tWch","TBar_tch_powheg","T_tWch","T_tWch_ext","T_tch_powheg"] , #"TToLeptons_sch","TBar_tWch_noFullyHad_ext","T_tWch_noFullyHad_ext",
@@ -38,9 +38,9 @@ All_files = {
         "Stackable" : True
         },
 
-    'VV' : 
+    'VV' :
          {
-        'files': ["VVTo","WWTo","WZTo","ZZTo"] , 
+        'files': ["VVTo","WWTo","WZTo","ZZTo"] ,
         'select' :'',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         "fill": ROOT.TAttFill(ROOT.kRed+3, 1001),
@@ -50,9 +50,9 @@ All_files = {
         "Stackable" : True
         },
 
-    'TTV' : 
+    'TTV' :
          {
-        'files': ['TTW','TTZ'] , 
+        'files': ['TTW','TTZ'] ,
         'select' : '',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         "fill": ROOT.TAttFill(ROOT.kOrange-3, 1001),
@@ -62,9 +62,9 @@ All_files = {
         "Stackable" : True
         },
 
-    'QCD' : 
+    'QCD' :
          {
-        'files': ['QCD_'] , 
+        'files': ['QCD_'] ,
         'select' :'',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         "fill": ROOT.TAttFill(ROOT.kCyan-6, 1001),
@@ -73,11 +73,11 @@ All_files = {
         "Label" : "QCD",
         "Stackable" : True
         },
-        
-       
-    'WJ' : 
+
+
+    'WJ' :
         {
-        'files': ['WJetsToLNu_HT'] , 
+        'files': ['WJetsToLNu_HT'] ,
         'select' : '',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         "fill": ROOT.TAttFill(ROOT.kGreen-2, 1001),
@@ -87,9 +87,9 @@ All_files = {
         "Stackable" : True
         },
 
-    'DY' : 
+    'DY' :
          {
-        'files': ['DYJetsToLL'] , 
+        'files': ['DYJetsToLL'] ,
         'select' : '',
         'scale' : '1000.0/sumOfWeights2*genWeight*Xsec*1*btagSF*puRatio*lepSF',
         "fill": ROOT.TAttFill(ROOT.kRed-6, 1001),
@@ -101,7 +101,7 @@ All_files = {
 
     'Data' :
         {
-        'files': ['SingleElectron','SingleMuon','MET_Run'] , 
+        'files': ['SingleElectron','SingleMuon','MET_Run'] ,
         'select' : '',
         'scale' : '1',
         "fill": None,
@@ -111,9 +111,9 @@ All_files = {
         "Stackable" : False
         },
 
-    #'Signal_1' : 
+    #'Signal_1' :
     #    {
-    #    'files': ['SMS_T1tttt'] , 
+    #    'files': ['SMS_T1tttt'] ,
     #    'select' : '&& mGo == @mGo && mLSP == @mLSP',
     #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
     #    "fill": None,
@@ -122,10 +122,10 @@ All_files = {
     #    "Label" : "T1t^{4} @mGo/@mLSP",
     #    "Stackable" : False
     #    },
-    #    
-    #'Signal_2' : 
+    #
+    #'Signal_2' :
     #    {
-    #    'files': ['SMS_T1tttt'] , #['SMS_T1tttt'] , 
+    #    'files': ['SMS_T1tttt'] , #['SMS_T1tttt'] ,
     #    'select' : '&& mGo == @mGo && mLSP == @mLSP',
     #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
     #    "fill": None,
@@ -135,9 +135,9 @@ All_files = {
     #    "Stackable" : False
     #    },
 
-    #'Signal_3' : 
+    #'Signal_3' :
     #    {
-    #    'files': ['SMS_T1tttt'] , 
+    #    'files': ['SMS_T1tttt'] ,
     #    'select' : '&& mGo == @mGo && mLSP == @mLSP',
     #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
     #    "fill": None,
@@ -147,9 +147,9 @@ All_files = {
     #    "Stackable" : False
     #    },
 
-    #'Signal_4' : 
+    #'Signal_4' :
     #    {
-    #    'files': ['SMS_T1tttt'] , 
+    #    'files': ['SMS_T1tttt'] ,
     #    'select' : '&& mGo == @mGo && mLSP == @mLSP',
     #    'scale' : '1000.0*genWeight*susyXsec/susyNgen*btagSF*lepSF*nISRweight',
     #    "fill": None,
@@ -165,13 +165,13 @@ AntidPhiCut = '&& ((LT < 350 && fabs(dPhi) < 1.0) || (350 < LT && LT < 600 && fa
 ntopCut = '&& nTop_Total_Combined >= 2 '
 AntintopCut = '&& nTop_Total_Combined < 1'
 
-oldbins = {"LT12HT01": "(LT < 450) && (HT < 1000) "                             , 
-           "LT12HT23": "(LT < 450) && (HT > 1000) && (HT < 1500)"               , 
-           "LT12HT4i": "(LT < 450) && (HT > 1500) "                             , 
-           "LT3HT01" : "(LT > 450) && (LT < 600) && (HT < 1000)"                , 
-           "LT3HT23" : "(LT > 450) && (LT < 600) && (HT > 1000) && (HT < 1500)" , 
-           "LT3HT4i" : "(LT > 450) && (LT < 600) && (HT > 1500)"                , 
-           "LT4HT01" : "(LT > 600) && (LT < 750) && (HT < 1000)"                , 
-           "LT4HT23" : "(LT > 600) && (LT < 750) && (HT > 1000) && (HT < 1500)" , 
-           "LT4HT4i" : "(LT > 600) && (LT < 750) && (HT > 1500)"                , 
+oldbins = {"LT12HT01": "(LT < 450) && (HT < 1000) "                             ,
+           "LT12HT23": "(LT < 450) && (HT > 1000) && (HT < 1500)"               ,
+           "LT12HT4i": "(LT < 450) && (HT > 1500) "                             ,
+           "LT3HT01" : "(LT > 450) && (LT < 600) && (HT < 1000)"                ,
+           "LT3HT23" : "(LT > 450) && (LT < 600) && (HT > 1000) && (HT < 1500)" ,
+           "LT3HT4i" : "(LT > 450) && (LT < 600) && (HT > 1500)"                ,
+           "LT4HT01" : "(LT > 600) && (LT < 750) && (HT < 1000)"                ,
+           "LT4HT23" : "(LT > 600) && (LT < 750) && (HT > 1000) && (HT < 1500)" ,
+           "LT4HT4i" : "(LT > 600) && (LT < 750) && (HT > 1500)"                ,
            "LT5iHT0i": "(LT > 750)"                                             }

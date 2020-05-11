@@ -4,17 +4,17 @@ import sys,os
 import argparse
 import glob
 
-import time 
+import time
 def find_all_matching(substring, path):
     result = []
     for root, dirs, files in os.walk(path):
         for thisfile in files:
-            if thisfile.startswith("."): continue 
+            if thisfile.startswith("."): continue
             if substring in thisfile:
                 result.append(os.path.join(root, thisfile ))
     return result
-    
-def getSFs(sffile,mass='1900_100',which='alpha') : 
+
+def getSFs(sffile,mass='1900_100',which='alpha') :
     token = open(sffile,'r')
     linestoken=token.readlines()
     if which == 'alpha' :  tokens_column_number = 1
@@ -31,8 +31,8 @@ def getSFs(sffile,mass='1900_100',which='alpha') :
     token.close()
     idx = masstoken.index(mass)
     return resulttoken[idx]
-    
-def getSFs_(sffile,which='alpha') : 
+
+def getSFs_(sffile,which='alpha') :
     token = open(sffile,'r')
     linestoken=token.readlines()
     if which == 'alpha' :  tokens_column_number = 0
@@ -50,7 +50,7 @@ def getSFs_(sffile,which='alpha') :
     #idx = masstoken.index(mass)
     return resulttoken[1]
 
-def getSFs_0b(sffile,mass='1900_100',which='alpha') : 
+def getSFs_0b(sffile,mass='1900_100',which='alpha') :
     token = open(sffile,'r')
     linestoken=token.readlines()
     if which == 'alpha' :  tokens_column_number = 1
@@ -65,8 +65,8 @@ def getSFs_0b(sffile,mass='1900_100',which='alpha') :
     token.close()
     idx = masstoken.index(mass)
     return resulttoken[idx]
-    
-def getSFs_0b_(sffile,which='alpha') : 
+
+def getSFs_0b_(sffile,which='alpha') :
     token = open(sffile,'r')
     linestoken=token.readlines()
     if which == 'alpha' :  tokens_column_number = 0
@@ -94,134 +94,139 @@ if __name__ == '__main__':
     parser.add_argument('--only' ,help="choose a cut text to run with it only", default=None, metavar='only')
     parser.add_argument('--blind' ,help="to blind the inclusive distributions",default=False,action='store_true')
     parser.add_argument('--blindall' ,help="to blind the all distributions",default=False,action='store_true')
-    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
-    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')  
+    parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')
+    parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
+    parser.add_argument("--cutflow", default=False, help="creates a cutflow diagram",action='store_true')
 
     args = parser.parse_args()
 
-    if args.lumi == "35.9" : 
+    if args.lumi == "35.9" :
         year = "2016"
-    elif args.lumi == "41.9" : 
+    elif args.lumi == "41.9" :
         year = "2017"
-    elif args.lumi == "59.74" : 
+    elif args.lumi == "59.74" :
         year = "2018"
-    elif args.lumi == "137.54" : 
+    elif args.lumi == "137.54" :
         year = "20161718"
-    else : print("lumi must be in [35.9,41.9,59.74]") ; sys.exit() 
-    
-    
-        
+    else : print("lumi must be in [35.9,41.9,59.74]") ; sys.exit()
+
+
+
     cmd = " --indir "+args.indir+" --lumi "+args.lumi+ " --YmaX 0.0  --YmiN 0.1 --rmax 1.95 --rmin 0.05 --doRatio --year "+year
 
-    if args.showSF : 
+    if args.showSF :
         cmd += " --showSF "
 
-    if args.showCount : 
+    if args.showCount :
         cmd += " --showCount "
 
-    if not "_0b" in args.param : 
+    if not "_0b" in args.param :
         cmd+= ' --mb '
 
-    cmd+=" --cuts "+args.param+"/inclusive.txt --varList "+args.param+"/baseplots.py"
-    if args.scale : 
-        cmd+= " --scale_bkgd_toData "
-    else : 
-        cmd+=" --do_alphabetagamma --scale_bkgd_toData "
-        if args.abg == None: 
-            print("you've decided to use the alpha/beta/gamm to scale background to data, but you haven't used --abg to provide the text file that contain them")
-            sys.exit()
-    if args.blindall : 
+    cmd+=" --cuts "+args.param+"/inclusive.txt" #--varList "+args.param+"/baseplots.py"
+    if args.cutflow:
+        cmd+=" --cutflow"
+    else:
+        cmd+=" --varList "+args.param+"/baseplots.py"
+    #if args.scale :
+    #    cmd+= " --scale_bkgd_toData "
+    #else :
+    #    cmd+=" --do_alphabetagamma --scale_bkgd_toData "
+    #    if args.abg == None:
+    #        print("you've decided to use the alpha/beta/gamm to scale background to data, but you haven't used --abg to provide the text file that contain them")
+    #        sys.exit()
+    if args.blindall :
         cmd+= " --blind "
     list_masses = [x[0] for x in os.walk(args.param)]
     list_masses_ = list_masses[1:]
     cmd_ = cmd
     cmd_array = []
-    for mdir in list_masses_ : 
+    for mdir in list_masses_ :
         #to retrive the common options in the cmd
         cmd = cmd_
-        if args.only != None : 
+        if args.only != None :
             myFiles = glob.glob(mdir+"/*"+args.only+"*.txt")
         else : myFiles = glob.glob(mdir+"/*.txt")
         if "_" in str(mdir.split("/")[-1]):
             mgo = str(mdir.split("/")[-1]).split("_")[0]
             mlsp = str(mdir.split("/")[-1]).split("_")[1]
             cmd+=" --Smass "+mgo+"_"+mlsp+" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1])
-            if not args.scale : 
-                if not "_0b" in args.param : 
+            if not args.scale :
+                if not "_0b" in args.param :
                     alpha = (getSFs(args.abg,mass=mdir.split("/")[-1],which="alpha"))
                     beta = (getSFs(args.abg,mass=mdir.split("/")[-1],which="beta"))
                     gamma = (getSFs(args.abg,mass=mdir.split("/")[-1],which="gamma"))
                     cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
-                else : 
+                else :
                     alpha = (getSFs_0b(args.abg,mass=mdir.split("/")[-1],which="alpha"))
                     beta = (getSFs_0b(args.abg,mass=mdir.split("/")[-1],which="beta"))
                     cmd+= " --alpha "+alpha+" --beta "+beta
         else :
             cmd+=" --outdir "+os.path.join(args.outdir,mdir.split("/")[-1]) + " --Smass 1500_1000  1900_100  1600_1100  2200_100 "
-            if not args.scale : 
-                if not "_0b" in args.param :     
+            if not args.scale :
+                if not "_0b" in args.param :
                     alpha = (getSFs_(args.abg,which="alpha"))
                     beta = (getSFs_(args.abg,which="beta"))
                     gamma = (getSFs_(args.abg,which="gamma"))
                     cmd+= " --alpha "+alpha+" --beta "+beta+" --gamma "+gamma
-                else : 
+                else :
                     alpha = (getSFs_0b_(args.abg,which="alpha"))
                     beta = (getSFs_0b_(args.abg,which="beta"))
                     cmd+= " --alpha "+alpha+" --beta "+beta
 
-        if args.blind and os.path.exists(mdir+"/mplots_blind.py"): 
+        if args.blind and os.path.exists(mdir+"/mplots_blind.py"):
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots_blind.py "
-        elif not args.blind and os.path.exists(mdir+"/mplots.py"): 
+        elif not args.blind and os.path.exists(mdir+"/mplots.py"):
             incl_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
         else : incl_cmd = cmd
-        if args.only == None : 
-            if os.path.exists(args.param+"/0bCS.txt") : 
+        if args.only == None :
+            if os.path.exists(args.param+"/0bCS.txt") :
                 zerob_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 zerob_cmd = zerob_cmd.replace("inclusive.txt","0bCS.txt")
                 cmd_array.append(zerob_cmd)
-            if os.path.exists(args.param+"/2LCS.txt") : 
+            if os.path.exists(args.param+"/2LCS.txt") :
                 diLepCS_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 diLepCS_cmd = diLepCS_cmd.replace("inclusive.txt","2LCS.txt")
                 cmd_array.append(diLepCS_cmd)
-            if os.path.exists(args.param+"/QCD_ech_sel.txt") : 
+            if os.path.exists(args.param+"/QCD_ech_sel.txt") :
                 QCD_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 QCD_e_cmd = QCD_e_cmd.replace("inclusive.txt","QCD_ech_sel.txt")
                 cmd_array.append(QCD_e_cmd)
-            if os.path.exists(args.param+"/QCD_mch_sel.txt") : 
+            if os.path.exists(args.param+"/QCD_mch_sel.txt") :
                 QCD_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 QCD_m_cmd = QCD_m_cmd.replace("inclusive.txt","QCD_mch_sel.txt")
                 cmd_array.append(QCD_m_cmd)
-            if os.path.exists(args.param+"/QCD_ech_antisel.txt") : 
+            if os.path.exists(args.param+"/QCD_ech_antisel.txt") :
                 QCDA_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 QCDA_e_cmd = QCDA_e_cmd.replace("inclusive.txt","QCD_ech_antisel.txt")
                 cmd_array.append(QCDA_e_cmd)
-            if os.path.exists(args.param+"/QCD_mch_antisel.txt") : 
+            if os.path.exists(args.param+"/QCD_mch_antisel.txt") :
                 QCDA_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 QCDA_m_cmd = QCDA_m_cmd.replace("inclusive.txt","QCD_mch_antisel.txt")
                 cmd_array.append(QCDA_m_cmd)
-            if os.path.exists(args.param+"/inclusive_ech_antisel.txt") : 
+            if os.path.exists(args.param+"/inclusive_ech_antisel.txt") :
                 incA_e_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 incA_e_cmd = incA_e_cmd.replace("inclusive.txt","inclusive_ech_antisel.txt")
                 cmd_array.append(incA_e_cmd)
-            if os.path.exists(args.param+"/inclusive_mch_antisel.txt") : 
+            if os.path.exists(args.param+"/inclusive_mch_antisel.txt") :
                 incA_m_cmd = cmd+" --mvarList "+mdir+"/mplots.py "
                 incA_m_cmd = incA_m_cmd.replace("inclusive.txt","inclusive_mch_antisel.txt")
                 cmd_array.append(incA_m_cmd)
             cmd_array.append(incl_cmd)
-        
-        for mcut in myFiles : 
+
+        for mcut in myFiles :
             othercmd = cmd
             if ("_postHEM" in str(mcut) or "_preHEM" in str(mcut)) and not year == "2018" : continue
-            if ("QCD_mchsel" in str(mcut)) : 
+            if ("QCD_mchsel" in str(mcut)) :
                 othercmd = othercmd.replace("inclusive.txt","QCD_mch_sel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
-            elif ("QCD_echsel" in str(mcut)) : 
+            elif ("QCD_echsel" in str(mcut)) :
                 othercmd = othercmd.replace("inclusive.txt","QCD_ech_sel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
-            elif ("QCD_mchantisel" in str(mcut)) : 
+            elif ("QCD_mchantisel" in str(mcut)) :
                 othercmd = othercmd.replace("inclusive.txt","QCD_mch_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
-            elif ("QCD_echantisel" in str(mcut)) : 
+            elif ("QCD_echantisel" in str(mcut)) :
                 othercmd = othercmd.replace("inclusive.txt","QCD_ech_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif ("Sig_ech_antisel" in str(mcut)) : 
@@ -234,40 +239,40 @@ if __name__ == '__main__':
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots_blind.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots_blind.py "
-            elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") : 
+            elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             othercmd+= " --mcuts "+mcut
             if ('Sig.txt' in mcut or 'Sig_ech.txt' in mcut or 'Sig_mch.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut ) and (not "Anti" in mcut or "QCD" in mcut) : othercmd +=' --blind '
             cmd_array.append(othercmd)
-            
+
     cmd_array = [x.replace("//","/") for x in cmd_array]
-    
+
     logdir = os.path.join(args.outdir,'Logs')
     excu = args.exec
     wdir = os.getcwd()
     if not os.path.exists(logdir):
-        os.makedirs(logdir) 
+        os.makedirs(logdir)
     outtext = open(args.outdir+"/commands.txt", "w+")
-    for cmd in cmd_array : 
+    for cmd in cmd_array :
         outtext.write(cmd+'\n')
-    
+
     JDir = args.outdir
-    
+
     import socket
     host = socket.gethostname()
 
-    if "lxplus" in host : 
+    if "lxplus" in host :
         path = "/afs/cern.ch/work/a/amohamed/anaconda3/bin"
         anaconda = "/afs/cern.ch/work/a/amohamed/anaconda3/bin/activate"
         pyth = "/afs/cern.ch/work/a/amohamed/anaconda3/envs/hepML/bin/python"
-    elif "desy.de" in host : 
+    elif "desy.de" in host :
         path = "/nfs/dust/cms/user/amohamed/anaconda3/bin"
         anaconda = "/nfs/dust/cms/user/amohamed/anaconda3/bin/activate"
         pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
 
-    for i,comd in enumerate(cmd_array) : 
+    for i,comd in enumerate(cmd_array) :
         confDir = os.path.join(JDir,"job_"+str(i))
-        if not os.path.exists(confDir) : 
+        if not os.path.exists(confDir) :
             os.makedirs(confDir)
         print(comd)
         exec = open(confDir+"/exec.sh","w+")
