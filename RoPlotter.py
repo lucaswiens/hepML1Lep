@@ -58,6 +58,31 @@ def make1D(var,style,name,bins = []):
     hist.SetTitle(style["Label"])
     return hist
 
+def make2D(var,style,name,binsX = [],binsY = []):
+    '''  A functon to make a 1D histogram and set it's style '''
+    # check if var binwidth is requested 
+    if len(bins) == 0 :
+        hist = ROOT.TH2F(name,name,var[3][0],var[3][1],var[3][2],var[3][3],var[3][4],var[3][5])
+    else : 
+        hist = ROOT.TH1F(name,name,len(binsX)-1 ,array('d',binsX),len(binsY)-1 ,array('d',binsY))
+    #hist.Draw('goff')
+    if style["fill"]:
+        style["fill"].Copy(hist)
+    if style["line"]:
+        style["line"].Copy(hist)
+    if style["marker"]:
+        style["marker"].Copy(hist)
+    hist.GetYaxis().SetTitle('Events')
+    hist.GetYaxis().SetTitleSize(0.07)
+    hist.GetYaxis().SetTitleFont(42)
+    hist.GetYaxis().SetTitleOffset(1.2)
+    hist.GetXaxis().SetTitle(var[2])
+    hist.GetXaxis().SetLabelFont(42)
+    hist.GetYaxis().SetLabelSize(0.05)
+    hist.GetXaxis().SetTitleOffset(1.1)
+    hist.SetTitle(style["Label"])
+    return hist
+
 def make1D_bins(binlist,style,name):
     '''  A functon to make a 1D histogram from bins and set it's style '''
     # check if var binwidth is requested 
@@ -120,15 +145,19 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     if showCount : 
         legWidth*= 1.4
     nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0 
+    if not signalHists : textSize = 0.025
     height = (.20 + textSize*max(nentries-3, 0))
     if columns > 1:
     	height = 0.9*height/columns#1.3*
     (x1, y1, x2, y2) = (0.9 - 1.3*legWidth , .88 - 2.5*height, .9, .92)
-    if "ROC" in signalHists[0].GetName() : 
-        if "sig" in signalHists[0].GetName() : 
-            leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
-        else : 
-            leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
+    if signalHists : 
+        if "ROC" in signalHists[0].GetName() : 
+            if "sig" in signalHists[0].GetName() : 
+                leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
+            else : 
+                leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
+        else: 
+            leg = ROOT.TLegend(x1, y1, x2, y2)
     else : 
         leg = ROOT.TLegend(x1, y1, x2, y2)
     leg.SetHeader("")
@@ -186,8 +215,11 @@ def doalphabetagamma(histlist,alpha,beta,gamma):
             h.Scale(beta)
         elif 'SemiLepTT' in hname : 
             h.Scale(alpha)
-        else : 
+        # not to scale QCD with alpha,beta,gamma
+        elif 'QCD' not in hname : 
             h.Scale(gamma)
+        else: 
+            h.Scale(1.0)
         scaled_List.append(h)
     return scaled_List
 
@@ -197,8 +229,10 @@ def doalphabetagamma_0b(histlist,alpha,beta):
         hname = h.GetName()
         if 'WJ' in hname : 
             h.Scale(beta)
-        else : 
+        elif 'QCD' not in hname : 
             h.Scale(alpha)
+        else: 
+            h.Scale(1.0)
         scaled_List.append(h)
     return scaled_List
 
@@ -302,7 +336,7 @@ if __name__ == '__main__':
     parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')    
     parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')    
     parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
-    parser.add_argument('--Smass', nargs='+',help="the mas of the signal hypothesis")
+    parser.add_argument('--Smass', nargs='+',default=[],help="the mas of the signal hypothesis")
 
     args = parser.parse_args()
 
@@ -453,9 +487,10 @@ if __name__ == '__main__':
     fcmd.write("%s\n\n" % " ".join(sys.argv))
     fcmd.write("%s\n" % (args))
     fcmd.close()
-    
+    TH2DHist = False 
     for i,var in enumerate(varList) :
-
+        if ":" in var[1] : 
+            TH2DHist = True
         outtext = open(textdire+"/"+var[0]+".txt", "w+")
         print (var[0])
         # make Tdir for each Varable to plot
@@ -470,10 +505,13 @@ if __name__ == '__main__':
             # make the hist 
             if any('varbin' in e for e in var) : 
                 index0,_ = findItem(var , 'varbin')
-                bins = var[index0][1]
-                hist = make1D(var,All_files[key],key+var[0],bins = bins)
+                binsX = var[index0][1]
+                binsY = var[index0][1]
+                if TH2DHist : hist = make2D(var,All_files[key],key+var[0],binsX = binsX,binsY = binsY )
+                else : hist = make1D(var,All_files[key],key+var[0],bins = bins)
             else : 
-                hist = make1D(var,All_files[key],key+var[0])
+                if TH2DHist : hist = make2D(var,All_files[key],key+var[0])
+                else : hist = make1D(var,All_files[key],key+var[0])
             # draw the variable to the hist created 
             if 'Data' in key : lum = '1.0' 
             else  : lum = lumi
@@ -522,6 +560,7 @@ if __name__ == '__main__':
         total.SetName("totalBKG")
         total.Write()
         stackableHists = sorttinglist(stackableHists)
+        #print(stackableHists)
         # scale the individual background to data
         apply = False
         if do_alphabetagamma : 
@@ -560,7 +599,7 @@ if __name__ == '__main__':
         if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
         else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
         rocs = []
-        if "ROC" in var[0] : 
+        if "ROC" in var[0] and len(SignalHists)!= 0 : 
             for hS in SignalHists : 
                 rocs.append(rocCurve(hS, total))
         # create canvas

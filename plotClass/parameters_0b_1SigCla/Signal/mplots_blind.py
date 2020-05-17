@@ -1,5 +1,5 @@
 varList.append(["sig_0b","sig_0b","DNN classifier T5q^{4}WW",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows',['blinded',"0.90 < x < 1.0"]])
-varList.append(["WJ_0b","WJ_0b","DNN classifier W+jets",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["wj_0b","WJ_0b","DNN classifier W+jets",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 varList.append(["TTJ_0b","TTJ_0b","DNN classifier t#bar{t}(1l,2l)",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 
 varList.append(["sig_0b_100bins","sig_0b","DNN classifier T5q^{4}WW",[100,0,1],"LogY",["MoreY",5000],'IncludeOverflows',['blinded',"0.90 < x < 1.0"]])
@@ -27,8 +27,10 @@ varList.append(["sig_0b_4bins","sig_0b","DNN classifier T5q^{4}WW",[4,0,1],"LogY
 #varList.append(["sig_0b_VR","sig_0b","DNN classifier T5q^{4}WW",[3,0,1],"LogY",["MoreY",5000],'IncludeOverflows',['varbin',[0.,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.5,0.6,0.7,0.8,0.98,0.99,0.995,1.0],False],['blinded',"0.98 < x < 1.0"]])
 varList.append(["ROC_sig_0b","sig_0b","DNN classifier T5q^{4}WW",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 varList.append(["ROC_TTJ_0b","TTJ_0b","DNN classifier t#bar{t}(1l,2l)",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
-varList.append(["ROC_WJ_0b","WJ_0b","DNN classifier W+jets",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["ROC_wj_0b","WJ_0b","DNN classifier W+jets",[50,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
+
+varList.append(["sig_0b_SR","sig_0b","DNN classifier T5q^{4}WW",[3,0,1],"LogY",["MoreY",5000],['varbin',[0.9,0.919,0.938,0.9570,0.9760,0.995,1.],False],['blinded',"0.9 < x < 1.0"]])
 
 varList.append(["CatTT1Lep","(TTJ_0b >sig_0b) && (TTJ_0b >WJ_0b)","t#bar{t}(1l,2l) + jets Event Category",[2,0.0,2.0],"LogY",["MoreY",5000],'IncludeOverflows'])
-varList.append(["CatWJ_0b","(WJ_0b >sig_0b) && (WJ_0b  > TTJ_0b )","W+jets Event Category",[2,0.0,2.0],"LogY",["MoreY",5000],'IncludeOverflows'])
+varList.append(["Catwj_0b","(WJ_0b >sig_0b) && (WJ_0b  > TTJ_0b )","W+jets Event Category",[2,0.0,2.0],"LogY",["MoreY",5000],'IncludeOverflows'])
 varList.append(["CatSig","(sig_0b >TTJ_0b) && (sig_0b >WJ_0b)","T5q^{4}WW Event Category",[2,0.0,2.0],"LogY",["MoreY",5000],'IncludeOverflows',['blinded',"1.0 < x < 2.0"]])

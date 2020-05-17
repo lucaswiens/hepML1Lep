@@ -224,7 +224,7 @@ void overly_DNN_FullRunII_0b()
       leg->SetHeader("T5qqqqWW NLO+NLL exclusion");
       leg->AddEntry(Gr_Exp_NTOP1, "expected limit param. 1 bin optimized for each mass", "l");
       leg->AddEntry(Gr_Exp_NTOP2, "expected limit param. 6 bin from 0.9", "l");
-      leg->AddEntry(Gr_Exp_NTOP3, "expected limit non-param 1 bin from 0.99 ", "l");
+      leg->AddEntry(Gr_Exp_NTOP3, "expected limit non-param 1 bin from 0.995 ", "l");
       leg->AddEntry(Gr_Exp_NTOP4, "expected limit non-param 6 bins from 0.9", "l");
 
       leg->Draw();

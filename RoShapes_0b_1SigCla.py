@@ -99,7 +99,7 @@ if __name__ == '__main__':
     if int(args.year) != 2016 : 
         for key in All_files : 
             All_files[key]['scale']  = All_files[key]['scale'].replace("*nISRttweight","")
-    elif int(args.year) == 2018 :
+    if int(args.year) == 2018 :
         for key in All_files: 
             if "Data" in key or "Signal_" in key : continue 
             All_files[key]['scale']  = All_files[key]['scale'].replace('*lepSF',"*lepSF*HEM_MC_SF")
@@ -133,7 +133,7 @@ if __name__ == '__main__':
                 for key in systList[syst] : 
                     systList[syst][key]['scale_up']  = systList[syst][key]['scale_up'].replace("*nISRttweightsyst_up","").replace("*nISRttweight","")
                     systList[syst][key]['scale_dn']  = systList[syst][key]['scale_dn'].replace("*nISRttweightsyst_down","").replace("*nISRttweight","")  
-        elif int(args.year) == 2018 :
+        if int(args.year) == 2018 :
             for syst in systList : 
                 for key in systList[syst] : 
                     if "Data" in key or "Signal_" in key : continue 
@@ -178,8 +178,8 @@ if __name__ == '__main__':
 
     instPlot = rootplot(indir,outdir,All_files=All_files)
     if args.doSyst : 
-        instPlot_Jec_up = rootplot(indirJecUp,outdir,All_files=All_files_Jec_up)
-        instPlot_Jec_dn = rootplot(indirJecdown,outdir,All_files=All_files_Jec_dn)
+        instPlot_Jec_up = rootplot(indirJecUp,outdir,All_files=All_files_Jec_up,outtext="sample_jec_up")
+        instPlot_Jec_dn = rootplot(indirJecdown,outdir,All_files=All_files_Jec_dn,outtext="sample_jec_down")
     cuttext = open(massdir+"/"+cutdict+".txt", "w+")
     if not batch : 
         cuts = cutdict_

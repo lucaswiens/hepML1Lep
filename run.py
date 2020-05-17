@@ -59,7 +59,7 @@ if __name__ == '__main__':
                 "puRatio","lepSF","nISRttweight","GenMET","Lep_relIso","Lep_miniIso","iso_pt","iso_MT2"]
     else :  
         # variables to be used in the training 
-        var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWTight","mGo", "mLSP"]
+        var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWLoose","nWMedium","nWTight","mGo", "mLSP"]
         # variables to be used in while transfere DFs
         VARS = ["MET","MT","Jet2_pt","Jet1_pt","nLep","Lep_pt","Selected","nVeto","LT","HT","W_fromHadTop_dRb","W_fromHadTop_dRb_2","W_fromHadTop_dRb_3","W_fromHadTop_dRb_4",
                 "nBCleaned_TOTAL","nBJet","nTop_Total_Combined","nJets30Clean","dPhi","met_caloPt","nWLoose","nWMedium","nWTight","nWVeryTight",

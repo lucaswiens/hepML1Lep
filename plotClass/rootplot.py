@@ -10,15 +10,16 @@ def find_all_matching(substring, path):
     return result
 
 class rootplot(object) : 
-    def __init__(self,input,outdir,All_files = {}) : 
+    def __init__(self,input,outdir,All_files = {},outtext="sample") : 
         self.input      = input  
         self.outdir     = outdir 
         self.rootList   = find_all_matching('.root',self.input)
         self.group      = {}
         self.All_files  = All_files
+        self.outtext=outtext
         if not os.path.exists(self.outdir) : os.makedirs(self.outdir)
 
-        textsample = open(self.outdir+"/sample.txt", "w+")
+        textsample = open(self.outdir+"/"+self.outtext+".txt", "w+")
 
         for g in self.All_files :
             textsample.write(g+" : "+"\n") 
@@ -37,36 +38,39 @@ class rootplot(object) :
         for f in filesList : 
             chain.Add(f)
         return chain
-    def makecutflow(self,Tree = None,cutstring = [], extraCuts=[]) :
-        ''' This Function is to apply selection on specific tree''' ## Don't use, not yet ready
-        from ROOT import TCut
-        
-        CUTtext = open(self.outdir+"/cuts.txt", "w+")
-        CUTtext.write(str(cutstring)+str(extraCuts)+'\n')
-        cutstring = [TCut(x) for x in cutstring or x in extraCuts]
-        cut = [cutstring[x].GetTitle() for x in range(len(cutstring))]
 
-        if Tree ==None : 
-            print ('no Tree founded please cheack')
-            pass  
-        else : 
-            tt_out = Tree.CopyTree("")
-            for i in cut:
-                tt_out = tt_out.CopyTree(i)
-                print(i,tt_out.GetEntries())
-                #del tt_out
-            #return tt_out
-        pass
-    def makecuts(self,Tree = None,cutstring = "",extraCuts = "" ) :
+    def makecuts(self,Tree = None,cutstring = "",extraCuts = "",name=None ) :
         ''' This Function is to apply selection on specific tree'''
         from ROOT import TCut
-        
+        #print(name)
         CUTtext = open(self.outdir+"/cuts.txt", "w+")
         CUTtext.write(cutstring+extraCuts+'\n')
 
         cutstring = TCut(cutstring+extraCuts)
         cut = cutstring.GetTitle()
-
+        # when doing the cutflow, make a temp root file to avoid using a lot of memory
+        if name : 
+            fname = self.outdir+"/"+name+".root"
+            #check if the file is already existing to avoid reproducing it
+            if os.path.exists(fname) : 
+                #open it and try to check if the tree is stored inside
+                tt_out = self.makeChain( filesList = [fname],Tname = "t")
+                if tt_out.LoadTree(0) >= 0 : 
+                    return tt_out
+                else: 
+                    print(name,"the chain is not saved properly, will reproduce it")
+                    tempFile = ROOT.TFile(self.outdir+"/"+name+".root","recreate")
+                    #print(Tree.LoadTree(0))
+                    tt_out = Tree.CopyTree(cut)
+                    # need to use Write() here otherwise it will not be overwritten
+                    tt_out.Write()
+                    tempFile.Close()
+                    # Stupied to write/Close the file to be able to load the chain correctly
+                    tt_out = self.makeChain( filesList = [fname],Tname = "t")
+                    return tt_out
+            # if file is not existing, poduce it
+            else : tempFile = ROOT.TFile(self.outdir+"/"+name+".root","recreate")
+        # the normal workflow
         if Tree ==None : 
             print ('no Tree founded please cheack')
             pass  
@@ -74,14 +78,8 @@ class rootplot(object) :
             tt_out = Tree.CopyTree(cut)
             return tt_out
         pass
-    def chain_and_cut (self,filesList,Tname,cutstring ,extraCuts): 
+    def chain_and_cut (self,filesList,Tname,cutstring ,extraCuts,name =None): 
         '''This function is to make TChain and apply selections at the same time'''
         chain = self.makeChain(filesList ,Tname)
-        chain = self.makecuts(chain,cutstring,extraCuts)
-        return chain
-        
-    def chain_and_cutflow (self,filesList,Tname,cutstring ,extraCuts): 
-        '''This function is to make TChain and apply selections at the same time'''
-        chain = self.makeChain(filesList ,Tname)
-        chain = self.makecuts(chain,cutstring,extraCuts)
+        chain = self.makecuts(chain,cutstring,extraCuts,name)
         return chain

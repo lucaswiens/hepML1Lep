@@ -224,10 +224,10 @@ if __name__ == '__main__':
             elif ("QCD_echantisel" in str(mcut)) : 
                 othercmd = othercmd.replace("inclusive.txt","QCD_ech_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
-            elif ("Sig_ech_antisel" in str(mcut)) : 
+            elif ("antisel" in str(mcut)) : 
                 othercmd = othercmd.replace("inclusive.txt","inclusive_ech_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
-            elif ("Sig_mch_antisel" in str(mcut)) : 
+            elif ("antisel" in str(mcut)) : 
                 othercmd = othercmd.replace("inclusive.txt","inclusive_mch_antisel.txt")
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             elif "inclusive_njseq6" in str(mcut) and os.path.exists(mdir+"/mplots.py") :
@@ -237,7 +237,7 @@ if __name__ == '__main__':
             elif not "inclusive" in str(mcut) and os.path.exists(mdir+"/mplots.py") : 
                 othercmd = othercmd+" --mvarList "+mdir+"/mplots.py "
             othercmd+= " --mcuts "+mcut
-            if ('Sig.txt' in mcut or 'Sig_ech.txt' in mcut or 'Sig_mch.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut ) and (not "Anti" in mcut or "QCD" in mcut) : othercmd +=' --blind '
+            if ('Sig.txt' in mcut or 'Sig_ech.txt' in mcut or 'Sig_mch.txt' in mcut or "Sig_lastbin" in mcut or "Sig_ge" in mcut or 'Sig_nj7.txt' in mcut or 'Sig_SR.txt' in mcut or 'Sig_bin' in mcut ) and (not "Anti" in mcut or "QCD" in mcut) : othercmd +=' --blind '
             cmd_array.append(othercmd)
             
     cmd_array = [x.replace("//","/") for x in cmd_array]

@@ -221,9 +221,9 @@ if __name__ == '__main__':
         SRbins = otherbins
         SRbins.append([bestBin,10001])
         #print(SRbins)'''
-        bestBin = 9900
+        bestBin = 9950
         nbins_full = 10000
-        SRbins = [[9000,9150],[9151,9300],[9301,9450],[9451,9600],[9601,9890],[bestBin,10001]]
+        SRbins = [[9000,9190],[9191,9380],[9381,9570],[9571,9760],[9761,9949],[bestBin,10001]]
         if not oneBin : 
             for num, bin in enumerate(SRbins) : 
                 bestBin = bin[0]

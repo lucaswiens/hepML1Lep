@@ -21,7 +21,7 @@ import htcondor
 
 m_list = ['1500_1000','1500_1200','1600_1100','1700_1200','1800_1300','1900_100','1900_1000','1900_800','2200_100','2200_800']
 b_list = ['DiLepTT','DY','QCD','SemiLepTT','SingleT','TTV','VV','WJ','Data']
-others_bkg = ['DiLepTT','SemiLepTT','DY','QCD','SingleT','TTV','VV']
+others_bkg = ['DiLepTT','SemiLepTT','DY','SingleT','TTV','VV'] #keep the QCD out 'QCD',
 
 CRs = ['SR','CR2','CR3']
 
@@ -118,6 +118,11 @@ if __name__ == '__main__':
                 if (obkg in bkg and '_CR1' in hname ): otherCR1.Add(hist)
                 if (obkg in bkg and '_CR2' in hname ): otherCR2.Add(hist)
                 if (obkg in bkg and '_CR3' in hname ): otherCR3.Add(hist)
+            
+            if ("QCD" in bkg and '_SR' in hname ) : QCDSR  = hist
+            if ("QCD" in bkg and '_CR1' in hname ): QCDCR1 = hist
+            if ("QCD" in bkg and '_CR2' in hname ): QCDCR2 = hist
+            if ("QCD" in bkg and '_CR3' in hname ): QCDCR3 = hist
             #print(hname, hist.Integral())
             
             if ('_SR' in hname and not 'Data' in bkg): 
@@ -128,11 +133,17 @@ if __name__ == '__main__':
             elif '_CR2' in hname : 
                 txtCR2.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
                 if 'WJ' in bkg  : WJ_2  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_1), 2)
-                if 'Data' in bkg       : Data_2 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_3), 2)
+                if 'Data' in bkg       :
+                    # remving the QCD events from data
+                    hist.Add(QCDCR2,-1)
+                    Data_2 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_3), 2)
             elif '_CR3' in hname : 
                 txtCR3.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err), 2), round(err, 2))+"\n")
                 if 'WJ' in bkg : WJ_3  = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_4), 2)
-                if 'Data' in bkg     : Data_3 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_5), 2)
+                if 'Data' in bkg     :
+                    # remving the QCD events from data
+                    hist.Add(QCDCR3,-1)
+                    Data_3 = round(hist.IntegralAndError(0, hist.GetNbinsX()+1, err_5), 2)
 
     txtSR.write((60 *('='))+'\n')
     txtSR.write("{:<20}{:<20}{:<20}".format(otherSR.GetTitle(),round(otherSR.IntegralAndError(0, otherSR.GetNbinsX()+1, err_6), 2), round(err_6, 2))+"\n")
@@ -161,14 +172,24 @@ if __name__ == '__main__':
     Y_ = a.I * b 
     Y = np.squeeze(np.asarray(unumpy.nominal_values(Y_)))
     Yerr = np.squeeze(np.asarray(unumpy.std_devs(Y_)))
-
     #print (np.allclose(np.dot(a, Y), b))
     alpha, beta = round(Y[0],2) , round(Y[1],2)
     alphaerr, betaerr  = round(Yerr[0],2) , round(Yerr[1],2)
-    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' '                   ,'TTJ' ,' '                  ,'WJ' ,' '                               ,'Data' ,' ')+"\n")
-    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('TTJCat'  ,TTJ_2       ,'+/-'+str(round(err_8,2)) ,WJ_3    ,'+/-'+str(round(err_4,2)) ,Data_2 ,'+/-'+str(round(err_3,2)))+"\n")
-    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('WJCat'   ,TTJ_3       ,'+/-'+str(round(err_9,2)) ,WJ_2    ,'+/-'+str(round(err_1,2)) ,Data_3 ,'+/-'+str(round(err_5,2 )))+"\n")
-    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SigCat'  ,TTJ_1       ,'+/-'+str(round(err_6,2)) ,WJ_1    ,'+/-'+str(round(err_0,2)) ,'---' ,'+/-'+'---')+"\n")
+
+
+    QCDSR_err = ROOT.Double(0.)
+    QCDCR2_err = ROOT.Double(0.)
+    QCDCR3_err = ROOT.Double(0.)
+
+    QCDSR_yields = QCDSR.IntegralAndError(0, QCDSR.GetNbinsX()+1, QCDSR_err)
+    QCDCR2_yields = QCDCR2.IntegralAndError(0, QCDCR2.GetNbinsX()+1, QCDCR2_err)
+    QCDCR3_yields = QCDCR3.IntegralAndError(0, QCDCR3.GetNbinsX()+1, QCDCR3_err)
+
+
+    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' '                   ,'TTJ' ,' '                  ,'WJ' ,' '                               ,'Data' ,' ','MC QCD',' ')+"\n")
+    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('TTJCat'  ,TTJ_2       ,'+/-'+str(round(err_8,2)) ,WJ_3    ,'+/-'+str(round(err_4,2)) ,Data_2 ,'+/-'+str(round(err_3,2)),round(QCDCR2_yields,2),'+/-'+str(round(QCDCR2_err,2)))+"\n")
+    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('WJCat'   ,TTJ_3       ,'+/-'+str(round(err_9,2)) ,WJ_2    ,'+/-'+str(round(err_1,2)) ,Data_3 ,'+/-'+str(round(err_5,2)),round(QCDCR3_yields,2),'+/-'+str(round(QCDCR3_err,2)))+"\n")
+    txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('SigCat'  ,TTJ_1       ,'+/-'+str(round(err_6,2)) ,WJ_1    ,'+/-'+str(round(err_0,2)) ,'---' ,'+/-'+'---',round(QCDSR_yields,2),'+/-'+str(round(QCDSR_err,2)))+"\n")
 
     txtalphabetagamma.write((60 *('='))+'\n')
 
@@ -176,18 +197,18 @@ if __name__ == '__main__':
     txtalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}".format(' ',alpha, '+/-'+str(alphaerr),beta ,'+/-'+str(betaerr) )+"\n")
 
     
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' & '             ,'\ttJets' ,' &'                       ,'\WJets' ,' &'     ,'Data' ,' ')+" \\\\ \n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format(' & '             ,'\ttJets' ,' &'                       ,'\WJets' ,' &'     ,'Data' ,' &','MC QCD',' ')+" \\\\ \n")
     latexalphabetagamma.write('\\hline\\hline \n')
 
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('\ttJets cat. & ',TTJ_2       ,' $\pm$ '+str(round(err_8,2))+'& ' ,WJ_3    ,' $\pm$ '+str(round(err_4,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2)))+"\\\\ \n")
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('\WJets cat. & ' ,TTJ_3       ,' $\pm$ '+str(round(err_9,2))+'& ' ,WJ_2    ,' $\pm$ '+str(round(err_1,2))+'& ',Data_3,'$\pm$'+str(round(err_6,2)))+"\\\\ \n")
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('T5qqqqWW cat.&' ,TTJ_1       ,' $\pm$ '+str(round(err_6,2))+'& ' ,WJ_1    ,'  $\pm$ '+str(round(err_0,2)) +'& ','---','$\pm$ ---')+"\\\\ \n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('\ttJets cat. & ',TTJ_2       ,' $\pm$ '+str(round(err_8,2))+'& ' ,WJ_3    ,' $\pm$ '+str(round(err_4,2))+'& ' ,Data_2,'$\pm$'+str(round(err_3,2))+'& ',round(QCDCR2_yields,2),'$\pm$'+str(round(QCDCR2_err,2)))+"\\\\ \n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('\WJets cat. & ' ,TTJ_3       ,' $\pm$ '+str(round(err_9,2))+'& ' ,WJ_2    ,' $\pm$ '+str(round(err_1,2))+'& ',Data_3,'$\pm$'+str(round(err_6,2))+'& ',round(QCDCR3_yields,2),'$\pm$'+str(round(QCDCR3_err,2)))+"\\\\ \n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}{:<12}{:<10}".format('T5qqqqWW cat.&' ,TTJ_1       ,' $\pm$ '+str(round(err_6,2))+'& ' ,WJ_1    ,'  $\pm$ '+str(round(err_0,2)) +'& ','---','$\pm$ ---'+'& ',round(QCDSR_yields,2),'$\pm$'+str(round(QCDSR_err,2)))+"\\\\ \n")
 
     latexalphabetagamma.write('\\hline\\hline \n')
 
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}".format('   & ','$\\alpha$',' & ','$\\beta$' ,' & ')+"\\\\ \n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}".format('   & ','$\\alpha$',' & ','$\\beta$' ,' & &')+"\\\\ \n")
     latexalphabetagamma.write('\\hline\\hline \n')
-    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}".format('   & ',alpha, ' $\pm$ '+str(alphaerr)+' & ',beta ,' $\pm$ '+str(betaerr)+' &    \\\\' )+"\n")
+    latexalphabetagamma.write("{:<20}{:<12}{:<10}{:<12}{:<10}".format('   & ',alpha, ' $\pm$ '+str(alphaerr)+' & ',beta ,' $\pm$ '+str(betaerr)+' &  &  \\\\' )+"\n")
     latexalphabetagamma.write('\\hline\\hline\\hline \n')
     textalphabetagamma.write("{:<20}{:<12}{:<15}{:<12}{:<15}".format("",alpha, str(alphaerr) ,beta ,str(betaerr))+"\n")
 
