@@ -58,7 +58,34 @@ def make1D(var,style,name,bins = []):
     hist.SetTitle(style["Label"])
     return hist
 
+<<<<<<< HEAD
 def make1D_bins(binlist, style, name):
+=======
+def make2D(var,style,name):
+    '''  A functon to make a 1D histogram and set it's style '''
+    # check if var binwidth is requested
+
+    hist = ROOT.TH2F(name,name,var[3][0],var[3][1],var[3][2],var[3][3],var[3][4],var[3][5])
+    #hist.Draw('goff')
+    if style["fill"]:
+        style["fill"].Copy(hist)
+    if style["line"]:
+        style["line"].Copy(hist)
+    if style["marker"]:
+        style["marker"].Copy(hist)
+    hist.GetYaxis().SetTitle(var[2].split(":")[1])
+    hist.GetYaxis().SetTitleSize(0.07)
+    hist.GetYaxis().SetTitleFont(42)
+    hist.GetYaxis().SetTitleOffset(1.2)
+    hist.GetXaxis().SetTitle(var[2].split(":")[0])
+    hist.GetXaxis().SetLabelFont(42)
+    hist.GetYaxis().SetLabelSize(0.05)
+    hist.GetXaxis().SetTitleOffset(1.1)
+    hist.SetTitle(style["Label"])
+    return hist
+
+def make1D_bins(binlist,style,name):
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
     '''  A functon to make a 1D histogram from bins and set it's style '''
     # check if var binwidth is requested
     if len(binlist) == 0 :
@@ -119,17 +146,34 @@ def doLegend(signalHists, BKGHists, DataHists, textSize=0.035, columns=1,showSF=
     legWidth= 0.18 * columns
     if showCount :
         legWidth*= 1.4
+<<<<<<< HEAD
     nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0
+=======
+    nentries = len(sigEntries) if sigEntries else 0 + len(bgEntries) if bgEntries else 0 + 1 if dataEntry else 0 + 1 if uncertHist else 0
+    if not signalHists : textSize = 0.025
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
     height = (.20 + textSize*max(nentries-3, 0))
     if columns > 1:
         height = 0.9*height/columns#1.3*
     (x1, y1, x2, y2) = (0.9 - 1.3*legWidth , .88 - 2.5*height, .9, .92)
+<<<<<<< HEAD
     if "ROC" in signalHists[0].GetName() :
         if "sig" in signalHists[0].GetName() :
             leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
         else :
             leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
     else :
+=======
+    if signalHists :
+        if "ROC" in signalHists[0].GetName() :
+            if "sig" in signalHists[0].GetName() :
+                leg = ROOT.TLegend(0.6 if columns ==1 else 0.3 , 0.3, 0.9, 0.7)
+            else :
+                leg = ROOT.TLegend(0.2, 0.4, 0.5 if columns ==1 else 0.8, 0.8)
+        else:
+            leg = ROOT.TLegend(x1, y1, x2, y2)
+    else :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
         leg = ROOT.TLegend(x1, y1, x2, y2)
     leg.SetHeader("")
     leg.SetFillColor(0)
@@ -197,8 +241,14 @@ def doalphabetagamma_0b(histlist,alpha,beta):
         hname = h.GetName()
         if 'WJ' in hname :
             h.Scale(beta)
+<<<<<<< HEAD
         else :
+=======
+        elif 'QCD' not in hname :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
             h.Scale(alpha)
+        else:
+            h.Scale(1.0)
         scaled_List.append(h)
     return scaled_List
 
@@ -238,6 +288,27 @@ def hadd1ds(histList,alphabetagamma=False,multib = True):
     sumbkg.Reset()
     for bkghist in histList :
         h = ROOT.TH1F(bkghist.Clone())
+        if alphabetagamma :
+            hname = h.GetName()
+            if multib :
+                if 'DiLepTT' in hname : h.Scale(beta)
+                elif 'SemiLepTT' in hname : h.Scale(alpha)
+                else : h.Scale(gamma)
+            else :
+                if 'WJ' in hname : h.Scale(beta)
+                else : h.Scale(alpha)
+        sumbkg.Add(h)
+    #sumbkg.Draw('goff')
+    sumbkg.SetTitle('Total BKG')
+    sumbkg.SetName('sumbkg')
+    return sumbkg
+
+def hadd2ds(histList,alphabetagamma=False,multib = True):
+    '''  A functon to hadd background and set it's style '''
+    sumbkg = ROOT.TH2F(histList[0].Clone())
+    sumbkg.Reset()
+    for bkghist in histList :
+        h = ROOT.TH2F(bkghist.Clone())
         if alphabetagamma :
             hname = h.GetName()
             if multib :
@@ -302,9 +373,13 @@ if __name__ == '__main__':
     parser.add_argument("--mb", "--multib", default=False, help="multple b or zero b analysis",action='store_true')
     parser.add_argument("--showSF", default=False, help="show the SF or not",action='store_true')
     parser.add_argument("--showCount", default=False, help="show the counts in legend",action='store_true')
+<<<<<<< HEAD
     parser.add_argument('--Smass', nargs='+',help="the mas of the signal hypothesis")
     parser.add_argument("--y-log", default=False, help="make the y axis logarithmic",action='store_true')
     parser.add_argument("--cutflow", default=False, help="produce a cutflow diagram",action='store_true')
+=======
+    parser.add_argument('--Smass', nargs='+',default=[],help="the mas of the signal hypothesis")
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
 
     args = parser.parse_args()
 
@@ -462,9 +537,15 @@ if __name__ == '__main__':
     fcmd.write("%s\n\n" % " ".join(sys.argv))
     fcmd.write("%s\n" % (args))
     fcmd.close()
+<<<<<<< HEAD
 
+=======
+    TH2DHist = False
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
     for i,var in enumerate(varList) :
-
+        TH2DHist = False
+        if ":" in var[1] :
+            TH2DHist = True
         outtext = open(textdire+"/"+var[0]+".txt", "w+")
         print (var[0])
         # make Tdir for each Varable to plot
@@ -476,6 +557,7 @@ if __name__ == '__main__':
         SignalHists = []
         error = ROOT.Double(0.)
         for key in All_files :
+<<<<<<< HEAD
             # make the hist
             if any('varbin' in e for e in var) :
                 index0,_ = findItem(var , 'varbin')
@@ -485,6 +567,19 @@ if __name__ == '__main__':
                 hist = make1D(var,All_files[key],key+var[0])
             # draw the variable to the hist created
             if 'Data' in key : lum = '1.0'
+=======
+            # make the hist
+            if any('varbin' in e for e in var) and not TH2DHist:
+                index0,_ = findItem(var , 'varbin')
+                binsX = var[index0][1]
+                binsY = var[index0][1]
+                hist = make1D(var,All_files[key],key+var[0],bins = binsX)
+            else :
+                if TH2DHist : hist = make2D(var,All_files[key],key+var[0])
+                else : hist = make1D(var,All_files[key],key+var[0])
+            # draw the variable to the hist created
+            if 'Data' in key : lum = '1.0'
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
             else  : lum = lumi
             addicut = "1"
             if any('AddCut' in e for e in var) :
@@ -495,8 +590,13 @@ if __name__ == '__main__':
             #print (hist)
             #ROOT.gROOT.ForceStyle()
             if (hist.GetSumw2N() == 0) : hist.Sumw2(ROOT.kTRUE)
+<<<<<<< HEAD
             # check the overflow bins
             if any('IncludeOverflows' in e for e in var) :
+=======
+            # check the overflow bins
+            if any('IncludeOverflows' in e for e in var) and not TH2DHist :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
                 n = hist.GetNbinsX()
                 hist.SetBinContent(1,hist.GetBinContent(0)+hist.GetBinContent(1))
                 hist.SetBinContent(n,hist.GetBinContent(n+1)+hist.GetBinContent(n))
@@ -506,8 +606,13 @@ if __name__ == '__main__':
                 hist.SetBinContent(n+1,0)
                 hist.SetBinContent(0,0)
                 hist.SetBinContent(n+1,0)
+<<<<<<< HEAD
             # per binwidth normalization
             if any('varbin' in e for e in var) :
+=======
+                # per binwidth normalization
+            if any('varbin' in e for e in var) and not TH2DHist :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
                 index0,_ = findItem(var , 'varbin')
                 normBinW = var[index0][2]
                 bins = var[index0][1]
@@ -522,15 +627,18 @@ if __name__ == '__main__':
             if All_files[key]['Stackable'] : stackableHists.append(hist)
             if 'Sig' in key :
                 SignalHists.append(hist)
-                outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+                if not TH2DHist: outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+                else: outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,0,hist.GetNbinsY()+1,error),2),round(error,2))+"\n")
                 hist.Write()
 
         # make the total BKG hist to be used for ratio calculation
-        total = hadd1ds(stackableHists,do_alphabetagamma,args.mb)
-        outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        total = hadd1ds(stackableHists,do_alphabetagamma,args.mb) if not TH2DHist else hadd2ds(stackableHists,do_alphabetagamma,args.mb)
+        if not TH2DHist: outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        else : outtext.write("{:<20}{:<20}{:<20}".format('total bkg unscaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,0,total.GetNbinsY()+1,error),2),round(error,2))+"\n")
         total.SetName("totalBKG")
         total.Write()
         stackableHists = sorttinglist(stackableHists)
+        #print(stackableHists)
         # scale the individual background to data
         apply = False
         if do_alphabetagamma :
@@ -555,9 +663,11 @@ if __name__ == '__main__':
         # write them
         stack.Write()
         total.Write()
-        outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        if not TH2DHist: outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,error),2),round(error,2))+"\n")
+        else: outtext.write("{:<20}{:<20}{:<20}".format('total bkg scaled ',round(total.IntegralAndError(0,total.GetNbinsX()+1,0,total.GetNbinsY()+1,error),2),round(error,2))+"\n")
         for hist in stackableHists :
-            outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+            if not TH2DHist : outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,error),2),round(error,2))+"\n")
+            else : outtext.write("{:<20}{:<20}{:<20}".format(hist.GetTitle(),round(hist.IntegralAndError(0,hist.GetNbinsX()+1,0,hist.GetNbinsY()+1,error),2),round(error,2))+"\n")
             hist.Write()
         # make canvas to draw
         plotformat = (600,600)
@@ -569,8 +679,13 @@ if __name__ == '__main__':
         if (doRatio and 'Data' in All_files.keys()) : ROOT.gStyle.SetPaperSize(20.,sf_*(plotformat[1]+150))
         else:       ROOT.gStyle.SetPaperSize(20.,sf_*plotformat[1])
         rocs = []
+<<<<<<< HEAD
         if "ROC" in var[0] :
             for hS in SignalHists :
+=======
+        if "ROC" in var[0] and len(SignalHists)!= 0 :
+            for hS in SignalHists :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
                 rocs.append(rocCurve(hS, total))
         # create canvas
         canv = ROOT.TCanvas(var[0],var[0],plotformat[0]+150, height)
@@ -579,7 +694,11 @@ if __name__ == '__main__':
         topsize = 0.12*600./height if doRatio else 0.06*600./height
         canv.SetTopMargin(topsize)
         canv.cd()
+<<<<<<< HEAD
         if (doRatio  and 'Data' in All_files.keys() and not "ROC" in var[0]) :
+=======
+        if (doRatio  and 'Data' in All_files.keys() and not "ROC" in var[0]) and not TH2DHist :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
             stackPad = ROOT.TPad("mainpad"+var[0], "mainpad"+var[0], 0, 0.30, 1, 1)
             ROOT.SetOwnership(stackPad, False)
             stackPad.SetBottomMargin(0.025)
@@ -593,7 +712,11 @@ if __name__ == '__main__':
             ratioPad.Draw()
             stackPad.cd()
         # Draw the stack first
+<<<<<<< HEAD
         if not "ROC" in var[0] :
+=======
+        if not "ROC" in var[0] and not TH2DHist :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
             stack.Draw('hist')
             if any('MoreY' in e for e in var) :
                 index1,_ = findItem(var , 'MoreY')
@@ -720,7 +843,11 @@ if __name__ == '__main__':
             if any('LogY' in e for e in var) :
                 ROOT.gPad.SetLogy()
 
+<<<<<<< HEAD
         else :
+=======
+        elif "ROC" in var[0] :
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
             #lineColours = [1, 2, 4, 7, 8]
             #lineStyles = [3, 2, 1, 4, 5]
 
@@ -736,12 +863,66 @@ if __name__ == '__main__':
                 roc.Write()
             CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.01)
             doLegend(rocs, None, None, textSize=0.020, columns=2,showSF=False,uncertHist= None,showCount=False)
+<<<<<<< HEAD
 
         canv.SaveAs(pngdire+'/'+str(args.year)[2:]+"-"+var[0]+'.png')
         canv.SaveAs(pdfdire+'/'+str(args.year)[2:]+"-"+var[0]+'.pdf')
         canv.SaveAs(epsdire+'/'+str(args.year)[2:]+"-"+var[0]+'.eps')
 
         tDirectory.WriteObject(canv,"TheCanvas")
+=======
+        elif TH2DHist:
+            Hists_FullList = []
+            Hists_FullList += SignalHists if SignalHists else []
+            Hists_FullList += stackableHists if stackableHists else  []
+            Hists_FullList += All_files['Data']['hist'][i] if 'Data' in All_files.keys() else []
+            Hists_FullList += [total] if total else []
+            canv.SetTopMargin(canv.GetTopMargin()*1.5)
+            canv.SetRightMargin(0.2)
+            canv.SetLeftMargin(canv.GetLeftMargin()*0.5)
+            #ROOT.gPad.Modified()
+            ROOT.gPad.Update()
+            CMS_lumi.CMS_lumi(ROOT.gPad, 4, 0, 0.01)
+            h2Ddirpng = os.path.join(outdire,'hist2D/png')
+            h2Ddirpdf = os.path.join(outdire,'hist2D/pdf')
+            h2Ddireps = os.path.join(outdire,'hist2D/eps')
+            if not os.path.exists(h2Ddirpng) :
+                os.makedirs(h2Ddirpng)
+            if not os.path.exists(h2Ddirpdf) :
+                os.makedirs(h2Ddirpdf)
+            if not os.path.exists(h2Ddireps) :
+                os.makedirs(h2Ddireps)
+            for H2D in Hists_FullList  :
+                H2D.GetXaxis().SetTitleOffset(1.1)
+                H2D.GetXaxis().SetLabelOffset(0.007)
+                H2D.GetXaxis().SetTitleFont(42)
+                H2D.GetXaxis().SetTitleSize(0.05)
+                H2D.GetXaxis().SetLabelFont(42)
+                H2D.GetXaxis().SetLabelSize(0.04)
+                H2D.GetYaxis().SetTitleFont(42)
+                H2D.GetYaxis().SetTitleSize(0.04)
+                H2D.GetYaxis().SetTitleOffset(0.8)
+                H2D.GetYaxis().SetLabelFont(42)
+                H2D.GetYaxis().SetLabelSize(0.05)
+                H2D.GetYaxis().SetLabelOffset(0.007)
+                H2D.GetXaxis().SetNdivisions(510)
+                H2D.GetYaxis().SetNdivisions(510)
+                H2D.GetZaxis().SetLabelFont(42)
+                H2D.GetZaxis().SetLabelSize(0.04)
+                H2D.SetMinimum(0.0)
+                H2D.Draw("HIST COLZ")
+                if any('LogZ' in e for e in var) :
+                    ROOT.gPad.SetLogz()
+                canv.SaveAs(h2Ddirpng+'/'+str(args.year)[2:]+"-"+H2D.GetName()+'.png')
+                canv.SaveAs(h2Ddirpdf+'/'+str(args.year)[2:]+"-"+H2D.GetName()+'.pdf')
+                canv.SaveAs(h2Ddireps+'/'+str(args.year)[2:]+"-"+H2D.GetName()+'.eps')
+        if not TH2DHist:
+            canv.SaveAs(pngdire+'/'+str(args.year)[2:]+"-"+var[0]+'.png')
+            canv.SaveAs(pdfdire+'/'+str(args.year)[2:]+"-"+var[0]+'.pdf')
+            canv.SaveAs(epsdire+'/'+str(args.year)[2:]+"-"+var[0]+'.eps')
+
+            tDirectory.WriteObject(canv,"TheCanvas")
+>>>>>>> 55f13a7beb43e3e31ccf7e5d903a34c2d74fa9da
         #del canv
         outroot.cd('')
 

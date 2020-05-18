@@ -157,6 +157,7 @@ if __name__ == '__main__':
             pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
         
         for i,fc in enumerate(Filenamelist) : 
+            #if not "Run2018" in fc : continue
             confDir = os.path.join(outdir,"job_"+str(i))
             if not os.path.exists(confDir) : 
                 os.makedirs(confDir)

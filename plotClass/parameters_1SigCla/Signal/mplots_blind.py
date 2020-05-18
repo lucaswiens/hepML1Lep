@@ -1,5 +1,6 @@
 varList.append(["TTDi","TTDi","DNN classifier t#bar{t} ll",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 varList.append(["sig","sig","DNN classifier T1t^{4}",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows',['blinded',"0.9 < x < 1.0"]])
+varList.append(["sig_SR","sig","DNN classifier T1t^{4}",[3,0,1],"LogY",["MoreY",5000],['varbin',[0.9,0.9196,0.9393,0.9588,0.9785,0.998,1],True],['blinded',"0.98 < x < 1.0"]])
 varList.append(["WJ","WJ","DNN classifier W+jets",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 varList.append(["TTS","TTS","DNN classifier t#bar{t} l",[20,0,1],"LogY",["MoreY",5000],'IncludeOverflows'])
 

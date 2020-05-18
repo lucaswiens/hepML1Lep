@@ -122,7 +122,7 @@ class score(object):
             if useDropOut : 
                 DNN.add(Dropout(0.1))
             DNN.add(Dense(nclass, kernel_initializer='uniform', activation='softmax'))
-            DNN.compile(loss='sparse_categorical_crossentropy',metrics=['accuracy'], optimizer=Adam(lr=0.001))
+            DNN.compile(loss='sparse_categorical_crossentropy',metrics=['accuracy'], optimizer=Adam(lr=0.0001))
 
         DNN.summary()
         # Train DNN classifier

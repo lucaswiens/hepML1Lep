@@ -42,9 +42,9 @@ def Predict_Keras(infile,outdir,var_list,class_list,model = None) :
 
     tree_out = tree_in.CopyTree("(nLep == 1) && (nJets30Clean >= 3)&& (nVeto == 0)&& (HT > 500)&& (LT > 250)")
 
-    TT1l  = tree_out.Branch('TTJ_0b', TT1l_val, 'TTJ_0b/F',20000000)
-    WJet  = tree_out.Branch('WJ_0b', WJet_val, 'WJ_0b/F',20000000)
-    Sig  = tree_out.Branch('sig_0b', Sig_val, 'sig_0b/F',20000000)
+    TT1l  = tree_out.Branch('TTJ_0b', TT1l_val, 'TTJ_0b/F')
+    WJet  = tree_out.Branch('WJ_0b', WJet_val, 'WJ_0b/F')
+    Sig  = tree_out.Branch('sig_0b', Sig_val, 'sig_0b/F')
     
     prediction['Event'] = p_df['Event']
     prediction['Run'] =  p_df['Run']
@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWTight"]
+    var_list = ['MET', 'MT', 'Jet2_pt','Jet1_pt', 'Lep_pt', 'LT', 'HT','nTop_Total_Combined', 'nJets30Clean', 'dPhi',"Lep_relIso","Lep_miniIso","iso_pt","iso_MT2","nWLoose","nWMedium","nWTight"]
     
     wdir = os.getcwd()
     
@@ -154,6 +154,7 @@ if __name__ == '__main__':
             pyth = "/nfs/dust/cms/user/amohamed/anaconda3/envs/hepML/bin/python"
         
         for i,fc in enumerate(Filenamelist) : 
+            #if not "Run2018" in fc : continue
             confDir = os.path.join(outdir,"job_"+str(i))
             if not os.path.exists(confDir) : 
                 os.makedirs(confDir)
